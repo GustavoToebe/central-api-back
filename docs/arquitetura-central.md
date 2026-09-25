@@ -442,11 +442,14 @@ Decisões:
 
 ## 9. Bancos de dados
 
-**Servire**: continua no Supabase atual. **Baseline novo**: V001–V032 são
-substituídas por um `V001` limpo, já com o modelo novo (sem billing/backoffice,
-com perfis, usuários, integração). O banco de produção é recriado do zero no
-corte; as 3 crianças cadastradas são recadastradas à mão. Depois do corte a
-regra "nunca editar migration aplicada" volta a valer a partir desse `V001`.
+**Servire**: continua no Supabase atual. ~~Baseline novo~~ **Mudou na
+implementação (25/09/2026):** em vez de substituir V001–V032 por um `V001`
+limpo, o modelo novo entrou em migrations **aditivas** (V035 perfis e
+convite, V036 integração v1), para não mexer na produção antes do corte. As
+tabelas de billing/backoffice (`plano`, `preco_plano`, `assinatura`,
+`cobranca`, `backoffice_log`) e a coluna `usuario.operador_saas` continuam no
+banco, **sem código**, até a Central existir para recebê-las; uma migration de
+limpeza apaga tudo no corte. O recadastro manual das 3 crianças continua.
 
 **Central**: segundo projeto free do Supabase, banco próprio, Flyway próprio.
 
@@ -530,7 +533,25 @@ cópias continuarem iguais.
 | 11 | Sem campo de senha: só convite / redefinição |
 | 12 | Nome/e-mail de usuário com outras paróquias: só leitura para o admin; o próprio usuário edita em "Meu perfil" |
 | 13 | Avatar só com iniciais por enquanto |
-| 14 | Servire com baseline de migrations novo e banco recriado; recadastro manual das 3 crianças |
+| 14 | Servire com banco recriado no corte e recadastro manual das 3 crianças (migrations aditivas V035/V036 em vez de baseline novo — seção 9) |
 | 15 | Sem backup por enquanto; Supabase Pro + VPS maior a partir de 2 clientes |
 | 16 | Bloqueio por atraso continua manual (decisão de 23/09/2026) |
 | 17 | Commits dos repositórios da Central direto na `main` |
+
+## 14. Estado da implementação no Servire (25/09/2026)
+
+Etapas 1 e 2 implementadas no `servire-api-back` (commit `bb42ecc` e a
+revisão seguinte). Diferenças e detalhes em relação ao desenho acima:
+
+| Tema | Como ficou |
+|---|---|
+| Migrations | Aditivas (V035/V036), não baseline novo — ver seção 9 |
+| Permissões | O catálogo da seção 8.3 é a única lista (`CatalogoPermissao`); cada endpoint pede a ação (`PERM_ESCALA_EXCLUIR`, `PERM_VAGA_PRESENCA`…) e o módulo libera a leitura. Ação marcada traz o módulo junto; código fora do catálogo é recusado |
+| Concessão | Quem não tem acesso total não concede acesso total, nem permissão que não tem, nem altera quem tem acesso total |
+| Convite | Token de uso único com finalidade `CONVITE`, válido por 7 dias (reset: 1h). Página `/reset-password?token=` no front serve aos dois |
+| `/integracao/**` | O HMAC concede `PERM_INTEGRACAO`, exigida pelo controller; a rota não é pública. Nonce com `INSERT ... ON CONFLICT DO NOTHING` |
+| Regra de acesso | Uma só (`AcessoParoquia`), usada no login e em toda requisição: sem `direitos_locais` vale o status do tenant; com a linha, `acessoLiberado` + 72h. Perfil inativo também barra |
+| Alerta | Roda depois de toda tentativa de sincronização (inclusive falha), no máximo um e-mail a cada 8h |
+| Suporte | Código de uso único (`UPDATE ... WHERE usado_em IS NULL`); a entrada é auditada na paróquia |
+| Operador no app | Removido: token `backoffice`, suporte antigo e login/refresh do operador |
+| Diocese | Cota continua no código, mas sem tela para criar diocese ou ligar paróquia. Decisão pendente: agrupamento, cliente da Central (cada paróquia uma contratação) ou cota real da diocese |
