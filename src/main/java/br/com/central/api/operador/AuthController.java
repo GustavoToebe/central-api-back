@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
 
-    static final String REFRESH_TOKEN_COOKIE = "central_refresh_token";
+    public static final String REFRESH_TOKEN_COOKIE = "central_refresh_token";
 
     private final AuthService authService;
     private final SecurityProperties properties;

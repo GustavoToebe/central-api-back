@@ -21,8 +21,8 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
         List<String> descricoes = jdbcTemplate.queryForList(
                 "SELECT description FROM flyway_schema_history WHERE type = 'SQL' ORDER BY installed_rank",
                 String.class);
-        assertThat(total).isEqualTo(1);
-        assertThat(descricoes).containsExactly("operador e nonce");
+        assertThat(total).isEqualTo(2);
+        assertThat(descricoes).containsExactly("operador e nonce", "dominio comercial");
     }
 
     @Test
@@ -32,15 +32,23 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
                 JOIN pg_class c ON c.relname = t.tablename
                 JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = t.schemaname
                 WHERE t.schemaname = 'public'
-                  AND t.tablename IN ('operador', 'operador_log', 'refresh_token', 'integracao_nonce')
+                  AND t.tablename IN (
+                    'operador', 'operador_log', 'refresh_token', 'integracao_nonce',
+                    'cliente', 'cliente_contato', 'produto', 'recurso', 'plano', 'plano_recurso',
+                    'preco_plano', 'adicional', 'contratacao', 'contratacao_adicional',
+                    'historico_contratacao', 'cobranca', 'evento_saida')
                   AND c.relrowsecurity = true
                 """, Integer.class);
         Integer policies = jdbcTemplate.queryForObject("""
                 SELECT count(*) FROM pg_policies
                 WHERE schemaname = 'public'
-                  AND tablename IN ('operador', 'operador_log', 'refresh_token', 'integracao_nonce')
+                  AND tablename IN (
+                    'operador', 'operador_log', 'refresh_token', 'integracao_nonce',
+                    'cliente', 'cliente_contato', 'produto', 'recurso', 'plano', 'plano_recurso',
+                    'preco_plano', 'adicional', 'contratacao', 'contratacao_adicional',
+                    'historico_contratacao', 'cobranca', 'evento_saida')
                 """, Integer.class);
-        assertThat(comRls).isEqualTo(4);
+        assertThat(comRls).isEqualTo(17);
         assertThat(policies).isZero();
     }
 }

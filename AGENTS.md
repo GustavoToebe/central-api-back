@@ -43,6 +43,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
   nonce com `INSERT ... ON CONFLICT`. `GET /integracao/v1/saude` é a sonda da fundação;
   os endpoints do contrato ainda não existem.
+- `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
+  direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca
+  `INADIMPLENTE`; não bloqueia. O job que **envia** o `evento_saida` ainda não existe.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
 - Testes: `mvn clean verify` (Docker, Postgres 16). Ao somar migration, atualizar o total

@@ -10,9 +10,11 @@ Front do painel do operador: [`central-api-front`](https://github.com/GustavoToe
 
 ## Estado atual
 
-**Fundação.** Operadores (login, refresh em cookie httpOnly, logout), JWT próprio,
-filtro HMAC de `/integracao/**` e a sonda `GET /integracao/v1/saude`. Cadastros
-comerciais e os endpoints do contrato ainda não existem.
+**Fundação e domínio comercial.** Operadores (login, refresh em cookie httpOnly, logout),
+JWT próprio, filtro HMAC de `/integracao/**` e a sonda `GET /integracao/v1/saude`.
+Cadastros de cliente, produto, recurso, plano, preço e adicional; contratação com
+direitos, histórico e cobrança manual. O job diário gera cobranças e marca
+`INADIMPLENTE`. O envio do `evento_saida` e os endpoints do contrato ainda não existem.
 
 Para subir em dev: Postgres local, profile `dev`, e `application-dev-local.yml`
 (gitignorado) ou as variáveis do `.env.example`. Sem `CENTRAL_JWT_SEGREDO` e sem

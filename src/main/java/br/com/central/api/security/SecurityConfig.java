@@ -88,6 +88,23 @@ public class SecurityConfig {
             return true;
         }
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        return authorization == null || !authorization.regionMatches(true, 0, "Bearer ", 0, 7);
+        if (authorization != null && authorization.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return false;
+        }
+        // Sem Bearer, o CSRF só protege quem já tem o cookie de sessão.
+        // Pedido anônimo segue para a autenticação e responde 401.
+        return temCookie(request, br.com.central.api.operador.AuthController.REFRESH_TOKEN_COOKIE);
+    }
+
+    private static boolean temCookie(HttpServletRequest request, String nome) {
+        if (request.getCookies() == null) {
+            return false;
+        }
+        for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+            if (nome.equals(cookie.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 }
