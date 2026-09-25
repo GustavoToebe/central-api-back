@@ -29,7 +29,21 @@ Commits vão direto na `main` (decisão de 25/09/2026).
   toda repetição; horário, nonce e assinatura novos a cada envio.
 - Segredos só em env var, sem valor padrão; nunca no git.
 
-## Stack (prevista)
+## Stack
 Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 16 (Supabase) · Flyway ·
 Testcontainers · Maven. Mesmas convenções do `servire-api-back` (DTOs `record`,
 `ApiException`, `@Transactional` no service, javadoc explicando o porquê).
+A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
+
+## Onde está o código
+- `web/` — `ApiError` (com `codigo`), `ApiException`, `GlobalExceptionHandler`, `RequestIdFilter`.
+- `security/` — JWT próprio (`CENTRAL_JWT_SEGREDO`), BCrypt, cookie httpOnly de refresh.
+- `operador/` — login, refresh, logout, `GET /operadores/eu`. Seed só no profile `dev`,
+  se `CENTRAL_OPERADOR_SEED_EMAIL` e `CENTRAL_OPERADOR_SEED_SENHA` existirem.
+- `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
+  nonce com `INSERT ... ON CONFLICT`. `GET /integracao/v1/saude` é a sonda da fundação;
+  os endpoints do contrato ainda não existem.
+- Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
+- Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
+- Testes: `mvn clean verify` (Docker, Postgres 16). Ao somar migration, atualizar o total
+  em `FlywayMigrationIntegrationTest`.

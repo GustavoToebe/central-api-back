@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+# Segredo só desta suíte. O valor decodifica para 35 bytes; não serve fora do teste.
+central:
+  security:
+    jwt:
+      secret: dGVzdGUtY2VudHJhbC1qd3Qtc2VjcmV0LTMyLWJ5dGVzIQ==
+    cors:
+      allowed-origins: http://localhost:4200
+  integracao:
+    chaves-entrada: teste-servire:c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5

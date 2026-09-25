@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
+central:
+  security:
+    jwt:
+      secret: ${CENTRAL_JWT_SEGREDO}
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS}

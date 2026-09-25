@@ -10,7 +10,14 @@ Front do painel do operador: [`central-api-front`](https://github.com/GustavoToe
 
 ## Estado atual
 
-**Etapa 0 — desenho.** Ainda não há código.
+**Fundação.** Operadores (login, refresh em cookie httpOnly, logout), JWT próprio,
+filtro HMAC de `/integracao/**` e a sonda `GET /integracao/v1/saude`. Cadastros
+comerciais e os endpoints do contrato ainda não existem.
+
+Para subir em dev: Postgres local, profile `dev`, e `application-dev-local.yml`
+(gitignorado) ou as variáveis do `.env.example`. Sem `CENTRAL_JWT_SEGREDO` e sem
+`DB_PASSWORD` a API não sobe. O seed do operador só roda no profile `dev`, e só
+se o e-mail e a senha vierem no ambiente.
 
 | Documento | Conteúdo |
 |---|---|
