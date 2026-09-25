@@ -315,6 +315,8 @@ public class ContratacaoService {
                 contratacao.getPlano().getCodigo(),
                 contratacao.getPeriodicidade(),
                 contratacao.getValor(),
+                contratacao.getDiaVencimento(),
+                contratacao.getVigenteAte(),
                 contratacao.getSituacaoComercial(),
                 contratacao.getSituacaoProvisionamento(),
                 contratacao.getVersaoDireitos(),

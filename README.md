@@ -57,10 +57,10 @@ Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e ent
 
 ## Próximos passos
 
-Etapas 1 e 2 (Servire) e 3 (esta API) prontas — ver `docs/arquitetura-central.md`, seção 14.
+Etapas 1 e 2 (Servire), 3 (esta API) e 4 (`central-api-front`) prontas — ver
+`docs/arquitetura-central.md`, seção 14.
 
-1. Etapa 4 — `central-api-front` (painel do operador).
-2. Etapa 5 — corte em produção: projeto Supabase da Central (Postgres 17), variáveis de produção
+1. Etapa 5 — corte em produção: projeto Supabase da Central (Postgres 17), variáveis de produção
    (`.env.example`, incluindo `CENTRAL_CSRF_COOKIE_DOMAIN`), recriar o banco do Servire.
 
 ## Stack prevista

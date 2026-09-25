@@ -176,7 +176,9 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
         autorizado(token, get("/recursos"), null, 200);
         autorizado(token, get("/planos"), null, 200);
         autorizado(token, get("/adicionais"), null, 200);
-        autorizado(token, get("/contratacoes"), null, 200);
+        mockMvc.perform(get("/contratacoes").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == '" + contratacaoId + "')].diaVencimento").value(10));
 
         autorizado(token, put("/contratacoes/" + contratacaoId + "/adicionais"),
                 "{\"adicionais\":[{\"adicionalId\":\"" + adicionalId + "\",\"quantidade\":1}],\"motivo\":\"pacote\"}", 200);

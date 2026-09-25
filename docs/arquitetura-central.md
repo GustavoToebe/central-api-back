@@ -586,5 +586,22 @@ Diferenças e detalhes em relação ao desenho acima:
 | Idempotency-Key | Sempre o id da contratação. A edição de nome, slug e administrador só vale antes de um envio que possa ter criado a instância (seção 5.2); a resposta da contratação traz `provisionamentoEditavel` |
 | Operador | `POST /contratacoes/{id}/tentar-provisionamento` depois de `ERRO` (recusa se provisionada ou cancelada); `POST /contratacoes/{id}/suporte` devolve `{codigo, urlAcesso, expiraEm}` e grava `operador_log` |
 | Sincronização | `GET /integracao/v1/produtos/{produto}/direitos?pagina&tamanho` (tamanho 1 a 100, padrão 100): só contratações com `id_externo`, inclusive bloqueadas e canceladas |
-| Painel | Listas não paginadas por enquanto; `GET` por id em cliente e contratação |
+| Painel | Listas não paginadas por enquanto; `GET` por id em cliente e contratação. O resumo de `GET /contratacoes` traz `diaVencimento` e `vigenteAte` para a grade |
 | Variáveis | Em produção sem valor padrão: `CENTRAL_JWT_SEGREDO`, `CORS_ALLOWED_ORIGINS`, `CENTRAL_CSRF_COOKIE_DOMAIN` e as `CENTRAL_PRODUTO_SERVIRE_*` |
+
+### 14.3 Painel do operador (26/09/2026)
+
+Etapa 4 implementada no `central-api-front` (Angular 21, visual do
+backoffice antigo do Servire). Validada de ponta a ponta com Central e Servire
+rodando juntos: contratação no painel → paróquia criada no Servire; bloqueio
+no painel → Servire bloqueia pelo webhook; suporte → aba com o código de uso
+único do Servire; sessão renovada pelo cookie com `X-XSRF-TOKEN`.
+
+| Tema | Como ficou |
+|---|---|
+| Telas | Clientes (lista, cadastro PF/PJ, detalhe com a grade de contratações), contratações (grade, nova, detalhe com resumo/financeiro/histórico) e catálogo (produtos, recursos, planos com preços, adicionais) |
+| Sessão | Access token no `sessionStorage`; refresh só no cookie httpOnly. Um refresh compartilhado por vez no 401; sem cookie `XSRF-TOKEN` o painel nem tenta renovar (a Central devolveria 403) |
+| Regras na tela | "Tentar novamente" só com `ERRO` sem `id_externo`; edição de nome/slug/admin só com `provisionamentoEditavel`; suporte só com a instância criada |
+| Fora do escopo | Log de ações dos operadores e lista geral de cobranças: não há endpoint (o histórico vem dentro da contratação e o financeiro é por contratação) |
+| Observação | `vigente_ate` usa a maior competência paga: pagar outubro com setembro em aberto mostra "pago até 31/10". Não bloqueia nada (o bloqueio é manual), mas o rótulo engana; rever no billing |
+

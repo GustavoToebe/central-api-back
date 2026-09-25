@@ -108,6 +108,8 @@ public final class ContratacaoDtos {
             String planoCodigo,
             Periodicidade periodicidade,
             BigDecimal valor,
+            int diaVencimento,
+            LocalDate vigenteAte,
             SituacaoComercial situacaoComercial,
             SituacaoProvisionamento situacaoProvisionamento,
             int versaoDireitos,
