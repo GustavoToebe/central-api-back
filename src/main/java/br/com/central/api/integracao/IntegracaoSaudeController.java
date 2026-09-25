@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Sonda da fundação. Os endpoints do contrato entram no passo da integração;
- * esta rota existe para o filtro ter um controller que exige {@code PERM_INTEGRACAO}.
+ * Sonda da fundação. A listagem de direitos mora em
+ * {@link IntegracaoDireitosController}.
  */
 @RestController
 @RequestMapping("/integracao/v1")

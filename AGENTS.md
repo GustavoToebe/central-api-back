@@ -41,11 +41,14 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - `operador/` — login, refresh, logout, `GET /operadores/eu`. Seed só no profile `dev`,
   se `CENTRAL_OPERADOR_SEED_EMAIL` e `CENTRAL_OPERADOR_SEED_SENHA` existirem.
 - `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
-  nonce com `INSERT ... ON CONFLICT`. `GET /integracao/v1/saude` é a sonda da fundação;
-  os endpoints do contrato ainda não existem.
+  nonce com `INSERT ... ON CONFLICT`, cliente de saída (`AplicativoHttp`) e o job
+  que entrega o `evento_saida`. `GET /integracao/v1/produtos/{produto}/direitos`
+  lista só contratações já provisionadas. `POST /contratacoes/{id}/suporte` e
+  `POST /contratacoes/{id}/tentar-provisionamento` são do operador.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca
-  `INADIMPLENTE`; não bloqueia. O job que **envia** o `evento_saida` ainda não existe.
+  `INADIMPLENTE`; não bloqueia. Provisionar espera 1 min, 5 min, 15 min e 1 h e
+  então fica `ERRO`. O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
 - Testes: `mvn clean verify` (Docker, Postgres 16). Ao somar migration, atualizar o total

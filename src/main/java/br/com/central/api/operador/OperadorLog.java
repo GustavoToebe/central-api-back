@@ -40,4 +40,20 @@ public class OperadorLog {
         this.detalhe = detalhe;
         this.ip = ip;
     }
+
+    public UUID getOperadorId() {
+        return operadorId;
+    }
+
+    public String getAcao() {
+        return acao;
+    }
+
+    public String getDetalhe() {
+        return detalhe;
+    }
+
+    public String getIp() {
+        return ip;
+    }
 }

@@ -62,6 +62,8 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
                 "/contratacoes/" + id + "/bloquear",
                 "/contratacoes/" + id + "/desbloquear",
                 "/contratacoes/" + id + "/cancelar",
+                "/contratacoes/" + id + "/tentar-provisionamento",
+                "/contratacoes/" + id + "/suporte",
                 "/contratacoes/" + id + "/pagamentos",
                 "/contratacoes/" + id + "/cobrancas/adiantadas",
                 "/contratacoes/" + id + "/cobrancas/" + id + "/estornar",
@@ -237,7 +239,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
             return "{\"produtoId\":\"" + id + "\",\"recursoId\":\"" + id
                     + "\",\"codigo\":\"x\",\"nome\":\"n\",\"quantidade\":1,\"preco\":1}";
         }
-        if (caminho.contains("/bloquear")) {
+        if (caminho.contains("/bloquear") || caminho.contains("/suporte")) {
             return "{\"motivo\":\"x\"}";
         }
         if (caminho.contains("/pagamentos")) {

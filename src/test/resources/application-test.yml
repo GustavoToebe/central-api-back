@@ -12,6 +12,11 @@ central:
       allowed-origins: http://localhost:4200
   integracao:
     chaves-entrada: teste-servire:c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5
+    chave-saida-id: teste-central
+    chave-saida-segredo: c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5
+  entrega:
+    job:
+      enabled: false
   billing:
     job:
       enabled: false

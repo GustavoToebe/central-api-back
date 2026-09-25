@@ -18,8 +18,9 @@ import java.util.UUID;
 
 /**
  * Recalcula o snapshot, sobe a versão e grava histórico e evento de saída
- * na mesma transação da alteração. O job que envia o evento fica para a
- * integração; aqui só se garante que ele existe ou não existe junto com a mudança.
+ * na mesma transação da alteração. Quem envia o evento é
+ * {@link br.com.central.api.integracao.EntregaIntegracao}. Aqui só se
+ * garante que o evento existe ou não existe junto com a mudança.
  */
 @Service
 public class DireitosDaContratacao {

@@ -68,6 +68,25 @@ public class EventoSaida {
         this.situacao = SituacaoEvento.DESCARTADO;
     }
 
+    public void marcarEnviado() {
+        this.situacao = SituacaoEvento.ENVIADO;
+    }
+
+    public void marcarFalhou() {
+        this.situacao = SituacaoEvento.FALHOU;
+    }
+
+    /** Soma uma tentativa e empurra a próxima para o instante calculado pela agenda. */
+    public void reagendar(Instant quando) {
+        this.tentativas++;
+        this.proximaTentativa = quando;
+    }
+
+    /** O operador pediu para tentar agora; a contagem de tentativas fica como está. */
+    public void adiantar(Instant quando) {
+        this.proximaTentativa = quando;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -90,5 +109,17 @@ public class EventoSaida {
 
     public String getTipo() {
         return tipo;
+    }
+
+    public int getTentativas() {
+        return tentativas;
+    }
+
+    public Instant getProximaTentativa() {
+        return proximaTentativa;
+    }
+
+    public Instant getCriadoEm() {
+        return criadoEm;
     }
 }

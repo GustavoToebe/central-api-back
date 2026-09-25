@@ -220,6 +220,14 @@ public class Contratacao implements Persistable<UUID> {
         return idExterno;
     }
 
+    public void setIdExterno(UUID idExterno) {
+        this.idExterno = idExterno;
+    }
+
+    public void setSituacaoProvisionamento(SituacaoProvisionamento situacaoProvisionamento) {
+        this.situacaoProvisionamento = situacaoProvisionamento;
+    }
+
     public String getNomeInstancia() {
         return nomeInstancia;
     }
