@@ -537,6 +537,7 @@ cópias continuarem iguais.
 | 15 | Sem backup por enquanto; Supabase Pro + VPS maior a partir de 2 clientes |
 | 16 | Bloqueio por atraso continua manual (decisão de 23/09/2026) |
 | 17 | Commits dos repositórios da Central direto na `main` |
+| 18 | Diocese é só agrupamento informativo no Servire (sem cota); diocese que contratar em bloco vira cliente na Central |
 
 ## 14. Estado da implementação no Servire (25/09/2026)
 
@@ -554,4 +555,4 @@ revisão seguinte). Diferenças e detalhes em relação ao desenho acima:
 | Alerta | Roda depois de toda tentativa de sincronização (inclusive falha), no máximo um e-mail a cada 8h |
 | Suporte | Código de uso único (`UPDATE ... WHERE usado_em IS NULL`); a entrada é auditada na paróquia |
 | Operador no app | Removido: token `backoffice`, suporte antigo e login/refresh do operador |
-| Diocese | Cota continua no código, mas sem tela para criar diocese ou ligar paróquia. Decisão pendente: agrupamento, cliente da Central (cada paróquia uma contratação) ou cota real da diocese |
+| Diocese | **Só agrupamento informativo** (decisão de 25/09/2026, V037): sem cota. A paróquia escolhe ou digita a diocese na tela Paróquia (`PUT /tenant`); `GET /dioceses` sugere as já usadas. Não é assunto da Central — se uma diocese contratar em bloco, vira **cliente** aqui, com cada paróquia como contratação |
