@@ -57,13 +57,14 @@ public class SecurityConfig {
                                                      JwtAuthenticationFilter jwtAuthenticationFilter,
                                                      IntegracaoFiltro integracaoFiltro,
                                                      CorsConfigurationSource corsConfigurationSource,
+                                                     SecurityProperties properties,
                                                      RestAuthenticationEntryPoint authenticationEntryPoint,
                                                      RestAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf
                         .spa()
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRepository(csrfTokenRepository(properties))
                         .requireCsrfProtectionMatcher(SecurityConfig::exigeCsrf)
                         .ignoringRequestMatchers("/auth/login", "/integracao/**"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -76,6 +77,16 @@ public class SecurityConfig {
                 .addFilterBefore(integracaoFiltro, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    /** Mesmo repositório do {@code spa()} ({@code XSRF-TOKEN} legível por JS), com domínio configurável. */
+    static CookieCsrfTokenRepository csrfTokenRepository(SecurityProperties properties) {
+        CookieCsrfTokenRepository repositorio = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        String dominio = properties.csrf() == null ? null : properties.csrf().cookieDomain();
+        if (dominio != null && !dominio.isBlank()) {
+            repositorio.setCookieCustomizer(cookie -> cookie.domain(dominio.trim()));
+        }
+        return repositorio;
     }
 
     /** Refresh e logout usam o cookie. Login e integração não. Bearer dispensa CSRF. */

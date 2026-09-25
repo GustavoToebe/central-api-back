@@ -137,9 +137,9 @@ para a máquina decidir) além da `message` (para humanos):
 
 | HTTP | `codigo` | Emissor repete automaticamente? |
 |---|---|---|
-| 401 | `CHAVE_DESCONHECIDA`, `TIMESTAMP_FORA_DA_JANELA`, `ASSINATURA_INVALIDA`, `NONCE_REPETIDO` | não (configuração/relógio; alerta) |
-| 400 | `DADOS_INVALIDOS` (Bean Validation, com `fieldErrors`) | não |
-| 404 | `INSTANCIA_NAO_ENCONTRADA` | não |
+| 401 | `CHAVE_DESCONHECIDA`, `TIMESTAMP_FORA_DA_JANELA`, `ASSINATURA_INVALIDA`, `NONCE_REPETIDO` | **sim**, até o fim da agenda, com alerta (configuração ou relógio: corrigido o ambiente, a próxima tentativa passa) |
+| 400 | `DADOS_INVALIDOS` (Bean Validation, com `fieldErrors`) | **sim**, até o fim da agenda |
+| 404 | `INSTANCIA_NAO_ENCONTRADA` | **sim**, até o fim da agenda |
 | 409 | `IDEMPOTENCY_KEY_CONFLITO` | não |
 | 422 | `SLUG_EM_USO` | não (operador corrige) |
 | 5xx, timeout, rede | — | **sim**, com espera crescente |
@@ -230,6 +230,7 @@ Respostas:
 | Criado agora | `201` | resposta abaixo |
 | Mesma chave, mesmo corpo (repetição) | `200` + header `Idempotency-Replayed: true` | a resposta gravada, idêntica |
 | Mesma chave, corpo diferente | `409 IDEMPOTENCY_KEY_CONFLITO` | erro |
+| Slug usado, corrigido e reenviado com a **mesma** chave | `201` | a recusa `422` não é gravada; só a criação grava a operação |
 | Slug usado por outra paróquia | `422 SLUG_EM_USO` | erro |
 | Concorrente com a mesma chave | a segunda esbarra na restrição única, relê e devolve `200` com a resposta gravada | — |
 
@@ -248,6 +249,12 @@ Respostas:
 
 `administrador.situacao`: `CONVIDADO` (usuário novo, convite enviado) ou
 `VINCULADO` (e-mail já existia, só ganhou acesso).
+
+**Idempotency-Key e edição (26/09/2026):** a chave é sempre o
+`contratacaoId` do corpo — o app recusa outra. Por isso o emissor só pode
+mudar nome, slug ou administrador antes de um envio que possa ter criado a
+instância: antes do primeiro envio, ou depois de uma recusa 4xx que não seja
+409. Depois de 2xx, 5xx, falha de rede ou 409, o corpo fica congelado.
 
 ### 5.2 Consultar instância (conciliação)
 

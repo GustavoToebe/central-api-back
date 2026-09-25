@@ -23,8 +23,10 @@ import java.util.UUID;
 
 /**
  * O id é gerado na aplicação e copiado para {@code idempotency_key} na
- * criação. {@link Persistable} evita que o Spring Data trate esse id
- * preenchido como entidade já existente (merge em vez de insert).
+ * criação; a chave nunca muda, porque o app exige Idempotency-Key igual ao
+ * {@code contratacaoId} do corpo (26/09/2026). {@link Persistable} evita
+ * que o Spring Data trate esse id preenchido como entidade já existente
+ * (merge em vez de insert).
  */
 @Entity
 @Table(name = "contratacao")
@@ -74,6 +76,10 @@ public class Contratacao implements Persistable<UUID> {
 
     @Column(name = "id_externo")
     private UUID idExterno;
+
+    /** Ver V003: NULL = nunca enviado; 0 = sem resposta; senão o status HTTP. */
+    @Column(name = "ultimo_status_provisionamento")
+    private Integer ultimoStatusProvisionamento;
 
     @Column(name = "nome_instancia", nullable = false, length = 200)
     private String nomeInstancia;
@@ -128,8 +134,27 @@ public class Contratacao implements Persistable<UUID> {
         this.adminEmail = adminEmail;
     }
 
-    public void gerarNovaChaveDeIdempotencia() {
-        this.idempotencyKey = UUID.randomUUID();
+    /**
+     * Nome, slug e administrador só mudam enquanto nenhum envio pode ter
+     * criado a instância no app: antes do primeiro POST, ou depois de uma
+     * recusa 4xx que não seja 409 (o app recusa antes de gravar). Com 2xx,
+     * 5xx, falha de rede ou 409 a instância pode existir; um corpo diferente
+     * com a mesma Idempotency-Key voltaria 409 para sempre.
+     */
+    public boolean dadosDeProvisionamentoEditaveis() {
+        if (idExterno != null) {
+            return false;
+        }
+        Integer status = ultimoStatusProvisionamento;
+        return status == null || (status >= 400 && status < 500 && status != 409);
+    }
+
+    public Integer getUltimoStatusProvisionamento() {
+        return ultimoStatusProvisionamento;
+    }
+
+    public void setUltimoStatusProvisionamento(Integer ultimoStatusProvisionamento) {
+        this.ultimoStatusProvisionamento = ultimoStatusProvisionamento;
     }
 
     @Override

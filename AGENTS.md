@@ -30,7 +30,7 @@ Commits vão direto na `main` (decisão de 25/09/2026).
 - Segredos só em env var, sem valor padrão; nunca no git.
 
 ## Stack
-Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 16 (Supabase) · Flyway ·
+Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 17 (Supabase, 17.6 em produção) · Flyway ·
 Testcontainers · Maven. Mesmas convenções do `servire-api-back` (DTOs `record`,
 `ApiException`, `@Transactional` no service, javadoc explicando o porquê).
 A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
@@ -51,5 +51,11 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   então fica `ERRO`. O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
-- Testes: `mvn clean verify` (Docker, Postgres 16). Ao somar migration, atualizar o total
+- CSRF: domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
+  domínio pai; obrigatória em produção). Variáveis de produção sem valor padrão, conferidas por
+  `ConfiguracaoProducaoTest`.
+- Idempotency-Key é sempre o id da contratação. Nome, slug e admin só mudam antes de um envio que
+  possa ter criado a instância (`Contratacao.dadosDeProvisionamentoEditaveis`, V003); senão 409
+  `PROVISIONAMENTO_NAO_EDITAVEL`.
+- Testes: `mvn clean verify` (Docker, Postgres 17 — mesma versão major da produção). Ao somar migration, atualizar o total
   em `FlywayMigrationIntegrationTest`.

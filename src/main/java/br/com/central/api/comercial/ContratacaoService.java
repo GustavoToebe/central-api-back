@@ -114,6 +114,12 @@ public class ContratacaoService {
         if (!mudou) {
             return detalhe(contratacao);
         }
+        if (!contratacao.dadosDeProvisionamentoEditaveis()) {
+            throw new ConflictException(contratacao.getIdExterno() != null
+                    ? "A instância já foi criada no aplicativo; nome, slug e administrador não mudam mais por aqui."
+                    : "O aplicativo pode já ter criado a instância com os dados atuais; tente o provisionamento de novo antes de editar.",
+                    "PROVISIONAMENTO_NAO_EDITAVEL");
+        }
         if (!contratacao.getSlugInstancia().equals(slug)
                 && contratacaoRepository.existsByProduto_IdAndSlugInstancia(contratacao.getProduto().getId(), slug)) {
             throw new ConflictException("Já existe instância com este slug neste produto.", "CONFLITO");
@@ -122,7 +128,9 @@ public class ContratacaoService {
         contratacao.setSlugInstancia(slug);
         contratacao.setAdminNome(request.adminNome().trim());
         contratacao.setAdminEmail(request.adminEmail().trim().toLowerCase());
-        contratacao.gerarNovaChaveDeIdempotencia();
+        if (contratacao.getSituacaoProvisionamento() == SituacaoProvisionamento.ERRO) {
+            contratacao.setSituacaoProvisionamento(SituacaoProvisionamento.PENDENTE);
+        }
         direitos.publicar(contratacao, "DADOS_PROVISIONAMENTO", null);
         return detalhe(contratacao);
     }
@@ -285,6 +293,7 @@ public class ContratacaoService {
                 contratacao.getSituacaoProvisionamento(),
                 contratacao.getIdempotencyKey(),
                 contratacao.getIdExterno(),
+                contratacao.dadosDeProvisionamentoEditaveis(),
                 contratacao.getNomeInstancia(),
                 contratacao.getSlugInstancia(),
                 contratacao.getAdminNome(),

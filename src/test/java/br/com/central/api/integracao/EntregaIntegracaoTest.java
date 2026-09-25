@@ -19,6 +19,7 @@ import br.com.central.api.comercial.dto.CatalogoDtos.SalvarProdutoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarRecursoRequest;
 import br.com.central.api.comercial.dto.ClienteDtos.SalvarClienteRequest;
 import br.com.central.api.comercial.dto.ContratacaoDtos.AdicionalContratadoRequest;
+import br.com.central.api.comercial.dto.ContratacaoDtos.AtualizarProvisionamentoRequest;
 import br.com.central.api.comercial.dto.ContratacaoDtos.ContratacaoResponse;
 import br.com.central.api.comercial.dto.ContratacaoDtos.CriarContratacaoRequest;
 import br.com.central.api.comercial.dto.ContratacaoDtos.SubstituirAdicionaisRequest;
@@ -27,6 +28,7 @@ import br.com.central.api.operador.OperadorLogRepository;
 import br.com.central.api.operador.OperadorRepository;
 import br.com.central.api.security.JwtService;
 import br.com.central.api.security.OperadorAutenticado;
+import br.com.central.api.web.ConflictException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -275,6 +277,84 @@ class EntregaIntegracaoTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.idExterno").value(tenant.toString()));
         ClienteDeTeste.servidor.verify();
         assertThat(chaves).containsExactly(criada.id().toString());
+    }
+
+    @Test
+    void recusa422LiberaEdicaoEReenviaComAMesmaChaveEONovoSlug() {
+        esperar("POST", "/integracao/v1/instancias", 422, "{\"codigo\":\"SLUG_EM_USO\"}");
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+        ContratacaoResponse recusada = contratacaoService.buscar(criada.id());
+        assertThat(recusada.situacaoProvisionamento()).isEqualTo(SituacaoProvisionamento.ERRO);
+        assertThat(recusada.provisionamentoEditavel()).isTrue();
+
+        ContratacaoResponse editada = contratacaoService.atualizarProvisionamento(criada.id(),
+                new AtualizarProvisionamentoRequest("Instancia nova", slug + "-novo", "Admin", slug + "@teste.com"));
+        assertThat(editada.situacaoProvisionamento()).isEqualTo(SituacaoProvisionamento.PENDENTE);
+        assertThat(editada.idempotencyKey()).isEqualTo(criada.id());
+
+        ClienteDeTeste.servidor.reset();
+        chaves.clear();
+        UUID tenant = UUID.randomUUID();
+        esperar("POST", "/integracao/v1/instancias", 201, corpoCriado(criada.id(), tenant));
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+
+        assertThat(chaves).containsExactly(criada.id().toString());
+        assertThat(ultimoCorpo).contains("\"slug\":\"" + slug + "-novo\"");
+        ContratacaoResponse provisionada = contratacaoService.buscar(criada.id());
+        assertThat(provisionada.idExterno()).isEqualTo(tenant);
+        assertThat(provisionada.provisionamentoEditavel()).isFalse();
+    }
+
+    @Test
+    void semRespostaDoAppTravaAEdicao() {
+        esperar("POST", "/integracao/v1/instancias", 502, "");
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+
+        assertThat(contratacaoService.buscar(criada.id()).provisionamentoEditavel()).isFalse();
+        assertEdicaoRecusada();
+    }
+
+    @Test
+    void conflito409TravaAEdicao() {
+        semRepeticao(409);
+
+        assertThat(contratacaoService.buscar(criada.id()).provisionamentoEditavel()).isFalse();
+        assertEdicaoRecusada();
+    }
+
+    @Test
+    void instanciaProvisionadaNaoTemMaisNomeSlugOuAdminEditaveis() {
+        esperar("POST", "/integracao/v1/instancias", 201, corpoCriado(criada.id(), UUID.randomUUID()));
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+
+        assertEdicaoRecusada();
+        ContratacaoResponse atual = contratacaoService.buscar(criada.id());
+        assertThat(atual.slugInstancia()).isEqualTo(slug);
+        assertThat(atual.versaoDireitos()).isEqualTo(1);
+    }
+
+    @Test
+    void mesmosDadosNaoContamComoEdicao() {
+        esperar("POST", "/integracao/v1/instancias", 201, corpoCriado(criada.id(), UUID.randomUUID()));
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+
+        ContratacaoResponse igual = contratacaoService.atualizarProvisionamento(criada.id(),
+                new AtualizarProvisionamentoRequest(criada.nomeInstancia(), criada.slugInstancia(),
+                        criada.adminNome(), criada.adminEmail()));
+        assertThat(igual.versaoDireitos()).isEqualTo(1);
+    }
+
+    private void assertEdicaoRecusada() {
+        assertThatThrownBy(() -> contratacaoService.atualizarProvisionamento(criada.id(),
+                new AtualizarProvisionamentoRequest("Outro nome", slug + "-x", "Outro", "outro@teste.com")))
+                .isInstanceOf(ConflictException.class)
+                .satisfies(e -> assertThat(((ConflictException) e).getCodigo())
+                        .isEqualTo("PROVISIONAMENTO_NAO_EDITAVEL"));
     }
 
     @Test

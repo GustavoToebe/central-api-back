@@ -53,18 +53,18 @@ No painel, ou pela API com o token do operador:
 3. Bloqueie a contratação. O job manda `PUT .../direitos` e o Servire passa a recusar o acesso na hora.
 4. Pare a Central. O Servire continua na cópia local. Sem novo webhook, a regra das 72 h (`SERVIRE_INTEGRACAO_TOLERANCIA_HORAS`, padrão 72) bloqueia a paróquia. O log de erro da sincronização avisa a partir de 24 h.
 
-Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e então a contratação fica `ERRO`. 409 e 422 não repetem. `POST /contratacoes/{id}/tentar-provisionamento` reenvia com a mesma `Idempotency-Key`, que é o id da contratação. O webhook de direitos espera até 72 h e então o evento fica `FALHOU`, com alerta no log.
+Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e então a contratação fica `ERRO`. 409 e 422 não repetem. `POST /contratacoes/{id}/tentar-provisionamento` reenvia com a mesma `Idempotency-Key`, que é o id da contratação. Nome, slug e administrador só podem ser editados antes do primeiro envio ou depois de uma recusa 4xx que não seja 409 (`provisionamentoEditavel` na resposta). O webhook de direitos espera até 72 h e então o evento fica `FALHOU`, com alerta no log.
 
 ## Próximos passos
 
-1. Etapa 1 — Servire: baseline de migrations novo, perfis e permissões por módulo, usuários e convite.
-2. Etapa 2 — Servire: `/integracao/v1`, cópia local de direitos, regra das 72h.
-3. Etapa 3 — este repositório: API da Central.
-4. Etapa 4 — `central-api-front`.
-5. Etapa 5 — corte em produção.
+Etapas 1 e 2 (Servire) e 3 (esta API) prontas — ver `docs/arquitetura-central.md`, seção 14.
+
+1. Etapa 4 — `central-api-front` (painel do operador).
+2. Etapa 5 — corte em produção: projeto Supabase da Central (Postgres 17), variáveis de produção
+   (`.env.example`, incluindo `CENTRAL_CSRF_COOKIE_DOMAIN`), recriar o banco do Servire.
 
 ## Stack prevista
 
-Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 16 (Supabase) · Flyway ·
+Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 17 (Supabase) · Flyway ·
 Testcontainers · Maven — a mesma do `servire-api-back`, para reaproveitar
 código e convenções.

@@ -134,6 +134,7 @@ public final class ContratacaoDtos {
             SituacaoProvisionamento situacaoProvisionamento,
             UUID idempotencyKey,
             UUID idExterno,
+            boolean provisionamentoEditavel,
             String nomeInstancia,
             String slugInstancia,
             String adminNome,

@@ -10,3 +10,13 @@ central:
       secret: ${CENTRAL_JWT_SEGREDO}
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS}
+    # Obrigatória em produção. Painel e API em subdomínios: o domínio pai
+    # (ex.: servirea.com.br). Mesmo host: definir vazia (CENTRAL_CSRF_COOKIE_DOMAIN=).
+    csrf:
+      cookie-domain: ${CENTRAL_CSRF_COOKIE_DOMAIN}
+  # Sem valor padrão: faltando a variável, a Central não sobe (em vez de subir
+  # sem chave e falhar em toda chamada de integração).
+  integracao:
+    chaves-entrada: ${CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA}
+    chave-saida-id: ${CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID}
+    chave-saida-segredo: ${CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_SEGREDO}

@@ -111,7 +111,8 @@ contratacao                                cliente_id, produto_id, plano_id, per
                                            admin_nome, admin_email,
                                            versao_direitos, direitos_atuais (jsonb)
 contratacao_adicional                      contratacao_id, adicional_id, quantidade
-cobranca, pagamento                        por contratação (reaproveita o billing do Servire)
+cobranca                                   por contratação, com o pagamento na própria linha
+                                           (reaproveita o billing do Servire; não há tabela pagamento)
 historico_contratacao                      toda mudança de plano/situação/adicional, com operador e motivo
 evento_saida                               outbox dos webhooks (payload, tentativas, próxima tentativa, situação)
 integracao_nonce                           nonces recebidos dos apps (anti-repetição)
@@ -182,8 +183,13 @@ Lucas abre o e-mail do convite e define a senha no Servire (a Central nunca vê 
 - Duas requisições simultâneas com a mesma chave → a segunda esbarra na
   restrição única, relê a operação gravada e devolve a mesma resposta.
 - Slug já usado por outra paróquia → `422`, sem repetição automática; o
-  operador corrige e tenta de novo (com **nova** chave se o corpo mudou — a
-  Central gera nova chave quando os dados de provisionamento são editados).
+  operador corrige e tenta de novo **com a mesma chave** (o app só grava a
+  operação quando cria a instância, então a recusa não fica gravada).
+- **Edição de nome, slug e administrador** (26/09/2026): só enquanto nenhum
+  envio pode ter criado a instância — antes do primeiro POST ou depois de uma
+  recusa 4xx que não seja 409. Com 2xx, 5xx, falha de rede ou 409 a instância
+  pode existir no app, e um corpo diferente com a mesma chave voltaria 409
+  para sempre; a Central recusa com `409 PROVISIONAMENTO_NAO_EDITAVEL`.
 - Falha de rede / 5xx / timeout → a Central repete com a mesma chave
   (1 min, 5 min, 15 min, 1 h; depois fica `ERRO` e espera o botão).
 - **Convite**: registro próprio (`token_usuario` com finalidade `CONVITE`),
@@ -538,8 +544,12 @@ cópias continuarem iguais.
 | 16 | Bloqueio por atraso continua manual (decisão de 23/09/2026) |
 | 17 | Commits dos repositórios da Central direto na `main` |
 | 18 | Diocese é só agrupamento informativo no Servire (sem cota); diocese que contratar em bloco vira cliente na Central |
+| 19 | Idempotency-Key é sempre o id da contratação; nome, slug e administrador só são editáveis antes de um envio que possa ter criado a instância (26/09/2026) |
+| 20 | Testes na mesma versão major do Postgres da produção: 17 (Supabase 17.6, 26/09/2026) |
 
-## 14. Estado da implementação no Servire (25/09/2026)
+## 14. Estado da implementação
+
+### 14.1 Servire (25/09/2026)
 
 Etapas 1 e 2 implementadas no `servire-api-back` (commit `bb42ecc` e a
 revisão seguinte). Diferenças e detalhes em relação ao desenho acima:
@@ -556,3 +566,25 @@ revisão seguinte). Diferenças e detalhes em relação ao desenho acima:
 | Suporte | Código de uso único (`UPDATE ... WHERE usado_em IS NULL`); a entrada é auditada na paróquia |
 | Operador no app | Removido: token `backoffice`, suporte antigo e login/refresh do operador |
 | Diocese | **Só agrupamento informativo** (decisão de 25/09/2026, V037): sem cota. A paróquia escolhe ou digita a diocese na tela Paróquia (`PUT /tenant`); `GET /dioceses` sugere as já usadas. Não é assunto da Central — se uma diocese contratar em bloco, vira **cliente** aqui, com cada paróquia como contratação |
+
+### 14.2 Central (26/09/2026)
+
+Etapa 3 implementada no `central-api-back` (fundação `9deff57`, domínio
+comercial `e5c77fb`, integração `3c52b50` e o ajuste de 26/09/2026).
+Diferenças e detalhes em relação ao desenho acima:
+
+| Tema | Como ficou |
+|---|---|
+| Migrations | V001 (operador e nonce), V002 (domínio comercial), V003 (`ultimo_status_provisionamento`). RLS sem policy nas 17 tabelas |
+| Operadores | Login, refresh em cookie httpOnly `central_refresh_token` (path `/auth`, `Secure`, `SameSite=None`), logout, JWT próprio. Seed só no profile `dev` |
+| CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
+| Pagamento | Mora na `cobranca` (não há tabela `pagamento`) |
+| Troca de plano | Atualiza a mesma contratação: cobranças pagas ficam; abertas a partir da data da troca são apagadas e geradas de novo |
+| Situação comercial | Pagar tudo leva `INADIMPLENTE` e `TRIAL` para `ATIVA`; `BLOQUEADA` continua bloqueada. Isentar a última vencida devolve `INADIMPLENTE` para `ATIVA`. Job diário às 03:00 (America/Sao_Paulo) gera cobranças e marca `INADIMPLENTE`; não bloqueia |
+| Outbox | Job a cada minuto (`central.entrega.job.enabled`). Provisionar: 1 min, 5 min, 15 min, 1 h e então `ERRO`. Webhook: 1 min, 5 min, 15 min, 1 h, 3 h e depois a cada 6 h até 72 h; então `FALHOU` com alerta em log de erro (a Central não manda e-mail) |
+| Repetição | 2xx encerra (inclusive `aplicado: false`). 409 e 422 não repetem. Rede, timeout, 5xx **e também 400, 401 e 404** repetem até o fim da agenda (divergência do contrato v1, seção 3: esses códigos costumam ser configuração, que se corrige sem mexer na contratação) |
+| Idempotency-Key | Sempre o id da contratação. A edição de nome, slug e administrador só vale antes de um envio que possa ter criado a instância (seção 5.2); a resposta da contratação traz `provisionamentoEditavel` |
+| Operador | `POST /contratacoes/{id}/tentar-provisionamento` depois de `ERRO` (recusa se provisionada ou cancelada); `POST /contratacoes/{id}/suporte` devolve `{codigo, urlAcesso, expiraEm}` e grava `operador_log` |
+| Sincronização | `GET /integracao/v1/produtos/{produto}/direitos?pagina&tamanho` (tamanho 1 a 100, padrão 100): só contratações com `id_externo`, inclusive bloqueadas e canceladas |
+| Painel | Listas não paginadas por enquanto; `GET` por id em cliente e contratação |
+| Variáveis | Em produção sem valor padrão: `CENTRAL_JWT_SEGREDO`, `CORS_ALLOWED_ORIGINS`, `CENTRAL_CSRF_COOKIE_DOMAIN` e as `CENTRAL_PRODUTO_SERVIRE_*` |

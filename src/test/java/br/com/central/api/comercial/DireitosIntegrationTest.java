@@ -131,12 +131,15 @@ class DireitosIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void editarDadosDeProvisionamentoGeraNovaChave() {
+    void editarDadosDeProvisionamentoAntesDoEnvioMantemAChave() {
         ContratacaoResponse criada = contratar(BigDecimal.ONE);
         ContratacaoResponse editada = contratacaoService.atualizarProvisionamento(criada.id(),
                 new AtualizarProvisionamentoRequest("Outro nome", slug + "-b", "Outro admin", "outro@teste.com"));
 
-        assertThat(editada.idempotencyKey()).isNotEqualTo(criada.id());
+        assertThat(criada.provisionamentoEditavel()).isTrue();
+        assertThat(editada.idempotencyKey()).isEqualTo(criada.id());
+        assertThat(editada.slugInstancia()).isEqualTo(slug + "-b");
+        assertThat(editada.provisionamentoEditavel()).isTrue();
         assertThat(editada.versaoDireitos()).isEqualTo(2);
         assertThat(editada.historico()).extracting(HistoricoResponse::acao)
                 .contains("DADOS_PROVISIONAMENTO");
