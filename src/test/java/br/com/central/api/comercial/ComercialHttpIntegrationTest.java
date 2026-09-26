@@ -1,6 +1,7 @@
 package br.com.central.api.comercial;
 
 import br.com.central.api.AbstractIntegrationTest;
+import br.com.central.api.Documentos;
 import br.com.central.api.operador.Operador;
 import br.com.central.api.operador.OperadorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -121,17 +123,43 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void clienteGravaDocumentoEContatosNoFormatoPadraoERecusaInvalido() throws Exception {
+        String token = token();
+        String cpf = Documentos.cpf();
+        String corpo = "{\"tipo\":\"PF\",\"documento\":\"" + cpf + "\",\"nome\":\"Maria\",\"cep\":\"85800000\","
+                + "\"uf\":\"pr\",\"contatos\":[{\"nome\":\"Maria\",\"email\":\"maria@paroquia.org.br\","
+                + "\"telefone\":\"45999998888\",\"principal\":true}]}";
+        String criado = autorizado(token, post("/clientes"), corpo, 201).getResponse().getContentAsString();
+        String formatado = cpf.substring(0, 3) + "." + cpf.substring(3, 6) + "." + cpf.substring(6, 9) + "-" + cpf.substring(9);
+        assertThat(criado).contains("\"documento\":\"" + formatado + "\"", "\"cep\":\"85800-000\"", "\"uf\":\"PR\"",
+                "\"telefone\":\"(45) 99999-8888\"");
+
+        // Mesmo CPF com outra pontuação é o mesmo cliente.
+        autorizado(token, post("/clientes"), corpo.replace(cpf, formatado), 409);
+        // CNPJ alfanumérico (Receita Federal, julho de 2026) é aceito para PJ.
+        autorizado(token, post("/clientes"),
+                "{\"tipo\":\"PJ\",\"documento\":\"12.ABC.345/01DE-35\",\"nome\":\"Empresa\"}", 201);
+        autorizado(token, post("/clientes"), "{\"tipo\":\"PF\",\"documento\":\"101175\",\"nome\":\"X\"}", 400);
+        autorizado(token, post("/clientes"), "{\"tipo\":\"PJ\",\"documento\":\"" + cpf + "\",\"nome\":\"X\"}", 400);
+        autorizado(token, post("/clientes"), "{\"tipo\":\"PF\",\"documento\":\"" + Documentos.cpf()
+                + "\",\"nome\":\"X\",\"contatos\":[{\"nome\":\"X\",\"telefone\":\"9999-8888\",\"principal\":true}]}", 400);
+        autorizado(token, post("/clientes"), "{\"tipo\":\"PF\",\"documento\":\"" + Documentos.cpf()
+                + "\",\"nome\":\"X\",\"contatos\":[{\"nome\":\"X\",\"email\":\"x@paroquia\",\"principal\":true}]}", 400);
+    }
+
+    @Test
     void operadorUsaCadastrosContratacaoEFinanceiro() throws Exception {
         String token = token();
         String sufixo = UUID.randomUUID().toString().substring(0, 8);
         String hoje = LocalDate.now().toString();
 
+        String cpf = Documentos.cpf();
         String clienteId = id(autorizado(token, post("/clientes"),
-                "{\"tipo\":\"PF\",\"documento\":\"" + sufixo + "\",\"nome\":\"Cliente " + sufixo
+                "{\"tipo\":\"PF\",\"documento\":\"" + cpf + "\",\"nome\":\"Cliente " + sufixo
                         + "\",\"contatos\":[{\"nome\":\"Ana\",\"principal\":true}]}", 201));
         autorizado(token, get("/clientes/" + clienteId), null, 200);
         autorizado(token, put("/clientes/" + clienteId),
-                "{\"tipo\":\"PF\",\"documento\":\"" + sufixo + "\",\"nome\":\"Cliente atualizado\"}", 200);
+                "{\"tipo\":\"PF\",\"documento\":\"" + cpf + "\",\"nome\":\"Cliente atualizado\"}", 200);
 
         String produtoId = id(autorizado(token, post("/produtos"),
                 "{\"codigo\":\"P" + sufixo + "\",\"nome\":\"Produto\"}", 201));

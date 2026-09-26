@@ -1,6 +1,7 @@
 package br.com.central.api.integracao;
 
 import br.com.central.api.AbstractIntegrationTest;
+import br.com.central.api.Documentos;
 import br.com.central.api.comercial.CatalogoService;
 import br.com.central.api.comercial.ClienteService;
 import br.com.central.api.comercial.Contratacao;
@@ -87,7 +88,7 @@ class ConsultaDireitosHttpIntegrationTest extends AbstractIntegrationTest {
                 List.of(new SimpleGrantedAuthority("ROLE_OPERADOR"))));
 
         UUID clienteId = clienteService.criar(new SalvarClienteRequest(
-                TipoCliente.PF, sufixo, "Cliente " + sufixo,
+                TipoCliente.PF, Documentos.cpf(), "Cliente " + sufixo,
                 null, null, null, null, null, null, null, null)).id();
         codigo = "P" + sufixo;
         UUID produtoId = catalogoService.criarProduto(new SalvarProdutoRequest(

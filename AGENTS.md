@@ -36,7 +36,10 @@ Testcontainers · Maven. Mesmas convenções do `servire-api-back` (DTOs `record
 A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 
 ## Onde está o código
-- `web/` — `ApiError` (com `codigo`), `ApiException`, `GlobalExceptionHandler`, `RequestIdFilter`.
+- `web/` — `ApiError` (com `codigo`), `ApiException`, `GlobalExceptionHandler`, `RequestIdFilter`,
+  `Formatos` (CPF/CNPJ do cliente conforme PF/PJ, CNPJ alfanumérico, CEP, UF, telefone; e-mail com
+  `@Email(regexp = Formatos.EMAIL)`). Grava sempre formatado; mesmas regras do Servire e do front.
+  Teste que cria cliente usa `Documentos.cpf()`/`cnpj()` (documento válido e único).
 - `security/` — JWT próprio (`CENTRAL_JWT_SEGREDO`), BCrypt, cookie httpOnly de refresh.
 - `operador/` — login, refresh, logout, `GET /operadores/eu`. Seed só no profile `dev`,
   se `CENTRAL_OPERADOR_SEED_EMAIL` e `CENTRAL_OPERADOR_SEED_SENHA` existirem.

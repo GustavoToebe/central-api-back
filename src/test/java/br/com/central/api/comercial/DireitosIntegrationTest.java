@@ -1,6 +1,7 @@
 package br.com.central.api.comercial;
 
 import br.com.central.api.AbstractIntegrationTest;
+import br.com.central.api.Documentos;
 import br.com.central.api.comercial.dto.CatalogoDtos.RecursoDoPlanoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarPlanoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarProdutoRequest;
@@ -67,7 +68,7 @@ class DireitosIntegrationTest extends AbstractIntegrationTest {
                 List.of(new SimpleGrantedAuthority("ROLE_OPERADOR"))));
 
         clienteId = clienteService.criar(new SalvarClienteRequest(
-                TipoCliente.PF, sufixo, "Cliente " + sufixo,
+                TipoCliente.PF, Documentos.cpf(), "Cliente " + sufixo,
                 null, null, null, null, null, null, null, null)).id();
         produtoId = catalogoService.criarProduto(new SalvarProdutoRequest(
                 "P" + sufixo, "Produto " + sufixo, "http://localhost", true)).id();

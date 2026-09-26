@@ -4,6 +4,7 @@ import br.com.central.api.comercial.dto.ClienteDtos.ClienteResponse;
 import br.com.central.api.comercial.dto.ClienteDtos.ContatoRequest;
 import br.com.central.api.comercial.dto.ClienteDtos.SalvarClienteRequest;
 import br.com.central.api.web.ConflictException;
+import br.com.central.api.web.Formatos;
 import br.com.central.api.web.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +36,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponse criar(SalvarClienteRequest request) {
-        String documento = documento(request.documento());
+        String documento = documento(request);
         if (clienteRepository.existsByDocumento(documento)) {
             throw new ConflictException("Já existe um cliente com este documento.", "CONFLITO");
         }
@@ -48,7 +49,7 @@ public class ClienteService {
     @Transactional
     public ClienteResponse atualizar(UUID id, SalvarClienteRequest request) {
         Cliente cliente = carregar(id);
-        String documento = documento(request.documento());
+        String documento = documento(request);
         if (clienteRepository.existsByDocumentoAndIdNot(documento, id)) {
             throw new ConflictException("Já existe um cliente com este documento.", "CONFLITO");
         }
@@ -73,8 +74,8 @@ public class ClienteService {
         cliente.setComplemento(texto(request.complemento()));
         cliente.setBairro(texto(request.bairro()));
         cliente.setCidade(texto(request.cidade()));
-        cliente.setUf(texto(request.uf()));
-        cliente.setCep(texto(request.cep()));
+        cliente.setUf(Formatos.uf(request.uf()));
+        cliente.setCep(Formatos.cep(request.cep()));
     }
 
     private static List<ClienteContato> contatos(List<ContatoRequest> pedidos) {
@@ -83,12 +84,12 @@ public class ClienteService {
         }
         return pedidos.stream()
                 .map(pedido -> new ClienteContato(
-                        pedido.nome().trim(), texto(pedido.email()), texto(pedido.telefone()), pedido.principal()))
+                        pedido.nome().trim(), texto(pedido.email()), Formatos.telefone(pedido.telefone()), pedido.principal()))
                 .toList();
     }
 
-    private static String documento(String valor) {
-        return valor.trim();
+    private static String documento(SalvarClienteRequest request) {
+        return Formatos.documento(request.tipo() == TipoCliente.PJ, request.documento());
     }
 
     private static String texto(String valor) {

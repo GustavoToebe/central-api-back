@@ -3,7 +3,9 @@ package br.com.central.api.comercial.dto;
 import br.com.central.api.comercial.Cliente;
 import br.com.central.api.comercial.ClienteContato;
 import br.com.central.api.comercial.TipoCliente;
+import br.com.central.api.web.Formatos;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -17,7 +19,7 @@ public final class ClienteDtos {
 
     public record ContatoRequest(
             @NotBlank(message = "Informe o nome do contato.") String nome,
-            String email,
+            @Email(regexp = Formatos.EMAIL, message = "E-mail do contato inválido.") String email,
             String telefone,
             boolean principal
     ) {

@@ -3,6 +3,7 @@ package br.com.central.api.comercial.dto;
 import br.com.central.api.comercial.Periodicidade;
 import br.com.central.api.comercial.SituacaoComercial;
 import br.com.central.api.comercial.SituacaoProvisionamento;
+import br.com.central.api.web.Formatos;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
@@ -44,7 +45,7 @@ public final class ContratacaoDtos {
             @NotBlank(message = "Informe o slug da instância.") String slugInstancia,
             @NotBlank(message = "Informe o nome do administrador.") String adminNome,
             @NotBlank(message = "Informe o e-mail do administrador.")
-            @Email(message = "E-mail do administrador inválido.") String adminEmail,
+            @Email(regexp = Formatos.EMAIL, message = "E-mail do administrador inválido.") String adminEmail,
             String observacoes,
             List<@Valid AdicionalContratadoRequest> adicionais
     ) {
@@ -55,7 +56,7 @@ public final class ContratacaoDtos {
             @NotBlank(message = "Informe o slug da instância.") String slugInstancia,
             @NotBlank(message = "Informe o nome do administrador.") String adminNome,
             @NotBlank(message = "Informe o e-mail do administrador.")
-            @Email(message = "E-mail do administrador inválido.") String adminEmail
+            @Email(regexp = Formatos.EMAIL, message = "E-mail do administrador inválido.") String adminEmail
     ) {
     }
 
