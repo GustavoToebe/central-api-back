@@ -72,6 +72,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -412,6 +413,32 @@ class EntregaIntegracaoTest extends AbstractIntegrationTest {
                     assertThat(log.getDetalhe()).contains(criada.id().toString());
                     assertThat(log.getIp()).isNotBlank();
                 });
+    }
+
+    @Test
+    void recursosDoAppVemAssinadosEMarcamOQueJaEstaCadastrado() throws Exception {
+        catalogoService.criarRecurso(new SalvarRecursoRequest(produtoId, "voluntarios", "Voluntários", TipoRecurso.LIMITE, "pessoa"));
+        esperar("GET", "/integracao/v1/recursos", 200, """
+                [{"codigo":"voluntarios","nome":"Voluntários","tipo":"LIMITE","unidade":"pessoa","aplicado":false},
+                 {"codigo":"ESCALAS","nome":"Escalas","tipo":"FUNCIONALIDADE","unidade":null,"aplicado":true},
+                 {"codigo":"NOVO_TIPO","nome":"Desconhecido","tipo":"OUTRO","aplicado":false}]""");
+        String token = jwtService.gerarAccessToken(operadorId);
+
+        mockMvc.perform(get("/produtos/" + produtoId + "/recursos-do-app").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].codigo").value("voluntarios"))
+                .andExpect(jsonPath("$[0].cadastrado").value(true))
+                .andExpect(jsonPath("$[1].codigo").value("ESCALAS"))
+                .andExpect(jsonPath("$[1].tipo").value("FUNCIONALIDADE"))
+                .andExpect(jsonPath("$[1].aplicado").value(true))
+                .andExpect(jsonPath("$[1].cadastrado").value(false));
+        ClienteDeTeste.servidor.verify();
+
+        ClienteDeTeste.servidor.reset();
+        esperar("GET", "/integracao/v1/recursos", 500, "");
+        mockMvc.perform(get("/produtos/" + produtoId + "/recursos-do-app").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

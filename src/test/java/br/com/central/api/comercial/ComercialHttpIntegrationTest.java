@@ -54,7 +54,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
                 "/clientes", "/clientes/" + id,
                 "/produtos", "/recursos", "/planos", "/adicionais",
                 "/contratacoes", "/contratacoes/" + id, "/contratacoes/" + id + "/financeiro",
-                "/cobrancas", "/cobrancas/" + id);
+                "/cobrancas", "/cobrancas/" + id, "/produtos/" + id + "/recursos-do-app");
     }
 
     static Stream<String> escritas() {

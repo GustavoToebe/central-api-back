@@ -46,7 +46,8 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
   nonce com `INSERT ... ON CONFLICT`, cliente de saída (`AplicativoHttp`) e o job
   que entrega o `evento_saida`. `GET /integracao/v1/produtos/{produto}/direitos`
-  lista só contratações já provisionadas. `POST /contratacoes/{id}/suporte` e
+  lista só contratações já provisionadas. `GET /produtos/{id}/recursos-do-app` pergunta ao app os códigos
+  de limite/funcionalidade (contrato 5.5); código de recurso fica como o app usa (sem maiúsculas). `POST /contratacoes/{id}/suporte` e
   `POST /contratacoes/{id}/tentar-provisionamento` são do operador.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca

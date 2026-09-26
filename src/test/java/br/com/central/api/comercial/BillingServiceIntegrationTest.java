@@ -325,6 +325,19 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void codigoDoRecursoFicaComoOAppUsaSemVirarMaiusculas() {
+        String codigo = "voluntarios_" + UUID.randomUUID().toString().substring(0, 4);
+
+        RecursoResponse recurso = catalogoService.criarRecurso(new SalvarRecursoRequest(
+                produtoId, " " + codigo + " ", "Voluntários", TipoRecurso.LIMITE, "pessoa"));
+
+        assertThat(recurso.codigo()).isEqualTo(codigo);
+        assertThatThrownBy(() -> catalogoService.criarRecurso(new SalvarRecursoRequest(
+                produtoId, codigo, "De novo", TipoRecurso.LIMITE, null)))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
     void semPrecoNoCatalogoESemValorInformadoLancaBadRequest() {
         assertThatThrownBy(() -> contratar(Periodicidade.ANUAL, null, 10, hoje))
                 .isInstanceOf(BadRequestException.class);

@@ -94,7 +94,7 @@ public class CatalogoService {
     @Transactional
     public RecursoResponse criarRecurso(SalvarRecursoRequest request) {
         Produto produto = carregarProduto(request.produtoId());
-        String codigo = codigo(request.codigo());
+        String codigo = codigoRecurso(request.codigo());
         if (recursoRepository.existsByProduto_IdAndCodigo(produto.getId(), codigo)) {
             throw new ConflictException("Já existe um recurso com este código neste produto.", "CONFLITO");
         }
@@ -331,6 +331,15 @@ public class CatalogoService {
 
     static String codigo(String valor) {
         return valor.trim().toUpperCase();
+    }
+
+    /**
+     * Código do recurso fica como o app usa (contrato 5.5): "voluntarios" e
+     * "ESCALAS" convivem. Só tira espaços; em maiúsculas nunca casaria com o
+     * que o app lê em {@code limites}.
+     */
+    static String codigoRecurso(String valor) {
+        return valor.trim().replaceAll("\\s+", "_");
     }
 
     private static String texto(String valor) {

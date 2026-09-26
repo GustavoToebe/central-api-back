@@ -321,6 +321,24 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
 - O app audita entrada e ações com o nome/e-mail do operador e o motivo.
 - Aceita instância bloqueada.
 
+### 5.5 Catálogo de recursos
+
+`GET /integracao/v1/recursos` → `200` (26/09/2026)
+
+```json
+[
+  { "codigo": "voluntarios", "nome": "Voluntários", "tipo": "LIMITE", "unidade": "pessoa", "aplicado": false },
+  { "codigo": "ESCALAS", "nome": "Escalas", "tipo": "FUNCIONALIDADE", "unidade": null, "aplicado": false }
+]
+```
+
+- Lista os códigos que o app entende em `limites` e `funcionalidades` (seção 4). A Central
+  usa como sugestão ao cadastrar recursos, e o código do recurso fica **igual** ao do app
+  (sem trocar maiúsculas/minúsculas).
+- `aplicado`: se o app já faz valer o recurso. `false` = o código é aceito e guardado, mas
+  ainda não limita nem esconde nada (aplicação futura).
+- Sem instância: é do app inteiro. Mesma assinatura HMAC das outras rotas; corpo vazio.
+
 ## 6. App → Central
 
 ### 6.1 Sincronização de direitos
