@@ -12,6 +12,9 @@ public interface PrecoPlanoRepository extends JpaRepository<PrecoPlano, UUID> {
     boolean existsByPlanoIdAndPeriodicidadeAndVigenteDesde(UUID planoId, Periodicidade periodicidade,
                                                            LocalDate vigenteDesde);
 
+    Optional<PrecoPlano> findByPlanoIdAndPeriodicidadeAndVigenteDesde(UUID planoId, Periodicidade periodicidade,
+                                                                      LocalDate vigenteDesde);
+
     Optional<PrecoPlano> findFirstByPlanoIdAndPeriodicidadeAndVigenteDesdeLessThanEqualOrderByVigenteDesdeDesc(
             UUID planoId, Periodicidade periodicidade, LocalDate data);
 

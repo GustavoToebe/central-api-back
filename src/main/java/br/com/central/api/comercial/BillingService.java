@@ -385,7 +385,7 @@ public class BillingService {
         Periodicidade periodicidade = contratacao.getPeriodicidade();
         List<CobrancaItem> itens = new ArrayList<>();
         itens.add(CobrancaItem.plano(
-                "Plano " + contratacao.getPlano().getNome() + " (" + rotulo(periodicidade) + ")",
+                contratacao.getPlano().getNome() + " (" + rotulo(periodicidade) + ")",
                 contratacao.getValor()));
         for (ContratacaoAdicional item : adicionais) {
             itens.add(CobrancaItem.adicional(

@@ -33,11 +33,16 @@ public final class CatalogoDtos {
             @NotBlank(message = "Informe o código do recurso.") String codigo,
             @NotBlank(message = "Informe o nome do recurso.") String nome,
             @NotNull(message = "Informe o tipo do recurso.") TipoRecurso tipo,
-            String unidade
+            String unidade,
+            @DecimalMin(value = "0", message = "O valor padrão não pode ser negativo.") BigDecimal valorPadrao
     ) {
+        public SalvarRecursoRequest(UUID produtoId, String codigo, String nome, TipoRecurso tipo, String unidade) {
+            this(produtoId, codigo, nome, tipo, unidade, null);
+        }
     }
 
-    public record RecursoResponse(UUID id, UUID produtoId, String codigo, String nome, TipoRecurso tipo, String unidade) {
+    public record RecursoResponse(UUID id, UUID produtoId, String codigo, String nome, TipoRecurso tipo, String unidade,
+                                  BigDecimal valorPadrao) {
     }
 
     public record RecursoDoPlanoRequest(
@@ -52,8 +57,27 @@ public final class CatalogoDtos {
             @NotBlank(message = "Informe o código do plano.") String codigo,
             @NotBlank(message = "Informe o nome do plano.") String nome,
             Boolean ativo,
-            List<@Valid RecursoDoPlanoRequest> recursos
+            List<@Valid RecursoDoPlanoRequest> recursos,
+            List<@Valid PrecoDoPlanoRequest> precos
     ) {
+        public SalvarPlanoRequest(UUID produtoId, String codigo, String nome, Boolean ativo,
+                                  List<RecursoDoPlanoRequest> recursos) {
+            this(produtoId, codigo, nome, ativo, recursos, null);
+        }
+    }
+
+    /**
+     * Preço de uma periodicidade informado no próprio cadastro do plano
+     * (26/09/2026). Vale a partir de hoje; periodicidade fora da lista não muda.
+     */
+    public record PrecoDoPlanoRequest(
+            @NotNull(message = "Informe a periodicidade.") Periodicidade periodicidade,
+            @NotNull(message = "Informe o valor.")
+            @DecimalMin(value = "0", message = "O preço não pode ser negativo.") BigDecimal valor
+    ) {
+    }
+
+    public record PrecoVigenteResponse(Periodicidade periodicidade, BigDecimal valor) {
     }
 
     public record RecursoDoPlanoResponse(UUID recursoId, String codigo, TipoRecurso tipo, BigDecimal valor) {
@@ -68,8 +92,8 @@ public final class CatalogoDtos {
             String codigo,
             String nome,
             boolean ativo,
-            BigDecimal precoMensal,
-            BigDecimal precoAnual,
+            /** Preço em vigor hoje, na ordem mensal → anual; periodicidade sem preço não aparece. */
+            List<PrecoVigenteResponse> precosVigentes,
             List<RecursoDoPlanoResponse> recursos,
             List<PrecoResponse> precos
     ) {

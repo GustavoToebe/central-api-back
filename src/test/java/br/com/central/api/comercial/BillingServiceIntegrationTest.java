@@ -4,6 +4,9 @@ import br.com.central.api.AbstractIntegrationTest;
 import br.com.central.api.Documentos;
 import br.com.central.api.comercial.dto.CatalogoDtos.NovoPrecoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.PlanoResponse;
+import br.com.central.api.comercial.dto.CatalogoDtos.PrecoDoPlanoRequest;
+import br.com.central.api.comercial.dto.CatalogoDtos.PrecoVigenteResponse;
+import br.com.central.api.comercial.dto.CatalogoDtos.RecursoResponse;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarAdicionalRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarPlanoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.SalvarProdutoRequest;
@@ -272,10 +275,53 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(catalogoService.listarPlanos(produtoId)).filteredOn(item -> item.id().equals(plano.id()))
                 .singleElement()
                 .satisfies(item -> {
-                    assertThat(item.precoMensal()).isEqualByComparingTo("150.00");
-                    assertThat(item.precoAnual()).isNull();
+                    assertThat(item.precosVigentes()).singleElement().satisfies(vigente -> {
+                        assertThat(vigente.periodicidade()).isEqualTo(Periodicidade.MENSAL);
+                        assertThat(vigente.valor()).isEqualByComparingTo("150.00");
+                    });
                     assertThat(item.precos()).hasSize(3);
                 });
+    }
+
+    @Test
+    void precosInformadosNoCadastroDoPlanoValemHojeEValorIgualNaoDuplicaHistorico() {
+        String codigo = "PP" + UUID.randomUUID().toString().substring(0, 8);
+        PlanoResponse criado = catalogoService.criarPlano(new SalvarPlanoRequest(produtoId, codigo, "Plano com preços", true,
+                null, List.of(new PrecoDoPlanoRequest(Periodicidade.MENSAL, new BigDecimal("49.90")),
+                new PrecoDoPlanoRequest(Periodicidade.TRIMESTRAL, new BigDecimal("140.00")))));
+
+        PlanoResponse atualizado = catalogoService.atualizarPlano(criado.id(), new SalvarPlanoRequest(
+                produtoId, codigo, "Plano com preços", true, null,
+                List.of(new PrecoDoPlanoRequest(Periodicidade.MENSAL, new BigDecimal("49.90")),
+                        new PrecoDoPlanoRequest(Periodicidade.TRIMESTRAL, new BigDecimal("135.00")))));
+
+        assertThat(atualizado.precosVigentes()).extracting(PrecoVigenteResponse::periodicidade)
+                .containsExactly(Periodicidade.MENSAL, Periodicidade.TRIMESTRAL);
+        assertThat(atualizado.precos()).hasSize(2).allMatch(preco -> preco.vigenteDesde().equals(hoje));
+        assertThat(atualizado.precosVigentes().get(1).valor()).isEqualByComparingTo("135.00");
+        String slug = "pp-" + UUID.randomUUID().toString().substring(0, 8);
+        ContratacaoResponse contratacao = contratacaoService.criar(new CriarContratacaoRequest(
+                clienteId, produtoId, criado.id(), Periodicidade.TRIMESTRAL, null, 10, hoje, SituacaoComercial.TRIAL,
+                "Instância " + slug, slug, "Admin", slug + "@teste.com", null, null));
+        assertThat(contratacao.valor()).isEqualByComparingTo("135.00");
+        assertThatThrownBy(() -> catalogoService.atualizarPlano(criado.id(), new SalvarPlanoRequest(
+                produtoId, codigo, "Plano com preços", true, null,
+                List.of(new PrecoDoPlanoRequest(Periodicidade.ANUAL, BigDecimal.TEN),
+                        new PrecoDoPlanoRequest(Periodicidade.ANUAL, BigDecimal.ONE)))))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void valorPadraoDoRecursoSoValeParaLimite() {
+        RecursoResponse limite = catalogoService.criarRecurso(new SalvarRecursoRequest(
+                produtoId, "L" + UUID.randomUUID().toString().substring(0, 8), "Voluntários", TipoRecurso.LIMITE,
+                "pessoa", new BigDecimal("100")));
+        RecursoResponse funcionalidade = catalogoService.criarRecurso(new SalvarRecursoRequest(
+                produtoId, "F" + UUID.randomUUID().toString().substring(0, 8), "Escalas", TipoRecurso.FUNCIONALIDADE,
+                null, new BigDecimal("5")));
+
+        assertThat(limite.valorPadrao()).isEqualByComparingTo("100");
+        assertThat(funcionalidade.valorPadrao()).isNull();
     }
 
     @Test

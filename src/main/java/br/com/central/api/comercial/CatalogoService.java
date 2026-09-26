@@ -3,7 +3,9 @@ package br.com.central.api.comercial;
 import br.com.central.api.comercial.dto.CatalogoDtos.AdicionalResponse;
 import br.com.central.api.comercial.dto.CatalogoDtos.NovoPrecoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.PlanoResponse;
+import br.com.central.api.comercial.dto.CatalogoDtos.PrecoDoPlanoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.PrecoResponse;
+import br.com.central.api.comercial.dto.CatalogoDtos.PrecoVigenteResponse;
 import br.com.central.api.comercial.dto.CatalogoDtos.ProdutoResponse;
 import br.com.central.api.comercial.dto.CatalogoDtos.RecursoDoPlanoRequest;
 import br.com.central.api.comercial.dto.CatalogoDtos.RecursoDoPlanoResponse;
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -96,7 +99,7 @@ public class CatalogoService {
             throw new ConflictException("Já existe um recurso com este código neste produto.", "CONFLITO");
         }
         Recurso recurso = new Recurso(produto, codigo, request.nome().trim(), request.tipo());
-        recurso.setUnidade(texto(request.unidade()));
+        aplicar(recurso, request);
         return recurso(recursoRepository.saveAndFlush(recurso));
     }
 
@@ -105,8 +108,14 @@ public class CatalogoService {
         Recurso recurso = carregarRecurso(id);
         recurso.setNome(request.nome().trim());
         recurso.setTipo(request.tipo());
-        recurso.setUnidade(texto(request.unidade()));
+        aplicar(recurso, request);
         return recurso(recurso);
+    }
+
+    /** Valor padrão só faz sentido em LIMITE: funcionalidade está ou não está no plano. */
+    private static void aplicar(Recurso recurso, SalvarRecursoRequest request) {
+        recurso.setUnidade(texto(request.unidade()));
+        recurso.setValorPadrao(request.tipo() == TipoRecurso.LIMITE ? request.valorPadrao() : null);
     }
 
     @Transactional(readOnly = true)
@@ -130,6 +139,7 @@ public class CatalogoService {
         }
         plano = planoRepository.saveAndFlush(plano);
         substituirRecursos(plano, request.recursos());
+        aplicarPrecos(plano, request.precos());
         return plano(plano);
     }
 
@@ -141,7 +151,38 @@ public class CatalogoService {
             plano.setAtivo(request.ativo());
         }
         substituirRecursos(plano, request.recursos());
+        aplicarPrecos(plano, request.precos());
         return plano(plano);
+    }
+
+    /**
+     * Preços informados no cadastro do plano (26/09/2026: antes era preciso
+     * salvar o plano e depois clicar em "Novo preço"). Valor igual ao vigente
+     * não gera histórico; diferente vale a partir de hoje, e dois ajustes no
+     * mesmo dia corrigem a mesma linha. Contratação existente não muda: o
+     * valor fica copiado nela.
+     */
+    private void aplicarPrecos(Plano plano, List<PrecoDoPlanoRequest> precos) {
+        if (precos == null) {
+            return;
+        }
+        LocalDate hoje = LocalDate.now(clock);
+        Set<Periodicidade> vistas = new HashSet<>();
+        for (PrecoDoPlanoRequest preco : precos) {
+            if (!vistas.add(preco.periodicidade())) {
+                throw new BadRequestException("Periodicidade repetida nos preços do plano.");
+            }
+            Optional<BigDecimal> vigente = precoVigente(plano.getId(), preco.periodicidade(), hoje);
+            if (vigente.isPresent() && vigente.get().compareTo(preco.valor()) == 0) {
+                continue;
+            }
+            precoPlanoRepository.findByPlanoIdAndPeriodicidadeAndVigenteDesde(plano.getId(), preco.periodicidade(), hoje)
+                    .ifPresentOrElse(
+                            doDia -> doDia.setValor(preco.valor()),
+                            () -> precoPlanoRepository.save(new PrecoPlano(
+                                    plano.getId(), preco.periodicidade(), preco.valor(), hoje)));
+        }
+        entityManager.flush();
     }
 
     @Transactional
@@ -255,11 +296,14 @@ public class CatalogoService {
                 .map(preco -> new PrecoResponse(preco.getId(), preco.getPeriodicidade(), preco.getValor(),
                         preco.getVigenteDesde()))
                 .toList();
+        List<PrecoVigenteResponse> vigentes = new ArrayList<>();
+        for (Periodicidade periodicidade : Periodicidade.values()) {
+            precoVigente(plano.getId(), periodicidade, hoje)
+                    .ifPresent(valor -> vigentes.add(new PrecoVigenteResponse(periodicidade, valor)));
+        }
         return new PlanoResponse(
                 plano.getId(), plano.getProdutoId(), plano.getCodigo(), plano.getNome(), plano.isAtivo(),
-                precoVigente(plano.getId(), Periodicidade.MENSAL, hoje).orElse(null),
-                precoVigente(plano.getId(), Periodicidade.ANUAL, hoje).orElse(null),
-                recursos, precos);
+                vigentes, recursos, precos);
     }
 
     private static void aplicar(Produto produto, SalvarProdutoRequest request) {
@@ -276,7 +320,7 @@ public class CatalogoService {
 
     private static RecursoResponse recurso(Recurso recurso) {
         return new RecursoResponse(recurso.getId(), recurso.getProdutoId(), recurso.getCodigo(),
-                recurso.getNome(), recurso.getTipo(), recurso.getUnidade());
+                recurso.getNome(), recurso.getTipo(), recurso.getUnidade(), recurso.getValorPadrao());
     }
 
     private static AdicionalResponse adicional(Adicional adicional) {

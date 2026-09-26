@@ -48,6 +48,11 @@ public class PrecoPlano {
         this.vigenteDesde = vigenteDesde;
     }
 
+    /** Só para corrigir o preço lançado no mesmo dia (a chave é plano + periodicidade + data). */
+    public void setValor(BigDecimal valor) {
+        this.valor = valor;
+    }
+
     public UUID getId() {
         return id;
     }
