@@ -38,12 +38,13 @@ vetores, em Base64, é `c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIz
 Regra de ouro: `$env:X = "..."` só vale no terminal onde foi digitado e só para o programa iniciado **depois**,
 nesse mesmo terminal. Cada API tem o seu terminal, com as suas variáveis coladas antes do `mvn`.
 
-**0. Atualizar os quatro repositórios.** Procura cada um em `Documents\servire\` e em `Documents\`:
+**0. Atualizar os quatro repositórios.** Layout em casa: `Documents\servire\servire-api-*` e
+`Documents\central\central-api-*` (também procura direto em `Documents\`):
 
 ```powershell
 $base = "$env:USERPROFILE\OneDrive\Documents"
 foreach ($r in "servire-api-back", "servire-api-front", "central-api-back", "central-api-front") {
-  $p = @("$base\servire\$r", "$base\$r") | Where-Object { Test-Path "$_\.git" } | Select-Object -First 1
+  $p = @("$base\servire\$r", "$base\central\$r", "$base\$r") | Where-Object { Test-Path "$_\.git" } | Select-Object -First 1
   if ($p) { Write-Host "== $r ($p)" -ForegroundColor Cyan; git -C $p pull --ff-only }
   else { Write-Host "== $r nao encontrado" -ForegroundColor Red }
 }
