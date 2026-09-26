@@ -18,6 +18,11 @@ O job do outbox (a cada minuto) provisiona a instância e envia o webhook de dir
 O operador pede suporte (`POST /contratacoes/{id}/suporte`) e, se o provisionamento parou em `ERRO`,
 `POST /contratacoes/{id}/tentar-provisionamento`.
 
+Desde o teste de telas de 26/09/2026: cobrança com itens (plano + adicionais, preço mensal × meses),
+periodicidades mensal, trimestral, semestral e anual, preços no próprio cadastro do plano, lista geral
+`/cobrancas` com pagamento em lote, sugestões de recursos vindas do app (contrato 5.5), logs de erro dos
+apps (contrato 6.2, `/erros`, 90 dias) e número curto `sequencial` nos cadastros (V005 a V007).
+
 Para subir em dev: Postgres local, profile `dev`, e `application-dev-local.yml`
 (gitignorado) ou as variáveis do `.env.example`. Sem `CENTRAL_JWT_SEGREDO` e sem
 `DB_PASSWORD` a API não sobe. O seed do operador só roda no profile `dev`, e só
