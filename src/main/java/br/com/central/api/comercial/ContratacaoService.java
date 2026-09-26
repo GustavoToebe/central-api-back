@@ -165,6 +165,7 @@ public class ContratacaoService {
         entityManager.flush();
         gravarAdicionais(contratacao, request.adicionais());
         direitos.publicar(contratacao, "ADICIONAIS", request.motivo());
+        billingService.recalcularAbertasNaoVencidas(contratacao);
         return detalhe(contratacao);
     }
 

@@ -53,14 +53,15 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
         return Stream.of(
                 "/clientes", "/clientes/" + id,
                 "/produtos", "/recursos", "/planos", "/adicionais",
-                "/contratacoes", "/contratacoes/" + id, "/contratacoes/" + id + "/financeiro");
+                "/contratacoes", "/contratacoes/" + id, "/contratacoes/" + id + "/financeiro",
+                "/cobrancas", "/cobrancas/" + id);
     }
 
     static Stream<String> escritas() {
         UUID id = UUID.randomUUID();
         return Stream.of(
                 "/clientes", "/produtos", "/recursos", "/planos", "/planos/" + id + "/precos",
-                "/adicionais", "/contratacoes",
+                "/adicionais", "/contratacoes", "/cobrancas/pagamentos",
                 "/contratacoes/" + id + "/bloquear",
                 "/contratacoes/" + id + "/desbloquear",
                 "/contratacoes/" + id + "/cancelar",
@@ -230,6 +231,28 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
                 "{\"motivo\":\"cortesia\"}", 200);
         autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/adiantadas"),
                 "{\"ate\":\"" + hoje.substring(0, 7) + "\"}", 200);
+        String daquiADoisMeses = LocalDate.now().plusMonths(2).toString().substring(0, 7);
+        autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/adiantadas"),
+                "{\"de\":\"" + daquiADoisMeses + "\",\"ate\":\"" + daquiADoisMeses + "\"}", 200);
+
+        MvcResult lista = mockMvc.perform(get("/cobrancas").param("situacao", "ABERTA").param("busca", "cliente atualizado")
+                        .param("competencia", daquiADoisMeses).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].clienteNome").value("Cliente atualizado"))
+                .andExpect(jsonPath("$[0].valor").value(112.0))
+                .andReturn();
+        String abertaId = com.jayway.jsonpath.JsonPath.read(lista.getResponse().getContentAsString(), "$[0].id");
+        mockMvc.perform(get("/cobrancas/" + abertaId).header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cobranca.planoNome").value("Plano 2"))
+                .andExpect(jsonPath("$.itens.length()").value(2))
+                .andExpect(jsonPath("$.itens[1].tipo").value("ADICIONAL"));
+        autorizado(token, post("/cobrancas/pagamentos"),
+                "{\"cobrancaIds\":[\"" + abertaId + "\"],\"pagoEm\":\"" + hoje + "\",\"formaPagamento\":\"PIX\"}", 204);
+        mockMvc.perform(get("/cobrancas").param("situacao", "PAGA").param("formaPagamento", "PIX")
+                        .param("busca", "cliente atualizado").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == '" + abertaId + "')].status").value("PAGA"));
         autorizado(token, put("/contratacoes/" + contratacaoId + "/plano"),
                 "{\"planoId\":\"" + planoId + "\",\"periodicidade\":\"MENSAL\",\"valor\":90,\"diaVencimento\":10,\"aPartirDe\":\""
                         + hoje + "\",\"motivo\":\"ajuste\"}", 200);

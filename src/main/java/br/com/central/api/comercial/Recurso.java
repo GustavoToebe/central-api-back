@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -38,6 +39,10 @@ public class Recurso {
 
     @Column(length = 40)
     private String unidade;
+
+    /** Só para LIMITE: vem preenchido quando o recurso entra num plano (V005). */
+    @Column(name = "valor_padrao", precision = 12, scale = 2)
+    private BigDecimal valorPadrao;
 
     protected Recurso() {
     }
@@ -87,5 +92,13 @@ public class Recurso {
 
     public void setUnidade(String unidade) {
         this.unidade = unidade;
+    }
+
+    public BigDecimal getValorPadrao() {
+        return valorPadrao;
+    }
+
+    public void setValorPadrao(BigDecimal valorPadrao) {
+        this.valorPadrao = valorPadrao;
     }
 }

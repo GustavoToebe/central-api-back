@@ -1,16 +1,24 @@
 package br.com.central.api.comercial;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -66,16 +74,44 @@ public class Cobranca {
     @Column(name = "registrado_por")
     private UUID registradoPor;
 
+    /** Só leitura, para a lista geral filtrar por cliente e produto. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contratacao_id", insertable = false, updatable = false)
+    private Contratacao contratacao;
+
+    @OneToMany(mappedBy = "cobranca", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("ordem")
+    private List<CobrancaItem> itens = new ArrayList<>();
+
     protected Cobranca() {
     }
 
     public Cobranca(Contratacao contratacao, LocalDate competenciaInicio, LocalDate competenciaFim,
-                    LocalDate vencimento) {
+                    LocalDate vencimento, List<CobrancaItem> itens) {
         this.contratacaoId = Objects.requireNonNull(contratacao.getId(), "contratação precisa estar salva");
-        this.valor = contratacao.getValor();
         this.competenciaInicio = competenciaInicio;
         this.competenciaFim = competenciaFim;
         this.vencimento = vencimento;
+        definirItens(itens);
+    }
+
+    /**
+     * Troca os itens e refaz o valor pela soma deles. Só para cobrança em
+     * aberto: a paga guarda o que foi cobrado de fato.
+     */
+    public void definirItens(List<CobrancaItem> novos) {
+        if (status != Status.ABERTA) {
+            throw new IllegalStateException("Só cobrança em aberto tem os itens refeitos.");
+        }
+        itens.clear();
+        BigDecimal total = BigDecimal.ZERO;
+        int ordem = 0;
+        for (CobrancaItem item : novos) {
+            item.vincular(this, ordem++);
+            itens.add(item);
+            total = total.add(item.getValor());
+        }
+        this.valor = total;
     }
 
     public void pagar(LocalDate pagoEm, BigDecimal valorPago, FormaPagamento forma, String observacao,
@@ -101,10 +137,6 @@ public class Cobranca {
         if (motivo != null) {
             this.observacao = motivo;
         }
-    }
-
-    public void atualizarValor(BigDecimal valor) {
-        this.valor = valor;
     }
 
     public boolean vencidaEm(LocalDate hoje) {
@@ -153,5 +185,13 @@ public class Cobranca {
 
     public String getObservacao() {
         return observacao;
+    }
+
+    public Contratacao getContratacao() {
+        return contratacao;
+    }
+
+    public List<CobrancaItem> getItens() {
+        return itens;
     }
 }

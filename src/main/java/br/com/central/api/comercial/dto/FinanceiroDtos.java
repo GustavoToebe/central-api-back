@@ -1,6 +1,8 @@
 package br.com.central.api.comercial.dto;
 
 import br.com.central.api.comercial.Cobranca;
+import br.com.central.api.comercial.CobrancaItem;
+import br.com.central.api.comercial.Contratacao;
 import br.com.central.api.comercial.FormaPagamento;
 import br.com.central.api.comercial.Periodicidade;
 import jakarta.validation.constraints.NotEmpty;
@@ -29,7 +31,11 @@ public final class FinanceiroDtos {
     public record IsentarCobrancaRequest(String motivo) {
     }
 
-    public record GerarCobrancasRequest(@NotNull(message = "Informe até qual mês gerar.") YearMonth ate) {
+    /** {@code de} vazio = desde o início da contratação. Só cria as que faltam. */
+    public record GerarCobrancasRequest(
+            YearMonth de,
+            @NotNull(message = "Informe até qual competência gerar.") YearMonth ate
+    ) {
     }
 
     public record CobrancaResponse(
@@ -67,6 +73,71 @@ public final class FinanceiroDtos {
             Periodicidade periodicidade,
             long cobrancasVencidas,
             long diasAtraso
+    ) {
+    }
+
+    /** Filtros da lista geral; todos opcionais. {@code situacao} aceita também VENCIDA. */
+    public record FiltroCobrancas(
+            UUID produtoId,
+            String situacao,
+            FormaPagamento formaPagamento,
+            LocalDate vencimentoDe,
+            LocalDate vencimentoAte,
+            YearMonth competencia,
+            String busca
+    ) {
+    }
+
+    /** Linha da tela "Cobranças": a cobrança com o cliente e a contratação. */
+    public record CobrancaLinha(
+            UUID id,
+            UUID contratacaoId,
+            UUID clienteId,
+            String clienteNome,
+            String produtoCodigo,
+            String nomeInstancia,
+            String planoNome,
+            Periodicidade periodicidade,
+            LocalDate competenciaInicio,
+            LocalDate competenciaFim,
+            LocalDate vencimento,
+            BigDecimal valor,
+            Cobranca.Status status,
+            boolean vencida,
+            LocalDate pagoEm,
+            BigDecimal valorPago,
+            FormaPagamento formaPagamento
+    ) {
+        public static CobrancaLinha de(Cobranca cobranca, LocalDate hoje) {
+            Contratacao contratacao = cobranca.getContratacao();
+            return new CobrancaLinha(
+                    cobranca.getId(), cobranca.getContratacaoId(), contratacao.getCliente().getId(),
+                    contratacao.getCliente().getNome(), contratacao.getProduto().getCodigo(),
+                    contratacao.getNomeInstancia(), contratacao.getPlano().getNome(), contratacao.getPeriodicidade(),
+                    cobranca.getCompetenciaInicio(), cobranca.getCompetenciaFim(), cobranca.getVencimento(),
+                    cobranca.getValor(), cobranca.getStatus(), cobranca.vencidaEm(hoje), cobranca.getPagoEm(),
+                    cobranca.getValorPago(), cobranca.getFormaPagamento());
+        }
+    }
+
+    public record CobrancaItemResponse(
+            CobrancaItem.Tipo tipo,
+            String descricao,
+            BigDecimal quantidade,
+            BigDecimal valorUnitario,
+            int meses,
+            BigDecimal valor
+    ) {
+        public static CobrancaItemResponse de(CobrancaItem item) {
+            return new CobrancaItemResponse(item.getTipo(), item.getDescricao(), item.getQuantidade(),
+                    item.getValorUnitario(), item.getMeses(), item.getValor());
+        }
+    }
+
+    public record CobrancaDetalhe(
+            CobrancaLinha cobranca,
+            String observacao,
+            List<CobrancaItemResponse> itens
     ) {
     }
 }

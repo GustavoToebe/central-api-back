@@ -1,6 +1,10 @@
 package br.com.central.api.comercial;
 
+import br.com.central.api.comercial.dto.FinanceiroDtos.CobrancaDetalhe;
+import br.com.central.api.comercial.dto.FinanceiroDtos.CobrancaItemResponse;
+import br.com.central.api.comercial.dto.FinanceiroDtos.CobrancaLinha;
 import br.com.central.api.comercial.dto.FinanceiroDtos.CobrancaResponse;
+import br.com.central.api.comercial.dto.FinanceiroDtos.FiltroCobrancas;
 import br.com.central.api.comercial.dto.FinanceiroDtos.FinanceiroResponse;
 import br.com.central.api.comercial.dto.FinanceiroDtos.RegistrarPagamentoRequest;
 import br.com.central.api.comercial.dto.FinanceiroDtos.Resumo;
@@ -10,6 +14,11 @@ import br.com.central.api.web.BadRequestException;
 import br.com.central.api.web.ResourceNotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,8 +35,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -35,17 +46,23 @@ import java.util.UUID;
 /**
  * Cobrança manual por contratação, adaptada do billing do Servire.
  * O job diário gera cobranças e marca INADIMPLENTE. Bloqueio continua manual.
+ *
+ * <p>Desde 26/09/2026 (teste de telas) a competência começa sempre no dia 1 do
+ * mês de início, em qualquer periodicidade, e a cobrança tem itens: o plano do
+ * período e cada adicional (preço mensal × quantidade × meses do período).
  */
 @Service
 public class BillingService {
 
     static final int MESES_ANTECEDENCIA = 1;
     static final int MAX_MESES_ADIANTADOS = 36;
+    static final int MAX_LINHAS_LISTA = 1000;
 
     private static final DateTimeFormatter MES_ANO = DateTimeFormatter.ofPattern("MM/yyyy");
 
     private final CobrancaRepository cobrancaRepository;
     private final ContratacaoRepository contratacaoRepository;
+    private final ContratacaoAdicionalRepository contratacaoAdicionalRepository;
     private final DireitosDaContratacao direitos;
     private final Clock clock;
 
@@ -53,9 +70,11 @@ public class BillingService {
     private EntityManager entityManager;
 
     public BillingService(CobrancaRepository cobrancaRepository, ContratacaoRepository contratacaoRepository,
+                          ContratacaoAdicionalRepository contratacaoAdicionalRepository,
                           DireitosDaContratacao direitos, Clock clock) {
         this.cobrancaRepository = cobrancaRepository;
         this.contratacaoRepository = contratacaoRepository;
+        this.contratacaoAdicionalRepository = contratacaoAdicionalRepository;
         this.direitos = direitos;
         this.clock = clock;
     }
@@ -73,15 +92,23 @@ public class BillingService {
         return montar(contratacaoId);
     }
 
+    /**
+     * Cria só as cobranças que faltam com competência entre {@code de} e
+     * {@code ate}. As que já existem não mudam (26/09/2026: o operador achou
+     * que "gerar até" mexia nas antigas; quem refaz abertas é a troca de plano).
+     */
     @Transactional
-    public FinanceiroResponse gerarAdiantadas(UUID contratacaoId, YearMonth ate) {
+    public FinanceiroResponse gerarAdiantadas(UUID contratacaoId, YearMonth de, YearMonth ate) {
         Contratacao contratacao = carregar(contratacaoId);
         exigirNaoCancelada(contratacao);
+        if (de != null && de.isAfter(ate)) {
+            throw new BadRequestException("A competência inicial não pode ser depois da final.");
+        }
         YearMonth limite = YearMonth.from(hoje()).plusMonths(MAX_MESES_ADIANTADOS);
         if (ate.isAfter(limite)) {
             throw new BadRequestException("Gere no máximo " + MAX_MESES_ADIANTADOS + " meses à frente.");
         }
-        gerarCobrancas(contratacao, ate.atEndOfMonth());
+        gerarCobrancas(contratacao, de == null ? null : de.atDay(1), ate.atEndOfMonth());
         return montar(contratacaoId);
     }
 
@@ -89,47 +116,32 @@ public class BillingService {
     public FinanceiroResponse registrarPagamento(UUID contratacaoId, RegistrarPagamentoRequest request) {
         Contratacao contratacao = carregar(contratacaoId);
         exigirNaoCancelada(contratacao);
-        LocalDate hoje = hoje();
-        if (request.pagoEm().isAfter(hoje)) {
-            throw new BadRequestException("A data do pagamento não pode estar no futuro.");
-        }
-        List<UUID> ids = List.copyOf(new LinkedHashSet<>(request.cobrancaIds()));
-        if (request.valorPago() != null && ids.size() > 1) {
-            throw new BadRequestException("Valor pago só pode ser informado para uma cobrança por vez.");
-        }
-        List<Cobranca> cobrancas = buscarCobrancas(contratacaoId, ids);
-        for (Cobranca cobranca : cobrancas) {
-            if (cobranca.getStatus() != Cobranca.Status.ABERTA) {
-                throw new BadRequestException("A cobrança de " + competencia(cobranca) + " não está em aberto.");
-            }
-        }
-        String observacao = texto(request.observacao());
-        LocalDate fimMaisDistante = null;
-        for (Cobranca cobranca : cobrancas) {
-            BigDecimal valorPago = request.valorPago() != null ? request.valorPago() : cobranca.getValor();
-            cobranca.pagar(request.pagoEm(), valorPago, request.formaPagamento(), observacao, operadorAtualId());
-            if (fimMaisDistante == null || cobranca.getCompetenciaFim().isAfter(fimMaisDistante)) {
-                fimMaisDistante = cobranca.getCompetenciaFim();
-            }
-        }
-        entityManager.flush();
-
-        SituacaoComercial antes = contratacao.getSituacaoComercial();
-        LocalDate vigenteAntes = contratacao.getVigenteAte();
-        if (fimMaisDistante != null && (vigenteAntes == null || fimMaisDistante.isAfter(vigenteAntes))) {
-            contratacao.setVigenteAte(fimMaisDistante);
-        }
-        boolean aindaEmAtraso = cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(
-                contratacaoId, Cobranca.Status.ABERTA, hoje);
-        if (!aindaEmAtraso
-                && (antes == SituacaoComercial.TRIAL || antes == SituacaoComercial.INADIMPLENTE)) {
-            contratacao.setSituacaoComercial(SituacaoComercial.ATIVA);
-        }
-        if (antes != contratacao.getSituacaoComercial()
-                || (vigenteAntes == null ? contratacao.getVigenteAte() != null : !vigenteAntes.equals(contratacao.getVigenteAte()))) {
-            direitos.publicar(contratacao, "PAGAMENTO", observacao);
-        }
+        List<UUID> ids = validarPagamento(request);
+        pagar(contratacao, buscarCobrancas(contratacaoId, ids), request);
         return montar(contratacaoId);
+    }
+
+    /**
+     * Pagamento pela tela "Cobranças": as cobranças podem ser de clientes
+     * diferentes. Cada contratação é tratada como no pagamento individual.
+     */
+    @Transactional
+    public int registrarPagamentos(RegistrarPagamentoRequest request) {
+        List<UUID> ids = validarPagamento(request);
+        List<Cobranca> cobrancas = cobrancaRepository.findAllById(ids);
+        if (cobrancas.size() != ids.size()) {
+            throw new ResourceNotFoundException("Cobrança não encontrada.");
+        }
+        Map<UUID, List<Cobranca>> porContratacao = new LinkedHashMap<>();
+        for (Cobranca cobranca : cobrancas) {
+            porContratacao.computeIfAbsent(cobranca.getContratacaoId(), chave -> new ArrayList<>()).add(cobranca);
+        }
+        for (Map.Entry<UUID, List<Cobranca>> grupo : porContratacao.entrySet()) {
+            Contratacao contratacao = carregar(grupo.getKey());
+            exigirNaoCancelada(contratacao);
+            pagar(contratacao, grupo.getValue(), request);
+        }
+        return cobrancas.size();
     }
 
     @Transactional
@@ -220,24 +232,101 @@ public class BillingService {
         return cobrancaRepository.somarRecebido(Cobranca.Status.PAGA, mes.atDay(1), mes.atEndOfMonth());
     }
 
+    /**
+     * Lista geral de cobranças (tela "Cobranças"), com cliente, produto e
+     * plano já carregados. Criteria porque todos os filtros são opcionais.
+     */
+    @Transactional(readOnly = true)
+    public List<CobrancaLinha> listar(FiltroCobrancas filtro) {
+        LocalDate hoje = hoje();
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Cobranca> query = cb.createQuery(Cobranca.class);
+        Root<Cobranca> cobranca = query.from(Cobranca.class);
+        @SuppressWarnings("unchecked")
+        Join<Cobranca, Contratacao> contratacao = (Join<Cobranca, Contratacao>) cobranca.<Cobranca, Contratacao>fetch("contratacao");
+        @SuppressWarnings("unchecked")
+        Join<Contratacao, Cliente> cliente = (Join<Contratacao, Cliente>) contratacao.<Contratacao, Cliente>fetch("cliente");
+        @SuppressWarnings("unchecked")
+        Join<Contratacao, Produto> produto = (Join<Contratacao, Produto>) contratacao.<Contratacao, Produto>fetch("produto");
+        contratacao.fetch("plano");
+
+        List<Predicate> filtros = new ArrayList<>();
+        if (filtro.produtoId() != null) {
+            filtros.add(cb.equal(produto.get("id"), filtro.produtoId()));
+        }
+        String situacao = texto(filtro.situacao());
+        if (situacao != null) {
+            if ("VENCIDA".equalsIgnoreCase(situacao)) {
+                filtros.add(cb.equal(cobranca.get("status"), Cobranca.Status.ABERTA));
+                filtros.add(cb.lessThan(cobranca.get("vencimento"), hoje));
+            } else {
+                filtros.add(cb.equal(cobranca.get("status"), status(situacao)));
+            }
+        }
+        if (filtro.formaPagamento() != null) {
+            filtros.add(cb.equal(cobranca.get("formaPagamento"), filtro.formaPagamento()));
+        }
+        if (filtro.vencimentoDe() != null) {
+            filtros.add(cb.greaterThanOrEqualTo(cobranca.get("vencimento"), filtro.vencimentoDe()));
+        }
+        if (filtro.vencimentoAte() != null) {
+            filtros.add(cb.lessThanOrEqualTo(cobranca.get("vencimento"), filtro.vencimentoAte()));
+        }
+        if (filtro.competencia() != null) {
+            filtros.add(cb.lessThanOrEqualTo(cobranca.get("competenciaInicio"), filtro.competencia().atEndOfMonth()));
+            filtros.add(cb.greaterThanOrEqualTo(cobranca.get("competenciaFim"), filtro.competencia().atDay(1)));
+        }
+        String busca = texto(filtro.busca());
+        if (busca != null) {
+            String padrao = "%" + busca.toLowerCase(Locale.ROOT) + "%";
+            filtros.add(cb.or(
+                    cb.like(cb.lower(cliente.get("nome")), padrao),
+                    cb.like(cb.lower(cliente.get("documento")), padrao),
+                    cb.like(cb.lower(contratacao.get("nomeInstancia")), padrao)));
+        }
+        query.select(cobranca).where(filtros.toArray(Predicate[]::new))
+                .orderBy(cb.asc(cobranca.get("vencimento")), cb.asc(cliente.get("nome")));
+        return entityManager.createQuery(query).setMaxResults(MAX_LINHAS_LISTA).getResultList().stream()
+                .map(item -> CobrancaLinha.de(item, hoje))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CobrancaDetalhe detalhe(UUID cobrancaId) {
+        Cobranca cobranca = cobrancaRepository.findById(cobrancaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cobrança não encontrada."));
+        carregar(cobranca.getContratacaoId());
+        return new CobrancaDetalhe(
+                CobrancaLinha.de(cobranca, hoje()),
+                cobranca.getObservacao(),
+                cobranca.getItens().stream().map(CobrancaItemResponse::de).toList());
+    }
+
     @Transactional
     public int gerarCobrancas(Contratacao contratacao, LocalDate ate) {
+        return gerarCobrancas(contratacao, null, ate);
+    }
+
+    /**
+     * Cria as cobranças que faltam com competência começando entre
+     * {@code de} (vazio = início do contrato) e {@code ate}.
+     */
+    @Transactional
+    public int gerarCobrancas(Contratacao contratacao, LocalDate de, LocalDate ate) {
         Set<LocalDate> existentes = new HashSet<>();
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacao.getId())) {
             existentes.add(cobranca.getCompetenciaInicio());
         }
-        LocalDate limite = ate;
         int meses = contratacao.getPeriodicidade().meses();
-        LocalDate primeiro = contratacao.getPeriodicidade() == Periodicidade.MENSAL
-                ? contratacao.getInicio().withDayOfMonth(1)
-                : contratacao.getInicio();
+        LocalDate primeiro = contratacao.getInicio().withDayOfMonth(1);
+        List<ContratacaoAdicional> adicionais = null;
         List<Cobranca> novas = new ArrayList<>();
         for (int i = 0; ; i++) {
             LocalDate inicioPeriodo = primeiro.plusMonths((long) i * meses);
-            if (inicioPeriodo.isAfter(limite)) {
+            if (inicioPeriodo.isAfter(ate)) {
                 break;
             }
-            if (existentes.contains(inicioPeriodo)) {
+            if (existentes.contains(inicioPeriodo) || (de != null && inicioPeriodo.isBefore(de))) {
                 continue;
             }
             LocalDate fimPeriodo = primeiro.plusMonths((long) (i + 1) * meses).minusDays(1);
@@ -245,10 +334,29 @@ public class BillingService {
             if (vencimento.isBefore(contratacao.getInicio())) {
                 vencimento = contratacao.getInicio();
             }
-            novas.add(new Cobranca(contratacao, inicioPeriodo, fimPeriodo, vencimento));
+            if (adicionais == null) {
+                adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacao.getId());
+            }
+            novas.add(new Cobranca(contratacao, inicioPeriodo, fimPeriodo, vencimento, itensDe(contratacao, adicionais)));
         }
         cobrancaRepository.saveAll(novas);
         return novas.size();
+    }
+
+    /**
+     * Refaz os itens das cobranças abertas que ainda não venceram (decisão de
+     * 26/09/2026): a vencida fica como estava, porque o cliente já devia aquilo.
+     */
+    @Transactional
+    public void recalcularAbertasNaoVencidas(Contratacao contratacao) {
+        LocalDate hoje = hoje();
+        List<ContratacaoAdicional> adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacao.getId());
+        for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacao.getId())) {
+            if (cobranca.getStatus() == Cobranca.Status.ABERTA && !cobranca.getVencimento().isBefore(hoje)) {
+                cobranca.definirItens(itensDe(contratacao, adicionais));
+            }
+        }
+        entityManager.flush();
     }
 
     @Transactional
@@ -270,6 +378,66 @@ public class BillingService {
                 cobranca.cancelar(motivo);
             }
         }
+    }
+
+    /** Plano do período mais cada adicional contratado. */
+    private static List<CobrancaItem> itensDe(Contratacao contratacao, List<ContratacaoAdicional> adicionais) {
+        Periodicidade periodicidade = contratacao.getPeriodicidade();
+        List<CobrancaItem> itens = new ArrayList<>();
+        itens.add(CobrancaItem.plano(
+                "Plano " + contratacao.getPlano().getNome() + " (" + rotulo(periodicidade) + ")",
+                contratacao.getValor()));
+        for (ContratacaoAdicional item : adicionais) {
+            itens.add(CobrancaItem.adicional(
+                    "Adicional " + item.getAdicional().getNome(),
+                    item.getQuantidade(), item.getAdicional().getPreco(), periodicidade.meses()));
+        }
+        return itens;
+    }
+
+    private void pagar(Contratacao contratacao, List<Cobranca> cobrancas, RegistrarPagamentoRequest request) {
+        for (Cobranca cobranca : cobrancas) {
+            if (cobranca.getStatus() != Cobranca.Status.ABERTA) {
+                throw new BadRequestException("A cobrança de " + competencia(cobranca) + " não está em aberto.");
+            }
+        }
+        String observacao = texto(request.observacao());
+        LocalDate fimMaisDistante = null;
+        for (Cobranca cobranca : cobrancas) {
+            BigDecimal valorPago = request.valorPago() != null ? request.valorPago() : cobranca.getValor();
+            cobranca.pagar(request.pagoEm(), valorPago, request.formaPagamento(), observacao, operadorAtualId());
+            if (fimMaisDistante == null || cobranca.getCompetenciaFim().isAfter(fimMaisDistante)) {
+                fimMaisDistante = cobranca.getCompetenciaFim();
+            }
+        }
+        entityManager.flush();
+
+        SituacaoComercial antes = contratacao.getSituacaoComercial();
+        LocalDate vigenteAntes = contratacao.getVigenteAte();
+        if (fimMaisDistante != null && (vigenteAntes == null || fimMaisDistante.isAfter(vigenteAntes))) {
+            contratacao.setVigenteAte(fimMaisDistante);
+        }
+        boolean aindaEmAtraso = cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(
+                contratacao.getId(), Cobranca.Status.ABERTA, hoje());
+        if (!aindaEmAtraso
+                && (antes == SituacaoComercial.TRIAL || antes == SituacaoComercial.INADIMPLENTE)) {
+            contratacao.setSituacaoComercial(SituacaoComercial.ATIVA);
+        }
+        if (antes != contratacao.getSituacaoComercial()
+                || (vigenteAntes == null ? contratacao.getVigenteAte() != null : !vigenteAntes.equals(contratacao.getVigenteAte()))) {
+            direitos.publicar(contratacao, "PAGAMENTO", observacao);
+        }
+    }
+
+    private List<UUID> validarPagamento(RegistrarPagamentoRequest request) {
+        if (request.pagoEm().isAfter(hoje())) {
+            throw new BadRequestException("A data do pagamento não pode estar no futuro.");
+        }
+        List<UUID> ids = List.copyOf(new LinkedHashSet<>(request.cobrancaIds()));
+        if (request.valorPago() != null && ids.size() > 1) {
+            throw new BadRequestException("Valor pago só pode ser informado para uma cobrança por vez.");
+        }
+        return ids;
     }
 
     private FinanceiroResponse montar(UUID contratacaoId) {
@@ -311,6 +479,23 @@ public class BillingService {
         if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
             throw new BadRequestException("Contratação cancelada não recebe movimentação financeira.");
         }
+    }
+
+    private static Cobranca.Status status(String situacao) {
+        try {
+            return Cobranca.Status.valueOf(situacao.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Situação de cobrança inválida.");
+        }
+    }
+
+    private static String rotulo(Periodicidade periodicidade) {
+        return switch (periodicidade) {
+            case MENSAL -> "mensal";
+            case TRIMESTRAL -> "trimestral";
+            case SEMESTRAL -> "semestral";
+            case ANUAL -> "anual";
+        };
     }
 
     private static String competencia(Cobranca cobranca) {

@@ -95,7 +95,7 @@ public class ContratacaoController {
     @PostMapping("/{id}/cobrancas/adiantadas")
     public FinanceiroResponse gerarAdiantadas(@PathVariable UUID id,
                                               @Valid @RequestBody GerarCobrancasRequest request) {
-        return billingService.gerarAdiantadas(id, request.ate());
+        return billingService.gerarAdiantadas(id, request.de(), request.ate());
     }
 
     @PostMapping("/{id}/pagamentos")

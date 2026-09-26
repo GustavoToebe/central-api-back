@@ -50,7 +50,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   `POST /contratacoes/{id}/tentar-provisionamento` são do operador.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca
-  `INADIMPLENTE`; não bloqueia. Provisionar espera 1 min, 5 min, 15 min e 1 h e
+  `INADIMPLENTE`; não bloqueia. Cobrança tem itens (`cobranca_item`: plano + adicionais,
+  preço mensal × meses); valor = soma dos itens; adicionais mudaram → refaz só as abertas
+  não vencidas. Competência começa no dia 1. `/cobrancas` = lista geral, detalhe e pagamento em lote. Provisionar espera 1 min, 5 min, 15 min e 1 h e
   então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
