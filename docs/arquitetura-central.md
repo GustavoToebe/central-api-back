@@ -607,6 +607,7 @@ no painel → Servire bloqueia pelo webhook; suporte → aba com o código de us
 | Sessão | Access token no `sessionStorage`; refresh só no cookie httpOnly. Um refresh compartilhado por vez no 401; sem cookie `XSRF-TOKEN` o painel nem tenta renovar (a Central devolveria 403) |
 | Regras na tela | "Tentar novamente" só com `ERRO` sem `id_externo`; edição de nome/slug/admin só com `provisionamentoEditavel`; suporte só com a instância criada |
 | Fora do escopo | Log de ações dos operadores: não há endpoint (o histórico vem dentro da contratação) |
+| Logs de erro (26/09/2026) | Os apps mandam erros 5xx (contrato 6.2); tela "Logs" com filtro por data e busca e aba "Erros" na contratação; 90 dias; usuário só pelo id |
 | Cobranças (26/09/2026) | `GET /cobrancas` com filtros (produto, situação, forma, vencimento, competência, busca por cliente/instância), `GET /cobrancas/{id}` com os itens e `POST /cobrancas/pagamentos` para várias contratações de uma vez |
 | Observação | `vigente_ate` usa a maior competência paga: pagar outubro com setembro em aberto mostra "pago até 31/10". Não bloqueia nada (o bloqueio é manual), mas o rótulo engana; rever no billing |
 

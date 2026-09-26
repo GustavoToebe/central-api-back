@@ -367,6 +367,33 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
   30 min até conseguir (o relógio das 72 h continua correndo).
 - Parâmetro futuro (aditivo): `alteradosDesde` para buscar só o que mudou.
 
+### 6.2 Erros de servidor (tela "Logs")
+
+`POST /integracao/v1/produtos/{produto}/erros` → `202` (26/09/2026)
+
+```json
+{
+  "erros": [
+    {
+      "id": "7b1c…", "ocorridoEm": "2026-09-26T18:00:00Z",
+      "tenantId": "25c1d0e4-…", "usuarioId": "a3f0…",
+      "metodo": "POST", "rota": "/pessoas", "status": 503, "codigo": null,
+      "mensagem": "Storage não configurado. …", "requestId": "req-123"
+    }
+  ]
+}
+```
+
+→ `{"recebidos": 1, "gravados": 1}`
+
+- Só erros **5xx**. Erro 4xx (engano de quem digitou) não é enviado.
+- **Nada de dado pessoal**: usuário só pelo id do app; `mensagem` só quando o texto é do próprio app
+  (erro previsto). Em erro inesperado vai só o tipo (`"Erro inesperado (NullPointerException)"`): a
+  mensagem técnica pode trazer valores do banco.
+- `id` é do app: reenviar o mesmo lote não duplica (`gravados` 0). No máximo 100 por lote.
+- O app junta em memória e manda a cada minuto; a Central fora do ar nunca atrasa a requisição da
+  instância. A Central acha a contratação pelo `tenantId` e guarda 90 dias.
+
 ## 7. Tabelas de apoio no app (Servire)
 
 ```

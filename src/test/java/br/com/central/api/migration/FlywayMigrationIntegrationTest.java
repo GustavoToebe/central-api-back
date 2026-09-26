@@ -21,9 +21,9 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
         List<String> descricoes = jdbcTemplate.queryForList(
                 "SELECT description FROM flyway_schema_history WHERE type = 'SQL' ORDER BY installed_rank",
                 String.class);
-        assertThat(total).isEqualTo(5);
+        assertThat(total).isEqualTo(6);
         assertThat(descricoes).containsExactly("operador e nonce", "dominio comercial", "ultimo status provisionamento",
-                "cep formatado", "periodicidades e itens da cobranca");
+                "cep formatado", "periodicidades e itens da cobranca", "erro aplicativo");
     }
 
     @Test
@@ -37,7 +37,7 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
                     'operador', 'operador_log', 'refresh_token', 'integracao_nonce',
                     'cliente', 'cliente_contato', 'produto', 'recurso', 'plano', 'plano_recurso',
                     'preco_plano', 'adicional', 'contratacao', 'contratacao_adicional',
-                    'historico_contratacao', 'cobranca', 'cobranca_item', 'evento_saida')
+                    'historico_contratacao', 'cobranca', 'cobranca_item', 'evento_saida', 'erro_aplicativo')
                   AND c.relrowsecurity = true
                 """, Integer.class);
         Integer policies = jdbcTemplate.queryForObject("""
@@ -47,9 +47,9 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
                     'operador', 'operador_log', 'refresh_token', 'integracao_nonce',
                     'cliente', 'cliente_contato', 'produto', 'recurso', 'plano', 'plano_recurso',
                     'preco_plano', 'adicional', 'contratacao', 'contratacao_adicional',
-                    'historico_contratacao', 'cobranca', 'cobranca_item', 'evento_saida')
+                    'historico_contratacao', 'cobranca', 'cobranca_item', 'evento_saida', 'erro_aplicativo')
                 """, Integer.class);
-        assertThat(comRls).isEqualTo(18);
+        assertThat(comRls).isEqualTo(19);
         assertThat(policies).isZero();
     }
 }

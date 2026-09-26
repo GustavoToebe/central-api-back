@@ -16,6 +16,8 @@ public interface ContratacaoRepository extends JpaRepository<Contratacao, UUID> 
 
     List<Contratacao> findBySituacaoComercialIn(Collection<SituacaoComercial> situacoes);
 
+    java.util.Optional<Contratacao> findByProduto_IdAndIdExterno(UUID produtoId, UUID idExterno);
+
     List<Contratacao> findAllByOrderByCriadoEmDesc();
 
     @Query("""

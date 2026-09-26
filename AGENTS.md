@@ -22,7 +22,8 @@ Commits vão direto na `main` (decisão de 25/09/2026).
   operadores do SaaS a usam.
 - A Central **nunca** guarda senha de usuário de aplicativo nem gera token de
   aplicativo. Sessão de suporte = pedir um código de uso único ao app.
-- A Central não recebe dado de negócio dos apps (nomes de pessoas etc.), só contagens.
+- A Central não recebe dado de negócio dos apps (nomes de pessoas etc.), só contagens e erros de servidor
+  (5xx, contrato 6.2) com o usuário só pelo id.
 - Toda alteração de contratação grava a nova versão dos direitos e o evento de
   saída (outbox) **na mesma transação**.
 - Provisionamento sempre com `Idempotency-Key` = id da contratação, igual em
@@ -47,7 +48,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   nonce com `INSERT ... ON CONFLICT`, cliente de saída (`AplicativoHttp`) e o job
   que entrega o `evento_saida`. `GET /integracao/v1/produtos/{produto}/direitos`
   lista só contratações já provisionadas. `GET /produtos/{id}/recursos-do-app` pergunta ao app os códigos
-  de limite/funcionalidade (contrato 5.5); código de recurso fica como o app usa (sem maiúsculas). `POST /contratacoes/{id}/suporte` e
+  de limite/funcionalidade (contrato 5.5); código de recurso fica como o app usa (sem maiúsculas).
+  `POST /integracao/v1/produtos/{produto}/erros` recebe erros 5xx (`erro_aplicativo`, V006, 90 dias; `GET /erros`
+  para a tela "Logs"). `POST /contratacoes/{id}/suporte` e
   `POST /contratacoes/{id}/tentar-provisionamento` são do operador.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca

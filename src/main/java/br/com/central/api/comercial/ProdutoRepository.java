@@ -9,5 +9,7 @@ public interface ProdutoRepository extends JpaRepository<Produto, UUID> {
 
     boolean existsByCodigo(String codigo);
 
+    java.util.Optional<Produto> findByCodigoIgnoreCase(String codigo);
+
     List<Produto> findAllByOrderByNomeAsc();
 }
