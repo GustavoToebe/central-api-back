@@ -49,6 +49,7 @@ public final class ClienteDtos {
 
     public record ClienteResponse(
             UUID id,
+            Long sequencial,
             TipoCliente tipo,
             String documento,
             String nome,
@@ -63,7 +64,7 @@ public final class ClienteDtos {
     ) {
         public static ClienteResponse de(Cliente cliente) {
             return new ClienteResponse(
-                    cliente.getId(), cliente.getTipo(), cliente.getDocumento(), cliente.getNome(),
+                    cliente.getId(), cliente.getSequencial(), cliente.getTipo(), cliente.getDocumento(), cliente.getNome(),
                     cliente.getLogradouro(), cliente.getNumero(), cliente.getComplemento(),
                     cliente.getBairro(), cliente.getCidade(), cliente.getUf(), cliente.getCep(),
                     cliente.getContatos().stream().map(ContatoResponse::de).toList());

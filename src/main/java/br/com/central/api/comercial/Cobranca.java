@@ -2,6 +2,7 @@ package br.com.central.api.comercial;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import org.hibernate.annotations.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -39,6 +40,11 @@ public class Cobranca {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    /** Número curto para o operador ditar e copiar (V007); o banco numera no insert. */
+    @Generated
+    @Column(insertable = false, updatable = false)
+    private Long sequencial;
 
     @Column(name = "contratacao_id", nullable = false, updatable = false)
     private UUID contratacaoId;
@@ -193,5 +199,8 @@ public class Cobranca {
 
     public List<CobrancaItem> getItens() {
         return itens;
+    }
+    public Long getSequencial() {
+        return sequencial;
     }
 }

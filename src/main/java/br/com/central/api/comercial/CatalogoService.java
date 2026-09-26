@@ -302,7 +302,7 @@ public class CatalogoService {
                     .ifPresent(valor -> vigentes.add(new PrecoVigenteResponse(periodicidade, valor)));
         }
         return new PlanoResponse(
-                plano.getId(), plano.getProdutoId(), plano.getCodigo(), plano.getNome(), plano.isAtivo(),
+                plano.getId(), plano.getSequencial(), plano.getProdutoId(), plano.getCodigo(), plano.getNome(), plano.isAtivo(),
                 vigentes, recursos, precos);
     }
 
@@ -314,17 +314,17 @@ public class CatalogoService {
     }
 
     private static ProdutoResponse produto(Produto produto) {
-        return new ProdutoResponse(produto.getId(), produto.getCodigo(), produto.getNome(),
+        return new ProdutoResponse(produto.getId(), produto.getSequencial(), produto.getCodigo(), produto.getNome(),
                 produto.getUrlBaseIntegracao(), produto.isAtivo());
     }
 
     private static RecursoResponse recurso(Recurso recurso) {
-        return new RecursoResponse(recurso.getId(), recurso.getProdutoId(), recurso.getCodigo(),
+        return new RecursoResponse(recurso.getId(), recurso.getSequencial(), recurso.getProdutoId(), recurso.getCodigo(),
                 recurso.getNome(), recurso.getTipo(), recurso.getUnidade(), recurso.getValorPadrao());
     }
 
     private static AdicionalResponse adicional(Adicional adicional) {
-        return new AdicionalResponse(adicional.getId(), adicional.getProdutoId(), adicional.getRecurso().getId(),
+        return new AdicionalResponse(adicional.getId(), adicional.getSequencial(), adicional.getProdutoId(), adicional.getRecurso().getId(),
                 adicional.getRecurso().getCodigo(), adicional.getCodigo(), adicional.getNome(),
                 adicional.getQuantidade(), adicional.getPreco(), adicional.isAtivo());
     }

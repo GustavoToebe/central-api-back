@@ -40,6 +40,7 @@ public final class FinanceiroDtos {
 
     public record CobrancaResponse(
             UUID id,
+            Long sequencial,
             UUID contratacaoId,
             LocalDate competenciaInicio,
             LocalDate competenciaFim,
@@ -54,7 +55,7 @@ public final class FinanceiroDtos {
     ) {
         public static CobrancaResponse de(Cobranca cobranca, LocalDate hoje) {
             return new CobrancaResponse(
-                    cobranca.getId(), cobranca.getContratacaoId(), cobranca.getCompetenciaInicio(),
+                    cobranca.getId(), cobranca.getSequencial(), cobranca.getContratacaoId(), cobranca.getCompetenciaInicio(),
                     cobranca.getCompetenciaFim(), cobranca.getVencimento(), cobranca.getValor(),
                     cobranca.getStatus(), cobranca.vencidaEm(hoje), cobranca.getPagoEm(),
                     cobranca.getValorPago(), cobranca.getFormaPagamento(), cobranca.getObservacao());
@@ -91,6 +92,7 @@ public final class FinanceiroDtos {
     /** Linha da tela "Cobranças": a cobrança com o cliente e a contratação. */
     public record CobrancaLinha(
             UUID id,
+            Long sequencial,
             UUID contratacaoId,
             UUID clienteId,
             String clienteNome,
@@ -111,7 +113,7 @@ public final class FinanceiroDtos {
         public static CobrancaLinha de(Cobranca cobranca, LocalDate hoje) {
             Contratacao contratacao = cobranca.getContratacao();
             return new CobrancaLinha(
-                    cobranca.getId(), cobranca.getContratacaoId(), contratacao.getCliente().getId(),
+                    cobranca.getId(), cobranca.getSequencial(), cobranca.getContratacaoId(), contratacao.getCliente().getId(),
                     contratacao.getCliente().getNome(), contratacao.getProduto().getCodigo(),
                     contratacao.getNomeInstancia(), contratacao.getPlano().getNome(), contratacao.getPeriodicidade(),
                     cobranca.getCompetenciaInicio(), cobranca.getCompetenciaFim(), cobranca.getVencimento(),

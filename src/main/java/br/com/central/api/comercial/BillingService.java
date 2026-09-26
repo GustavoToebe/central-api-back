@@ -279,10 +279,17 @@ public class BillingService {
         String busca = texto(filtro.busca());
         if (busca != null) {
             String padrao = "%" + busca.toLowerCase(Locale.ROOT) + "%";
-            filtros.add(cb.or(
+            List<Predicate> alternativas = new ArrayList<>(List.of(
                     cb.like(cb.lower(cliente.get("nome")), padrao),
                     cb.like(cb.lower(cliente.get("documento")), padrao),
                     cb.like(cb.lower(contratacao.get("nomeInstancia")), padrao)));
+            if (busca.matches("\\d{1,18}")) {
+                Long numero = Long.valueOf(busca);
+                alternativas.add(cb.equal(cobranca.get("sequencial"), numero));
+                alternativas.add(cb.equal(contratacao.get("sequencial"), numero));
+                alternativas.add(cb.equal(cliente.get("sequencial"), numero));
+            }
+            filtros.add(cb.or(alternativas.toArray(Predicate[]::new)));
         }
         query.select(cobranca).where(filtros.toArray(Predicate[]::new))
                 .orderBy(cb.asc(cobranca.get("vencimento")), cb.asc(cliente.get("nome")));

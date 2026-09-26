@@ -279,6 +279,7 @@ public class ContratacaoService {
                 .toList();
         return new ContratacaoResponse(
                 contratacao.getId(),
+                contratacao.getSequencial(),
                 contratacao.getCliente().getId(),
                 contratacao.getProduto().getId(),
                 contratacao.getProduto().getCodigo(),
@@ -308,6 +309,7 @@ public class ContratacaoService {
     private ContratacaoResumo resumo(Contratacao contratacao) {
         return new ContratacaoResumo(
                 contratacao.getId(),
+                contratacao.getSequencial(),
                 contratacao.getCliente().getId(),
                 contratacao.getCliente().getNome(),
                 contratacao.getProduto().getId(),

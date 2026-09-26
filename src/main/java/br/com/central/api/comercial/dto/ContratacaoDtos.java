@@ -101,6 +101,7 @@ public final class ContratacaoDtos {
 
     public record ContratacaoResumo(
             UUID id,
+            Long sequencial,
             UUID clienteId,
             String clienteNome,
             UUID produtoId,
@@ -122,6 +123,7 @@ public final class ContratacaoDtos {
 
     public record ContratacaoResponse(
             UUID id,
+            Long sequencial,
             UUID clienteId,
             UUID produtoId,
             String produtoCodigo,

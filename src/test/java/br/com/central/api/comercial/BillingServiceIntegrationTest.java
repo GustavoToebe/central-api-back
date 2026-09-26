@@ -325,6 +325,22 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void cadastrosGanhamNumeroCurtoEACobrancaEAchadaPeloNumero() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, hoje.withDayOfMonth(1));
+        ContratacaoResponse outra = contratar(Periodicidade.MENSAL, CEM, 10, hoje.withDayOfMonth(1));
+        CobrancaResponse cobranca = maisAntiga(financeiro(contratacao));
+
+        assertThat(contratacao.sequencial()).isNotNull();
+        assertThat(outra.sequencial()).isGreaterThan(contratacao.sequencial());
+        assertThat(cobranca.sequencial()).isNotNull();
+        assertThat(plano.sequencial()).isNotNull();
+        assertThat(clienteService.buscar(clienteId).sequencial()).isNotNull();
+        assertThat(billingService.listar(new FiltroCobrancas(
+                null, null, null, null, null, null, cobranca.sequencial().toString())))
+                .extracting(CobrancaLinha::id).contains(cobranca.id());
+    }
+
+    @Test
     void codigoDoRecursoFicaComoOAppUsaSemVirarMaiusculas() {
         String codigo = "voluntarios_" + UUID.randomUUID().toString().substring(0, 4);
 

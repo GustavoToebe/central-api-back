@@ -1,6 +1,7 @@
 package br.com.central.api.comercial;
 
 import jakarta.persistence.Column;
+import org.hibernate.annotations.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,6 +35,11 @@ public class Contratacao implements Persistable<UUID> {
 
     @Id
     private UUID id;
+
+    /** Número curto para o operador ditar e copiar (V007); o banco numera no insert. */
+    @Generated
+    @Column(insertable = false, updatable = false)
+    private Long sequencial;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cliente_id", nullable = false)
@@ -315,5 +321,8 @@ public class Contratacao implements Persistable<UUID> {
 
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+    public Long getSequencial() {
+        return sequencial;
     }
 }

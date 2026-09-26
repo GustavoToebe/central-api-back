@@ -25,7 +25,7 @@ public final class CatalogoDtos {
     ) {
     }
 
-    public record ProdutoResponse(UUID id, String codigo, String nome, String urlBaseIntegracao, boolean ativo) {
+    public record ProdutoResponse(UUID id, Long sequencial, String codigo, String nome, String urlBaseIntegracao, boolean ativo) {
     }
 
     public record SalvarRecursoRequest(
@@ -41,7 +41,7 @@ public final class CatalogoDtos {
         }
     }
 
-    public record RecursoResponse(UUID id, UUID produtoId, String codigo, String nome, TipoRecurso tipo, String unidade,
+    public record RecursoResponse(UUID id, Long sequencial, UUID produtoId, String codigo, String nome, TipoRecurso tipo, String unidade,
                                   BigDecimal valorPadrao) {
     }
 
@@ -88,6 +88,7 @@ public final class CatalogoDtos {
 
     public record PlanoResponse(
             UUID id,
+            Long sequencial,
             UUID produtoId,
             String codigo,
             String nome,
@@ -122,6 +123,7 @@ public final class CatalogoDtos {
 
     public record AdicionalResponse(
             UUID id,
+            Long sequencial,
             UUID produtoId,
             UUID recursoId,
             String recursoCodigo,

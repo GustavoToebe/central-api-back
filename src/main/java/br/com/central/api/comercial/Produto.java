@@ -1,6 +1,7 @@
 package br.com.central.api.comercial;
 
 import jakarta.persistence.Column;
+import org.hibernate.annotations.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +18,11 @@ public class Produto {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    /** Número curto para o operador ditar e copiar (V007); o banco numera no insert. */
+    @Generated
+    @Column(insertable = false, updatable = false)
+    private Long sequencial;
 
     @Column(nullable = false, length = 40)
     private String codigo;
@@ -71,5 +77,8 @@ public class Produto {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+    public Long getSequencial() {
+        return sequencial;
     }
 }

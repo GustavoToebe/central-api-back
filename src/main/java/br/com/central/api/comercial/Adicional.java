@@ -1,6 +1,7 @@
 package br.com.central.api.comercial;
 
 import jakarta.persistence.Column;
+import org.hibernate.annotations.Generated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -20,6 +21,11 @@ public class Adicional {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    /** Número curto para o operador ditar e copiar (V007); o banco numera no insert. */
+    @Generated
+    @Column(insertable = false, updatable = false)
+    private Long sequencial;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "produto_id", nullable = false)
@@ -107,5 +113,8 @@ public class Adicional {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+    public Long getSequencial() {
+        return sequencial;
     }
 }
