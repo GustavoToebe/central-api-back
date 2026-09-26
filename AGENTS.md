@@ -48,7 +48,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca
   `INADIMPLENTE`; não bloqueia. Provisionar espera 1 min, 5 min, 15 min e 1 h e
-  então fica `ERRO`. O webhook de direitos espera até 72 h e então fica `FALHOU`.
+  então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
 - CSRF: domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =

@@ -6,6 +6,8 @@ import br.com.central.api.comercial.ClienteService;
 import br.com.central.api.comercial.ContratacaoService;
 import br.com.central.api.comercial.EventoSaida;
 import br.com.central.api.comercial.EventoSaidaRepository;
+import br.com.central.api.comercial.HistoricoContratacao;
+import br.com.central.api.comercial.HistoricoContratacaoRepository;
 import br.com.central.api.comercial.Periodicidade;
 import br.com.central.api.comercial.SituacaoComercial;
 import br.com.central.api.comercial.SituacaoEvento;
@@ -98,6 +100,8 @@ class EntregaIntegracaoTest extends AbstractIntegrationTest {
     private JwtService jwtService;
     @Autowired
     private PlatformTransactionManager transactionManager;
+    @Autowired
+    private HistoricoContratacaoRepository historicoRepository;
     @Autowired
     private JdbcTemplate jdbc;
     @Autowired
@@ -228,6 +232,28 @@ class EntregaIntegracaoTest extends AbstractIntegrationTest {
         assertThat(eventoRepository.findByContratacaoIdAndSituacao(criada.id(), SituacaoEvento.ENVIADO))
                 .singleElement()
                 .satisfies(evento -> assertThat(evento.getVersao()).isEqualTo(2));
+    }
+
+    @Test
+    void canceladaAntesDoEnvioNaoCriaInstancia() {
+        esperar("POST", "/integracao/v1/instancias", 502, "");
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+        contratacaoService.cancelar(criada.id(), "desistiu");
+        jdbc.update("update evento_saida set proxima_tentativa = ? where contratacao_id = ? and situacao = 'PENDENTE'",
+                Timestamp.from(Instant.now().minusSeconds(5)), criada.id());
+
+        ClienteDeTeste.servidor.reset();
+        entrega.enviarProntos();
+        ClienteDeTeste.servidor.verify();
+
+        assertThat(eventoRepository.findByContratacaoIdAndSituacao(criada.id(), SituacaoEvento.PENDENTE)).isEmpty();
+        ContratacaoResponse atual = contratacaoService.buscar(criada.id());
+        assertThat(atual.idExterno()).isNull();
+        assertThat(historicoRepository.findByContratacaoIdOrderByCriadoEmAsc(criada.id()))
+                .extracting(HistoricoContratacao::getAcao)
+                .contains("PROVISIONAMENTO_DESCARTADO")
+                .doesNotContain("PROVISIONADA");
     }
 
     @Test

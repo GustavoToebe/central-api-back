@@ -133,6 +133,10 @@ public class EntregaIntegracao {
         }
         Contratacao contratacao = carregar(evento.getContratacaoId());
         boolean provisionar = contratacao.getIdExterno() == null;
+        if (provisionar && contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
+            descartarProvisionamento(contratacao, evento);
+            return;
+        }
         if (provisionar && contratacao.getSituacaoProvisionamento() == SituacaoProvisionamento.PENDENTE) {
             contratacao.setSituacaoProvisionamento(SituacaoProvisionamento.PROCESSANDO);
         }
@@ -210,6 +214,23 @@ public class EntregaIntegracao {
         historicoRepository.save(new HistoricoContratacao(
                 contratacao.getId(), null, "PROVISIONADA", null, contratacao.getVersaoDireitos()));
         return true;
+    }
+
+    /**
+     * Cancelada antes de chegar ao app: não cria a instância. Achado no teste
+     * local de 26/09/2026: a contratação foi cancelada enquanto o app estava
+     * fora do ar, e a repetição seguinte criou a paróquia (já bloqueada) e
+     * mandou o convite ao administrador. O botão "Tentar novamente" já
+     * recusava cancelada; a repetição automática passa a recusar também.
+     * Se um envio anterior criou a instância sem a Central saber (timeout),
+     * ela fica sem confirmação de direitos e o app a bloqueia pela regra das 72 h.
+     */
+    private void descartarProvisionamento(Contratacao contratacao, EventoSaida evento) {
+        evento.descartar();
+        historicoRepository.save(new HistoricoContratacao(
+                contratacao.getId(), null, "PROVISIONAMENTO_DESCARTADO",
+                "Contratação cancelada antes de chegar ao aplicativo.", contratacao.getVersaoDireitos()));
+        log.info("Provisionamento da contratação {} descartado: cancelada antes do envio.", contratacao.getId());
     }
 
     private void repetir(Contratacao contratacao, EventoSaida evento, boolean provisionar, String motivo) {

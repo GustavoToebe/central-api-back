@@ -53,7 +53,7 @@ No painel, ou pela API com o token do operador:
 3. Bloqueie a contratação. O job manda `PUT .../direitos` e o Servire passa a recusar o acesso na hora.
 4. Pare a Central. O Servire continua na cópia local. Sem novo webhook, a regra das 72 h (`SERVIRE_INTEGRACAO_TOLERANCIA_HORAS`, padrão 72) bloqueia a paróquia. O log de erro da sincronização avisa a partir de 24 h.
 
-Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e então a contratação fica `ERRO`. 409 e 422 não repetem. `POST /contratacoes/{id}/tentar-provisionamento` reenvia com a mesma `Idempotency-Key`, que é o id da contratação. Nome, slug e administrador só podem ser editados antes do primeiro envio ou depois de uma recusa 4xx que não seja 409 (`provisionamentoEditavel` na resposta). O webhook de direitos espera até 72 h e então o evento fica `FALHOU`, com alerta no log.
+Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e então a contratação fica `ERRO`. 409 e 422 não repetem. Contratação cancelada antes de chegar ao app não é mais enviada: a instância não é criada e o histórico mostra o descarte. `POST /contratacoes/{id}/tentar-provisionamento` reenvia com a mesma `Idempotency-Key`, que é o id da contratação. Nome, slug e administrador só podem ser editados antes do primeiro envio ou depois de uma recusa 4xx que não seja 409 (`provisionamentoEditavel` na resposta). O webhook de direitos espera até 72 h e então o evento fica `FALHOU`, com alerta no log.
 
 ## Próximos passos
 
