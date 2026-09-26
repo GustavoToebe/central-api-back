@@ -28,23 +28,87 @@ se o e-mail e a senha vierem no ambiente.
 | [`docs/arquitetura-central.md`](docs/arquitetura-central.md) | objetivo, responsabilidades, modelo, provisionamento, sincronização, mudanças no Servire (perfis/usuários no estilo SIN+), plano de etapas, riscos e decisões |
 | [`docs/contrato-integracao-v1.md`](docs/contrato-integracao-v1.md) | contrato técnico Central ↔ apps: HMAC (com vetores de teste), erros, snapshot de direitos, endpoints |
 
-## Ponta a ponta local
+## Ponta a ponta local (Windows, tudo no PC)
 
-Central na porta 8081 e Servire na 8080, cada um com o seu Postgres. O segredo de teste dos vetores, em Base64, é `c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5` (não usar em produção).
+Quatro programas e um Postgres no Docker, sem tocar no Supabase. Portas: Servire API 8080, Central API 8081,
+Servire front 4200, Central front **4201** (os dois fronts usam 4200 por padrão). O segredo de teste dos
+vetores, em Base64, é `c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5`
+(**só para uso local**, nunca em produção).
 
-No Servire:
+Regra de ouro: `$env:X = "..."` só vale no terminal onde foi digitado e só para o programa iniciado **depois**,
+nesse mesmo terminal. Cada API tem o seu terminal, com as suas variáveis coladas antes do `mvn`.
 
-- `SERVIRE_INTEGRACAO_CHAVES_ENTRADA=teste-central:c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5`
-- `SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID=teste-servire`
-- `SERVIRE_INTEGRACAO_CHAVE_SAIDA_SEGREDO` com o mesmo Base64
-- `SERVIRE_INTEGRACAO_CENTRAL_URL=http://localhost:8081`
-- provedor de e-mail `log` (o convite sai no log, em DEBUG: `[STUB] Convite`)
+**0. Atualizar os quatro repositórios.** Procura cada um em `Documents\servire\` e em `Documents\`:
 
-Na Central:
+```powershell
+$base = "$env:USERPROFILE\OneDrive\Documents"
+foreach ($r in "servire-api-back", "servire-api-front", "central-api-back", "central-api-front") {
+  $p = @("$base\servire\$r", "$base\$r") | Where-Object { Test-Path "$_\.git" } | Select-Object -First 1
+  if ($p) { Write-Host "== $r ($p)" -ForegroundColor Cyan; git -C $p pull --ff-only }
+  else { Write-Host "== $r nao encontrado" -ForegroundColor Red }
+}
+```
 
-- `CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA=teste-servire:` seguido do mesmo Base64
-- `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID=teste-central`
-- `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_SEGREDO` com o mesmo Base64
+**1. Banco (uma vez; Docker Desktop aberto).** Porta 5433 para não bater com outro Postgres na 5432.
+
+```powershell
+docker run --name ecossistema-db -e POSTGRES_PASSWORD=postgres -p 5433:5432 -d postgres:17
+docker exec ecossistema-db createdb -U postgres servire_dev
+docker exec ecossistema-db createdb -U postgres central_dev
+# na pasta do servire-api-back: stub do Supabase (schemas auth/storage e roles) antes do Flyway
+Get-Content src\test\resources\testcontainers\supabase-stubs.sql | docker exec -i ecossistema-db psql -U postgres -d servire_dev
+```
+
+Container já existe ("name is already in use")? Tudo bem: `docker start ecossistema-db`. Começar do zero:
+`docker rm -f ecossistema-db` e repetir.
+
+**2. API do Servire (terminal só dela, pasta `servire-api-back`).** Se houver `application-dev-local.yml`,
+ele não pode ter `datasource` (passaria por cima do banco local).
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5433/servire_dev"; $env:DB_PASSWORD="postgres"
+$s="c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5"
+$env:SERVIRE_INTEGRACAO_CHAVES_ENTRADA="teste-central:$s"
+$env:SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID="teste-servire"
+$env:SERVIRE_INTEGRACAO_CHAVE_SAIDA_SEGREDO=$s
+$env:SERVIRE_INTEGRACAO_CENTRAL_URL="http://localhost:8081"
+mvn spring-boot:run -DskipTests "-Dspring-boot.run.profiles=dev"
+```
+
+No ar quando `http://localhost:8080/actuator/health` mostra `"status":"UP"`.
+
+**3. API da Central (terminal só dela, pasta `central-api-back`).** O operador é criado na subida, só no
+profile `dev`, com o e-mail e a senha abaixo. A senha de um operador que já existe **nunca** é trocada: para
+outra senha, use outro e-mail.
+
+```powershell
+$env:DB_URL="jdbc:postgresql://localhost:5433/central_dev"; $env:DB_PASSWORD="postgres"
+$s="c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5"
+$env:CENTRAL_JWT_SEGREDO=$s
+$env:CORS_ALLOWED_ORIGINS="http://localhost:4201"
+$env:CENTRAL_OPERADOR_SEED_EMAIL="gustavo2@teste.local"; $env:CENTRAL_OPERADOR_SEED_SENHA="12345678"
+$env:CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA="teste-servire:$s"
+$env:CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID="teste-central"
+$env:CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_SEGREDO=$s
+mvn spring-boot:run -DskipTests "-Dspring-boot.run.profiles=dev"
+```
+
+**4. Fronts.** `servire-api-front`: `npm start` (http://localhost:4200). `central-api-front`:
+`npm start -- --port 4201` (http://localhost:4201). Depois de um `git pull` que mexeu no `package.json`,
+rode `npm ci` antes.
+
+**Primeiro acesso.** Central: login com o e-mail e a senha do passo 3. Servire: não há usuário pronto; o
+primeiro nasce do convite da contratação (passo 2 abaixo). Com o provedor de e-mail `log`, o link aparece no
+terminal da API do Servire (`[STUB] Convite para ...`); com o Resend no `application-dev-local.yml`, chega no
+e-mail de verdade.
+
+**Problemas já vistos**
+
+| Sintoma | Causa |
+|---|---|
+| "E-mail ou senha inválidos" na Central | variáveis do seed coladas em outro terminal, ou operador já criado com outra senha |
+| "Entrega ... adiada ... Falha de rede" no log da Central | API do Servire fora do ar ou URL do produto errada (tem que ser `http://localhost:8080`, não 4200); a Central tenta de novo em 1, 5, 15 min e 1 h |
+| Contratação em "Aguardando envio" | normal por até 1 minuto; a tela não se atualiza sozinha (F5) |
 
 No painel, ou pela API com o token do operador:
 

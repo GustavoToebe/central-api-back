@@ -575,7 +575,7 @@ Diferenças e detalhes em relação ao desenho acima:
 
 | Tema | Como ficou |
 |---|---|
-| Migrations | V001 (operador e nonce), V002 (domínio comercial), V003 (`ultimo_status_provisionamento`). RLS sem policy nas 17 tabelas |
+| Migrations | V001 (operador e nonce), V002 (domínio comercial), V003 (`ultimo_status_provisionamento`), V004 (`cliente.cep` com hífen, 26/09/2026). RLS sem policy nas 17 tabelas |
 | Operadores | Login, refresh em cookie httpOnly `central_refresh_token` (path `/auth`, `Secure`, `SameSite=None`), logout, JWT próprio. Seed só no profile `dev` |
 | CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
 | Pagamento | Mora na `cobranca` (não há tabela `pagamento`) |
@@ -586,6 +586,7 @@ Diferenças e detalhes em relação ao desenho acima:
 | Idempotency-Key | Sempre o id da contratação. A edição de nome, slug e administrador só vale antes de um envio que possa ter criado a instância (seção 5.2); a resposta da contratação traz `provisionamentoEditavel` |
 | Operador | `POST /contratacoes/{id}/tentar-provisionamento` depois de `ERRO` (recusa se provisionada ou cancelada); `POST /contratacoes/{id}/suporte` devolve `{codigo, urlAcesso, expiraEm}` e grava `operador_log` |
 | Sincronização | `GET /integracao/v1/produtos/{produto}/direitos?pagina&tamanho` (tamanho 1 a 100, padrão 100): só contratações com `id_externo`, inclusive bloqueadas e canceladas |
+| Formatos | `web/Formatos` (26/09/2026): cliente PF exige CPF válido, PJ exige CNPJ válido (inclusive alfanumérico); CEP, UF, telefone e e-mail conferidos. Tudo grava formatado, então o mesmo documento com ou sem pontuação é o mesmo cliente. Mesmas regras no Servire e nos fronts |
 | Painel | Listas não paginadas por enquanto; `GET` por id em cliente e contratação. O resumo de `GET /contratacoes` traz `diaVencimento` e `vigenteAte` para a grade |
 | Variáveis | Em produção sem valor padrão: `CENTRAL_JWT_SEGREDO`, `CORS_ALLOWED_ORIGINS`, `CENTRAL_CSRF_COOKIE_DOMAIN` e as `CENTRAL_PRODUTO_SERVIRE_*` |
 
