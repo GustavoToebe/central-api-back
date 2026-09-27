@@ -12,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Painel e API em subdomínios diferentes: o front só lê o {@code XSRF-TOKEN}
+ * Painel e API em subdomínios diferentes: o front só lê o {@code CENTRAL-XSRF-TOKEN}
  * se o cookie for do domínio pai. Sem domínio, o cookie fica só no host da API.
  */
 class CsrfCookieDomainTest {
@@ -21,7 +21,7 @@ class CsrfCookieDomainTest {
     void comDominioOCookieXsrfSaiNoDominioPai() {
         String setCookie = setCookieCom(" servirea.com.br ");
 
-        assertThat(setCookie).startsWith("XSRF-TOKEN=");
+        assertThat(setCookie).startsWith("CENTRAL-XSRF-TOKEN=");
         assertThat(setCookie).containsIgnoringCase("Domain=servirea.com.br");
         assertThat(setCookie).doesNotContainIgnoringCase("HttpOnly");
     }

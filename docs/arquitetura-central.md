@@ -580,7 +580,7 @@ Diferenças e detalhes em relação ao desenho acima:
 |---|---|
 | Migrations | V001 (operador e nonce), V002 (domínio comercial), V003 (`ultimo_status_provisionamento`), V004 (`cliente.cep` com hífen, 26/09/2026). RLS sem policy nas 17 tabelas |
 | Operadores | Login, refresh em cookie httpOnly `central_refresh_token` (path `/auth`, `Secure`, `SameSite=None`), logout, JWT próprio. Seed só no profile `dev` |
-| CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
+| CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Cookie `CENTRAL-XSRF-TOKEN` (o Servire usa `XSRF-TOKEN` no mesmo domínio pai), domínio em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
 | Pagamento | Mora na `cobranca` (não há tabela `pagamento`) |
 | Troca de plano | Atualiza a mesma contratação: cobranças pagas ficam; abertas a partir da data da troca são apagadas e geradas de novo |
 | Situação comercial | Pagar tudo leva `INADIMPLENTE` e `TRIAL` para `ATIVA`; `BLOQUEADA` continua bloqueada. Isentar a última vencida devolve `INADIMPLENTE` para `ATIVA`. Job diário às 03:00 (America/Sao_Paulo) gera cobranças e marca `INADIMPLENTE`; não bloqueia |
@@ -604,7 +604,7 @@ no painel → Servire bloqueia pelo webhook; suporte → aba com o código de us
 | Tema | Como ficou |
 |---|---|
 | Telas | Clientes (lista, cadastro PF/PJ, detalhe com a grade de contratações), contratações (grade, nova, detalhe com resumo/financeiro/histórico) e catálogo (produtos, recursos, planos com preços, adicionais) |
-| Sessão | Access token no `sessionStorage`; refresh só no cookie httpOnly. Um refresh compartilhado por vez no 401; sem cookie `XSRF-TOKEN` o painel nem tenta renovar (a Central devolveria 403) |
+| Sessão | Access token no `sessionStorage`; refresh só no cookie httpOnly. Um refresh compartilhado por vez no 401; sem cookie `CENTRAL-XSRF-TOKEN` o painel nem tenta renovar (a Central devolveria 403) |
 | Regras na tela | "Tentar novamente" só com `ERRO` sem `id_externo`; edição de nome/slug/admin só com `provisionamentoEditavel`; suporte só com a instância criada |
 | Fora do escopo | Log de ações dos operadores: não há endpoint (o histórico vem dentro da contratação) |
 | Número curto (26/09/2026) | Coluna `sequencial` (identity, V007) em cliente, contratação, cobrança, produto, plano, adicional e recurso; o painel mostra "(2108)" e copia ao clicar. No Servire é por paróquia (V038) |

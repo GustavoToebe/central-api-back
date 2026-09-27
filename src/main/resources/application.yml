@@ -24,7 +24,7 @@ central:
     refresh-token-ttl: P30D
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
-    # Domínio do cookie XSRF-TOKEN. Vazio = só o host da API (dev, mesmo host).
+    # Domínio do cookie CENTRAL-XSRF-TOKEN. Vazio = só o host da API (dev, mesmo host).
     csrf:
       cookie-domain: ${CENTRAL_CSRF_COOKIE_DOMAIN:}
   integracao:

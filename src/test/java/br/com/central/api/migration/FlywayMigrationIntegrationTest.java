@@ -21,9 +21,10 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
         List<String> descricoes = jdbcTemplate.queryForList(
                 "SELECT description FROM flyway_schema_history WHERE type = 'SQL' ORDER BY installed_rank",
                 String.class);
-        assertThat(total).isEqualTo(7);
+        assertThat(total).isEqualTo(8);
         assertThat(descricoes).containsExactly("operador e nonce", "dominio comercial", "ultimo status provisionamento",
-                "cep formatado", "periodicidades e itens da cobranca", "erro aplicativo", "sequencial");
+                "cep formatado", "periodicidades e itens da cobranca", "erro aplicativo", "sequencial",
+                "fecha data api do supabase");
     }
 
     @Test
@@ -51,5 +52,11 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
                 """, Integer.class);
         assertThat(comRls).isEqualTo(19);
         assertThat(policies).isZero();
+        Integer semRls = jdbcTemplate.queryForObject("""
+                SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = 'public' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity
+                  AND c.relname <> 'flyway_schema_history'
+                """, Integer.class);
+        assertThat(semRls).as("tabela nova no public sem RLS").isZero();
     }
 }

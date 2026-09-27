@@ -15,7 +15,7 @@ public record SecurityProperties(Jwt jwt, Duration refreshTokenTtl, Cors cors, C
     }
 
     /**
-     * Domínio do cookie {@code XSRF-TOKEN}. Vazio = só o host da API. Com o
+     * Domínio do cookie {@code CENTRAL-XSRF-TOKEN}. Vazio = só o host da API. Com o
      * painel e a API em subdomínios diferentes (ex.: {@code central.servirea.com.br}
      * e {@code api-central.servirea.com.br}), o front só lê o cookie se ele for
      * do domínio pai ({@code servirea.com.br}); sem isso refresh e logout dão 403.

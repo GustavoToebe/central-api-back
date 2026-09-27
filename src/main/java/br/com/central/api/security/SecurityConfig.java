@@ -79,9 +79,17 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Mesmo repositório do {@code spa()} ({@code XSRF-TOKEN} legível por JS), com domínio configurável. */
+    /**
+     * Nome do cookie CSRF: o Servire grava {@code XSRF-TOKEN} no mesmo domínio pai (servirea.com.br); com o mesmo
+     * nome, logar num derrubava a sessão do outro no mesmo navegador (27/09/2026). O header continua
+     * {@code X-XSRF-TOKEN}.
+     */
+    public static final String COOKIE_CSRF = "CENTRAL-XSRF-TOKEN";
+
+    /** Mesmo repositório do {@code spa()} (cookie legível por JS), com nome próprio e domínio configurável. */
     static CookieCsrfTokenRepository csrfTokenRepository(SecurityProperties properties) {
         CookieCsrfTokenRepository repositorio = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repositorio.setCookieName(COOKIE_CSRF);
         String dominio = properties.csrf() == null ? null : properties.csrf().cookieDomain();
         if (dominio != null && !dominio.isBlank()) {
             repositorio.setCookieCustomizer(cookie -> cookie.domain(dominio.trim()));

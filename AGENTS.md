@@ -62,7 +62,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
-- CSRF: domínio do `XSRF-TOKEN` em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
+- CSRF: domínio do `CENTRAL-XSRF-TOKEN` (nome próprio: o Servire usa `XSRF-TOKEN` no mesmo domínio pai) em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
   domínio pai; obrigatória em produção). Variáveis de produção sem valor padrão, conferidas por
   `ConfiguracaoProducaoTest`.
 - Idempotency-Key é sempre o id da contratação. Nome, slug e admin só mudam antes de um envio que
