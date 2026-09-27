@@ -462,6 +462,12 @@ limpeza apaga tudo no corte. O recadastro manual das 3 crianças continua.
 
 **Central**: segundo projeto free do Supabase, banco próprio, Flyway próprio.
 
+**Produção (27/09/2026)**: os dois projetos (Servirea e Central) foram criados do zero no Supabase
+**ca-central-1**, na mesma cidade da VPS (Montreal); sa-east-1 dava 120 ms por conexão. Bancos montados só
+pelo Flyway (Servire V001–V039, Central V001–V008). A V039/V008 fecham o `public` para a Data API (RLS em
+tudo, sem policy, sem grant para anon/authenticated); a Data API e o cadastro do Supabase Auth ficam
+desligados no painel. Não marcar "Enable automatic RLS" ao criar projeto (o Flyway não começa).
+
 **Backup**: fora de escopo por enquanto (só uma usuária). Ao chegar a 2
 clientes pagantes: Supabase Pro + VPS maior.
 
@@ -549,6 +555,11 @@ cópias continuarem iguais.
 | 18 | Diocese é só agrupamento informativo no Servire (sem cota); diocese que contratar em bloco vira cliente na Central |
 | 19 | Idempotency-Key é sempre o id da contratação; nome, slug e administrador só são editáveis antes de um envio que possa ter criado a instância (26/09/2026) |
 | 20 | Testes na mesma versão major do Postgres da produção: 17 (Supabase 17.6, 26/09/2026) |
+| 21 | Produção em uma VPS (Integrator Host, Montreal) com Docker Compose + Caddy; um domínio só (`servirea.com.br`) com subdomínios `app`, `api`, `central`, `api-central`; DNS no Cloudflare como "DNS only" (27/09/2026) |
+| 22 | Supabase na mesma região da VPS (ca-central-1) |
+| 23 | Cookie CSRF da Central com nome próprio (`CENTRAL-XSRF-TOKEN`): o Servire usa `XSRF-TOKEN` no mesmo domínio pai |
+| 24 | Atualizar a produção = commit/push na `main` com testes verdes + `deploy/atualizar.sh` na VPS |
+| 25 | WhatsApp (próximo): EvolutionGo na VPS, na rede interna, com número dedicado; a Central vira a central de mensagens (WhatsApp + e-mail) dos apps; só recebe quem autorizou (`autorizaWhatsapp`) |
 
 ## 14. Estado da implementação
 
@@ -613,3 +624,15 @@ no painel → Servire bloqueia pelo webhook; suporte → aba com o código de us
 | Cobranças (26/09/2026) | `GET /cobrancas` com filtros (produto, situação, forma, vencimento, competência, busca por cliente/instância), `GET /cobrancas/{id}` com os itens e `POST /cobrancas/pagamentos` para várias contratações de uma vez |
 | Observação | `vigente_ate` usa a maior competência paga: pagar outubro com setembro em aberto mostra "pago até 31/10". Não bloqueia nada (o bloqueio é manual), mas o rótulo engana; rever no billing |
 
+
+### 14.4 Produção (27/09/2026)
+
+Etapa 5 feita. Roteiro em `deploy/README.md`.
+
+| Tema | Como ficou |
+|---|---|
+| Endereços | `app.servirea.com.br` (Servire), `api.servirea.com.br`, `central.servirea.com.br` (painel), `api-central.servirea.com.br`; `servirea.com.br` e `www` redirecionam para `app` |
+| VPS | Integrator Host "VPS ICP CORE" (4 vCPU, 6 GB, Ubuntu 26.04), IP 184.107.176.76, Montreal. O painel ICP (`:2090`) trazia um nginx nas portas 80/443: parado (`docker update --restart=no` + `stop`) para o Caddy. Firewall (ufw): 22, 80, 443, 2090 |
+| Deploy | `/opt/ecossistema` com os quatro repositórios (deploy key só leitura em cada um, alias `gh-<repo>`), `servire.env`/`central.env` (600, segredos gerados na VPS), `sites/` com os fronts. `atualizar.sh`: pull, build dos fronts no `node:24-alpine`, `docker compose up -d --build` |
+| Primeiro acesso | Operador da Central criado pelo `psql` (bcrypt via `extensions.crypt`); "Meu perfil" troca a senha |
+| Pendências | Storage das fotos (variáveis vazias: só o envio de foto falha); backup (Supabase Pro a partir de 2 clientes); primeira contratação/paróquia pela Central; migration de limpeza das tabelas antigas de billing do Servire; renomear/remover a paróquia `placeholder` (V020) |

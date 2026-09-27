@@ -127,11 +127,15 @@ Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e ent
 
 ## Próximos passos
 
-Etapas 1 e 2 (Servire), 3 (esta API) e 4 (`central-api-front`) prontas — ver
-`docs/arquitetura-central.md`, seção 14.
+Etapas 1 a 5 prontas: em produção desde 27/09/2026 (`docs/arquitetura-central.md`, seção 14.4;
+roteiro em `deploy/README.md`).
 
-1. Etapa 5 — corte em produção: roteiro, compose e Caddyfile em `deploy/` (VPS + Supabase sa-east-1). Variáveis de produção
-   (`.env.example`, incluindo `CENTRAL_CSRF_COOKIE_DOMAIN`), recriar o banco do Servire.
+1. Primeira contratação pela Central (produto Servire com URL de integração `http://servire-api:8080`, cliente,
+   contratação, provisionamento e convite).
+2. Ajustes do uso real (Servire e Central) e bugs.
+3. WhatsApp e e-mail pela Central (EvolutionGo na VPS; decisão 25).
+4. Segurança da VPS: Fail2Ban e SSH só por chave.
+5. Storage das fotos e backup (Supabase Pro) quando houver clientes pagantes.
 
 ## Stack prevista
 
