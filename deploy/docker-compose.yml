@@ -26,6 +26,37 @@ services:
     mem_limit: 1024m
     restart: unless-stopped
 
+  # WhatsApp (27/09/2026): EvolutionGo, sem porta publicada. A Central chama http://evolution:4000; o QR code
+  # é lido em whatsapp.servirea.com.br (Caddy com usuário e senha + a chave da API na tela da Evolution).
+  evolution:
+    image: evoapicloud/evolution-go:0.7.2
+    env_file: ../../evolution.env
+    environment:
+      SERVER_PORT: "4000"
+      CLIENT_NAME: servirea
+      PASSKEY_PUBLIC_URL: https://whatsapp.servirea.com.br
+      DATABASE_SAVE_MESSAGES: "false"
+      CONNECT_ON_STARTUP: "true"
+      OS_NAME: Servirea
+      EVENT_IGNORE_GROUP: "true"
+      EVENT_IGNORE_STATUS: "true"
+      DEBUG_ENABLED: INFO
+      LOG_TYPE: console
+    volumes:
+      - evolution_data:/app/dbdata
+    depends_on:
+      - evolution-db
+    mem_limit: 512m
+    restart: unless-stopped
+
+  evolution-db:
+    image: postgres:17-alpine
+    env_file: ../../evolution-db.env
+    volumes:
+      - evolution_pg:/var/lib/postgresql/data
+    mem_limit: 256m
+    restart: unless-stopped
+
   caddy:
     image: caddy:2-alpine
     ports:
@@ -37,11 +68,16 @@ services:
       - ../../sites:/srv:ro
       - caddy_data:/data
       - caddy_config:/config
+    # Usuário e hash (base64) do acesso ao whatsapp.servirea.com.br.
+    env_file: ../../caddy.env
     depends_on:
       - servire-api
       - central-api
+      - evolution
     restart: unless-stopped
 
 volumes:
   caddy_data:
   caddy_config:
+  evolution_data:
+  evolution_pg:

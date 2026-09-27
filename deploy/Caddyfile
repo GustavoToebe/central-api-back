@@ -57,3 +57,13 @@ api-central.servirea.com.br {
 		header_up X-Forwarded-For {remote_host}
 	}
 }
+
+# WhatsApp (EvolutionGo): só para ler o QR code e administrar a conexão. Duas travas: usuário e senha aqui
+# (caddy.env na VPS) e a chave global da API na tela da Evolution. A Central usa a rede interna.
+whatsapp.servirea.com.br {
+	import seguranca
+	basic_auth {
+		{$EVO_ADMIN_USUARIO} {$EVO_ADMIN_HASH}
+	}
+	reverse_proxy evolution:4000
+}

@@ -10,6 +10,7 @@ ca-central-1, com um projeto para cada sistema. Os fronts são arquivos estátic
 | `central.servirea.com.br` | Painel da Central | `sites/central` |
 | `api-central.servirea.com.br` | API da Central | container `central-api:8081` |
 | `servirea.com.br`, `www` | redireciona para `app` | Caddy |
+| `whatsapp.servirea.com.br` | tela da EvolutionGo (QR code) | container `evolution:4000`, com usuário e senha no Caddy |
 
 Os arquivos desta pasta:
 - `docker-compose.yml`: as duas APIs e o Caddy. As APIs não publicam porta nenhuma.
@@ -136,3 +137,30 @@ VALUES (gen_random_uuid(), 'Gustavo', '<e-mail>',
 **Produto Servire na Central.** Cadastre o produto com a URL de integração
 `http://servire-api:8080`, que é a rede interna do Docker. Depois cadastre a cliente, a contratação e o
 provisionamento da paróquia. O administrador recebe o convite por e-mail.
+
+## 7. WhatsApp (EvolutionGo) e Fail2Ban (27/09/2026)
+
+**EvolutionGo 0.7.2** (`evolution`, com o Postgres próprio `evolution-db`) roda na rede interna. A Central chama
+`http://evolution:4000` com o header `apikey`. Para ler o QR code e administrar a conexão, abra
+`https://whatsapp.servirea.com.br/manager`, que tem duas travas: o usuário e a senha do Caddy e depois a chave
+global da API.
+
+Os segredos, gerados na VPS com `chmod 600`, ficam em quatro arquivos:
+- `evolution.env`: `GLOBAL_API_KEY` e as URLs `POSTGRES_*_DB`.
+- `evolution-db.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_DB`.
+- `caddy.env`: `EVO_ADMIN_USUARIO` e `EVO_ADMIN_HASH`. O hash é o `caddy hash-password` em **base64**, porque o
+  `$` do bcrypt vira variável no compose.
+- `acesso-whatsapp.txt`: as credenciais para a primeira leitura. Apague o arquivo depois.
+
+Regras do WhatsApp:
+- Use um número **dedicado**, porque não é a API oficial da Meta.
+- Mande só para quem autorizou (`autorizaWhatsapp`) e em volume baixo.
+- Registro DNS: `whatsapp`, tipo A, nuvem cinza.
+
+**Fail2Ban** (`apt`, `/etc/fail2ban/jail.d/servirea.local`) vigia o SSH:
+- 5 erros em 10 minutos bloqueiam o IP por 1 hora, no ufw.
+- Quem reincide (`recidive`) fica bloqueado 1 semana.
+- Para ver: `fail2ban-client status sshd`.
+
+Não instale apps pela App Store do painel ICP. Vários ligam de novo o nginx dele, que disputa as portas 80 e 443
+com o Caddy.
