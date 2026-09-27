@@ -60,6 +60,15 @@ public class RefreshTokenService {
         });
     }
 
+    /**
+     * Troca de senha: encerra todas as sessões do operador, na mesma transação. Apaga os tokens em vez de
+     * revogar: um token revogado apresentado de novo conta como reuso e derrubaria também a sessão nova.
+     */
+    @Transactional
+    public void encerrarTodas(java.util.UUID operadorId) {
+        repository.apagarTodos(operadorId);
+    }
+
     public record Rotacao(Operador operador, String refreshTokenBruto) {
     }
 }

@@ -61,4 +61,8 @@ public class Operador {
     public boolean isAtivo() {
         return ativo;
     }
+
+    public void trocarSenha(String novoHash) {
+        this.senhaHash = novoHash;
+    }
 }

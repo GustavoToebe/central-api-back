@@ -42,8 +42,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   `@Email(regexp = Formatos.EMAIL)`). Grava sempre formatado; mesmas regras do Servire e do front.
   Teste que cria cliente usa `Documentos.cpf()`/`cnpj()` (documento válido e único).
 - `security/` — JWT próprio (`CENTRAL_JWT_SEGREDO`), BCrypt, cookie httpOnly de refresh.
-- `operador/` — login, refresh, logout, `GET /operadores/eu`. Seed só no profile `dev`,
-  se `CENTRAL_OPERADOR_SEED_EMAIL` e `CENTRAL_OPERADOR_SEED_SENHA` existirem.
+- `operador/` — login, refresh, logout, `GET /operadores/eu`, `PUT /operadores/eu/senha` (confere a atual, derruba
+  as outras sessões e devolve cookie de refresh novo). Seed só no profile `dev`, se `CENTRAL_OPERADOR_SEED_EMAIL` e
+  `CENTRAL_OPERADOR_SEED_SENHA` existirem; em produção o primeiro operador entra pelo `psql` (`deploy/README.md`).
 - `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
   nonce com `INSERT ... ON CONFLICT`, cliente de saída (`AplicativoHttp`) e o job
   que entrega o `evento_saida`. `GET /integracao/v1/produtos/{produto}/direitos`

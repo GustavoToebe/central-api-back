@@ -1,6 +1,8 @@
 package br.com.central.api.operador;
 
 import br.com.central.api.security.JwtService;
+import br.com.central.api.web.BadRequestException;
+import br.com.central.api.web.ResourceNotFoundException;
 import br.com.central.api.web.UnauthorizedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -53,6 +55,28 @@ public class AuthService {
         }
         refreshTokenService.revogar(refreshTokenBruto);
         auditoria.registrar(null, "LOGOUT", null, ip);
+    }
+
+    /**
+     * Troca a própria senha (27/09/2026: a senha do primeiro operador passou pelo chat). Derruba as outras
+     * sessões e devolve um refresh token novo para esta continuar aberta.
+     */
+    @Transactional
+    public String trocarSenha(UUID operadorId, String senhaAtual, String novaSenha, String ip) {
+        Operador operador = operadorRepository.findById(operadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Operador não encontrado."));
+        if (!passwordEncoder.matches(senhaAtual, operador.getSenhaHash())) {
+            auditoria.registrar(operadorId, "SENHA_RECUSADA", null, ip);
+            throw new BadRequestException("A senha atual não confere.");
+        }
+        if (passwordEncoder.matches(novaSenha, operador.getSenhaHash())) {
+            throw new BadRequestException("A nova senha precisa ser diferente da atual.");
+        }
+        operador.trocarSenha(passwordEncoder.encode(novaSenha));
+        operadorRepository.save(operador);
+        refreshTokenService.encerrarTodas(operadorId);
+        auditoria.registrar(operadorId, "SENHA_ALTERADA", null, ip);
+        return refreshTokenService.emitir(operador, ip);
     }
 
     private Sessao sessao(Operador operador, String refresh) {

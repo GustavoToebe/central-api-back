@@ -15,4 +15,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Modifying
     @Query("update RefreshToken t set t.revogadoEm = :quando where t.operador.id = :operadorId and t.revogadoEm is null")
     int revogarTodosAtivos(UUID operadorId, Instant quando);
+
+    /** Troca de senha: apaga em vez de revogar, para token antigo não disparar a detecção de reuso. */
+    @Modifying
+    @Query("delete from RefreshToken t where t.operador.id = :operadorId")
+    int apagarTodos(UUID operadorId);
 }

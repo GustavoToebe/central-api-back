@@ -79,6 +79,11 @@ public class AuthController {
     }
 
     private ResponseCookie cookie(String valor, long maxAgeSeconds) {
+        return cookieDeRefresh(valor, maxAgeSeconds);
+    }
+
+    /** Também usado pela troca de senha, que devolve um refresh novo fora de /auth. */
+    static ResponseCookie cookieDeRefresh(String valor, long maxAgeSeconds) {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE, valor)
                 .httpOnly(true)
                 .secure(true)
