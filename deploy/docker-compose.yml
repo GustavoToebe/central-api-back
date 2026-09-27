@@ -1,0 +1,47 @@
+# Produção na VPS (27/09/2026): as duas APIs e o Caddy (HTTPS automático).
+# Layout em /opt/ecossistema (ver deploy/README.md):
+#   servire-api-back/  servire-api-front/  central-api-back/  central-api-front/
+#   servire.env  central.env  (segredos, chmod 600, fora do git)
+#   sites/servire  sites/central  (fronts compilados pelo atualizar.sh)
+# As APIs não publicam porta: só o Caddy fala com a internet (80/443).
+name: ecossistema
+
+services:
+  servire-api:
+    build: ../../servire-api-back
+    env_file: ../../servire.env
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+      SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE: 5
+      SERVIRE_INTEGRACAO_CENTRAL_URL: http://central-api:8081
+    mem_limit: 1536m
+    restart: unless-stopped
+
+  central-api:
+    build: ..
+    env_file: ../../central.env
+    environment:
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+      SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE: 5
+    mem_limit: 1024m
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../sites:/srv:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - servire-api
+      - central-api
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

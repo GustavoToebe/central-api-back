@@ -68,5 +68,6 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Idempotency-Key é sempre o id da contratação. Nome, slug e admin só mudam antes de um envio que
   possa ter criado a instância (`Contratacao.dadosDeProvisionamentoEditaveis`, V003); senão 409
   `PROVISIONAMENTO_NAO_EDITAVEL`.
+- Produção: `deploy/` (compose com as duas APIs e o Caddy, `atualizar.sh`, roteiro no README de lá).
 - Testes: `mvn clean verify` (Docker, Postgres 17 — mesma versão major da produção). Ao somar migration, atualizar o total
   em `FlywayMigrationIntegrationTest`.

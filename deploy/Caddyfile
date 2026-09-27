@@ -1,0 +1,59 @@
+# Caddy da VPS (27/09/2026): certificado HTTPS automático (Let's Encrypt) para
+# cada nome. No Cloudflare os registros ficam "DNS only" (nuvem cinza): o IP
+# real do visitante chega à API (limite da inscrição pública por IP) e o
+# certificado sai direto para a VPS.
+{
+	email contato@servirea.com.br
+}
+
+(seguranca) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+}
+
+(spa) {
+	encode zstd gzip
+	try_files {path} /index.html
+	file_server
+	@hash path *.js *.css *.woff2
+	@resto not path *.js *.css *.woff2
+	header @hash Cache-Control "public, max-age=31536000, immutable"
+	header @resto Cache-Control "no-cache"
+}
+
+servirea.com.br, www.servirea.com.br {
+	redir https://app.servirea.com.br{uri} permanent
+}
+
+app.servirea.com.br {
+	import seguranca
+	root * /srv/servire
+	import spa
+}
+
+# O proxy sobrescreve o X-Forwarded-For com o IP de quem conectou (não
+# repassa o que o navegador mandou) — README do servire-api-back.
+api.servirea.com.br {
+	import seguranca
+	reverse_proxy servire-api:8080 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}
+
+central.servirea.com.br {
+	import seguranca
+	root * /srv/central
+	import spa
+}
+
+api-central.servirea.com.br {
+	import seguranca
+	reverse_proxy central-api:8081 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}
