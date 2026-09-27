@@ -26,6 +26,11 @@ da VPS e todos como **DNS only (nuvem cinza)**. Com o proxy do Cloudflare ligado
 
 ## 2. Supabase (nos dois projetos)
 
+- Ao criar o projeto, deixe **Enable automatic RLS desmarcado**. Essa opção cria `public.rls_auto_enable` e o
+  event trigger `ensure_rls`, e com o `public` "não vazio" o Flyway se recusa a começar ("Found non-empty
+  schema(s) public but no schema history table"). Se foi marcada, rode no SQL Editor de cada projeto:
+  `DROP EVENT TRIGGER IF EXISTS ensure_rls; DROP FUNCTION IF EXISTS public.rls_auto_enable();`
+  As migrations já ligam o RLS nas tabelas.
 - **Desligue a Data API** (Project Settings → Data API). Só a API Java usa o banco. As migrations
   V039 (Servire) e V008 (Central) já fecham o schema `public`, e desligar aqui é uma segunda trava.
 - **Desligue o cadastro de usuários do Supabase Auth** (Authentication → Sign In / Providers → "Allow
