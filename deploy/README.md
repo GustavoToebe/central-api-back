@@ -1,7 +1,7 @@
 # Produção na VPS
 
 Uma VPS Ubuntu, com as duas APIs e o Caddy no Docker. Os bancos ficam no Supabase, na região
-sa-east-1, com um projeto para cada sistema. Os fronts são arquivos estáticos servidos pelo Caddy.
+ca-central-1, com um projeto para cada sistema. Os fronts são arquivos estáticos servidos pelo Caddy.
 
 | Endereço | O quê | Onde |
 |---|---|---|
@@ -41,16 +41,22 @@ da VPS e todos como **DNS only (nuvem cinza)**. Com o proxy do Cloudflare ligado
 ```bash
 apt update && apt upgrade -y
 curl -fsSL https://get.docker.com | sh
-ufw allow OpenSSH && ufw allow 80,443/tcp && ufw allow 443/udp && ufw --force enable
+ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw allow 2090/tcp && ufw --force enable
 mkdir -p /opt/ecossistema && cd /opt/ecossistema
-git clone https://github.com/GustavoToebe/servire-api-back.git
-git clone https://github.com/GustavoToebe/servire-api-front.git
-git clone https://github.com/GustavoToebe/central-api-back.git
-git clone https://github.com/GustavoToebe/central-api-front.git
+git clone gh-servire-api-back:GustavoToebe/servire-api-back.git
+git clone gh-servire-api-front:GustavoToebe/servire-api-front.git
+git clone gh-central-api-back:GustavoToebe/central-api-back.git
+git clone gh-central-api-front:GustavoToebe/central-api-front.git
 ```
 
-Se os repositórios forem privados, o clone precisa de um token do GitHub (fine-grained, só leitura,
-só destes quatro repositórios) ou de uma deploy key em cada um.
+Os repositórios são privados. Cada um tem uma deploy key só de leitura, que o GitHub não deixa repetir entre
+repositórios. As chaves ficam em `~/.ssh/deploy_<repo>`, com um alias `gh-<repo>` no `~/.ssh/config`, e a
+chave pública vai em GitHub → repositório → Settings → Deploy keys.
+
+**VPS com o painel ICP (Integrator Host, Montreal).** O painel traz um nginx próprio (`ic-nginx-*`) nas portas
+80 e 443, que só serve a página padrão do servidor. Ele foi parado com `docker update --restart=no` e
+`docker stop` para o Caddy assumir essas portas. O painel continua em `:2090`. O Supabase fica em
+ca-central-1, na mesma cidade da VPS (sa-east-1 dava 120 ms por conexão).
 
 ## 4. Segredos
 
