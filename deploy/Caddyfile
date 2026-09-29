@@ -32,6 +32,9 @@ servirea.com.br, www.servirea.com.br {
 
 app.servirea.com.br {
 	import seguranca
+	# CSP do HTML. Não entra no snippet compartilhado: a API é JSON e o
+	# painel do WhatsApp (Evolution) quebraria com esta política.
+	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.servirea.com.br https://viacep.com.br https://challenges.cloudflare.com https://qcybebkhwhrudbwoweip.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:"
 	root * /srv/servire
 	import spa
 }
@@ -47,6 +50,7 @@ api.servirea.com.br {
 
 central.servirea.com.br {
 	import seguranca
+	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api-central.servirea.com.br https://viacep.com.br; frame-src 'none'; worker-src 'self' blob:"
 	root * /srv/central
 	import spa
 }
