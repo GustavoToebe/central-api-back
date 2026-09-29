@@ -70,6 +70,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
                 "/contratacoes/" + id + "/pagamentos",
                 "/contratacoes/" + id + "/cobrancas/adiantadas",
                 "/contratacoes/" + id + "/cobrancas/" + id + "/estornar",
+                "/contratacoes/" + id + "/cobrancas/" + id + "/reemitir",
                 "/contratacoes/" + id + "/cobrancas/" + id + "/isentar");
     }
 
@@ -227,7 +228,15 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
         autorizado(token, post("/contratacoes/" + contratacaoId + "/pagamentos"),
                 "{\"cobrancaIds\":[\"" + cobrancaId + "\"],\"pagoEm\":\"" + hoje + "\",\"formaPagamento\":\"PIX\"}", 200);
         autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/" + cobrancaId + "/estornar"), null, 200);
-        autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/" + cobrancaId + "/isentar"),
+        MvcResult reemitida = autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/" + cobrancaId + "/reemitir"), null, 200);
+        String corpoReemitida = reemitida.getResponse().getContentAsString();
+        String inicio = com.jayway.jsonpath.JsonPath.read(corpoReemitida,
+                "$.cobrancas[?(@.id == '" + cobrancaId + "')].competenciaInicio").toString();
+        inicio = inicio.substring(2, inicio.length() - 2);
+        String novaId = com.jayway.jsonpath.JsonPath.read(corpoReemitida,
+                "$.cobrancas[?(@.status == 'ABERTA' && @.competenciaInicio == '" + inicio + "')].id").toString();
+        novaId = novaId.substring(2, novaId.length() - 2);
+        autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/" + novaId + "/isentar"),
                 "{\"motivo\":\"cortesia\"}", 200);
         autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/adiantadas"),
                 "{\"ate\":\"" + hoje.substring(0, 7) + "\"}", 200);

@@ -6,7 +6,7 @@ irmão **`central-api-front`** (outro git). O primeiro aplicativo atendido é o
 Servire (`servire-api-back` / `servire-api-front`). Idioma do código,
 comentários, mensagens de erro e commits: **português**.
 
-- Desenho e decisões: `docs/arquitetura-central.md`.
+- Índice: `docs/README.md`. Desenho e decisões: `docs/arquitetura-central.md`.
 - Contrato com os apps: `docs/contrato-integracao-v1.md`. Mudança de contrato
   atualiza o documento **junto** com o código, nos dois lados.
 

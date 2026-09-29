@@ -516,6 +516,23 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void reemitirCancelaAAtualECriaOutraAbertaNaMesmaCompetencia() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, hoje.withDayOfMonth(1));
+        CobrancaResponse cobranca = maisAntiga(financeiro(contratacao));
+
+        FinanceiroResponse depois = billingService.reemitir(contratacao.id(), cobranca.id());
+
+        CobrancaResponse cancelada = porId(depois, cobranca.id());
+        assertThat(cancelada.status()).isEqualTo(Cobranca.Status.CANCELADA);
+        assertThat(depois.cobrancas())
+                .filteredOn(c -> c.competenciaInicio().equals(cobranca.competenciaInicio())
+                        && c.status() == Cobranca.Status.ABERTA)
+                .hasSize(1);
+        assertThatThrownBy(() -> billingService.reemitir(contratacao.id(), cobranca.id()))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
     void trocarDePlanoMantemOPagoERecalculaAsAbertasDaqueleDiaEmDiante() {
         LocalDate inicio = hoje.minusMonths(2).withDayOfMonth(1);
         ContratacaoResponse antes = contratar(Periodicidade.MENSAL, CEM, 10, inicio);

@@ -155,6 +155,27 @@ public class BillingService {
         return montar(contratacaoId);
     }
 
+    /**
+     * Cancela a cobrança e emite outra, em aberto, na mesma competência.
+     * A cancelada deixa de ocupar o período (índice único parcial, V009).
+     */
+    @Transactional
+    public FinanceiroResponse reemitir(UUID contratacaoId, UUID cobrancaId) {
+        Contratacao contratacao = carregar(contratacaoId);
+        exigirNaoCancelada(contratacao);
+        Cobranca atual = buscarCobrancas(contratacaoId, List.of(cobrancaId)).getFirst();
+        if (atual.getStatus() == Cobranca.Status.CANCELADA) {
+            throw new BadRequestException("Cobrança cancelada não gera outra.");
+        }
+        atual.cancelar("Substituída por nova emissão");
+        entityManager.flush();
+        List<ContratacaoAdicional> adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacaoId);
+        cobrancaRepository.save(new Cobranca(
+                contratacao, atual.getCompetenciaInicio(), atual.getCompetenciaFim(), atual.getVencimento(),
+                itensDe(contratacao, adicionais)));
+        return montar(contratacaoId);
+    }
+
     @Transactional
     public FinanceiroResponse isentar(UUID contratacaoId, UUID cobrancaId, String motivo) {
         Contratacao contratacao = carregar(contratacaoId);

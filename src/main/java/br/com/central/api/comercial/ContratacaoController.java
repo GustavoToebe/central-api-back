@@ -109,6 +109,11 @@ public class ContratacaoController {
         return billingService.estornar(id, cobrancaId);
     }
 
+    @PostMapping("/{id}/cobrancas/{cobrancaId}/reemitir")
+    public FinanceiroResponse reemitir(@PathVariable UUID id, @PathVariable UUID cobrancaId) {
+        return billingService.reemitir(id, cobrancaId);
+    }
+
     @PostMapping("/{id}/cobrancas/{cobrancaId}/isentar")
     public FinanceiroResponse isentar(@PathVariable UUID id, @PathVariable UUID cobrancaId,
                                       @RequestBody(required = false) IsentarCobrancaRequest request) {
