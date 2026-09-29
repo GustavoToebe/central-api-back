@@ -102,6 +102,17 @@ public class Contratacao implements Persistable<UUID> {
     @Column(name = "motivo_bloqueio")
     private String motivoBloqueio;
 
+    /** Isenta de cobrança (V010): as cobranças das competências até {@link #isentaAte} nascem isentas. */
+    @Column(nullable = false)
+    private boolean isenta;
+
+    @Column(name = "isencao_motivo")
+    private String isencaoMotivo;
+
+    /** Último dia da última competência isenta; vazio com {@link #isenta} = sem data para acabar. */
+    @Column(name = "isenta_ate")
+    private LocalDate isentaAte;
+
     @Column(name = "versao_direitos", nullable = false)
     private int versaoDireitos;
 
@@ -297,6 +308,35 @@ public class Contratacao implements Persistable<UUID> {
 
     public void setMotivoBloqueio(String motivoBloqueio) {
         this.motivoBloqueio = motivoBloqueio;
+    }
+
+    public void isentar(String motivo, LocalDate ate) {
+        this.isenta = true;
+        this.isencaoMotivo = motivo;
+        this.isentaAte = ate;
+    }
+
+    public void encerrarIsencao() {
+        this.isenta = false;
+        this.isencaoMotivo = null;
+        this.isentaAte = null;
+    }
+
+    /** A competência que começa em {@code inicio} está dentro da isenção. */
+    public boolean isentaEm(LocalDate inicio) {
+        return isenta && (isentaAte == null || !inicio.isAfter(isentaAte));
+    }
+
+    public boolean isIsenta() {
+        return isenta;
+    }
+
+    public String getIsencaoMotivo() {
+        return isencaoMotivo;
+    }
+
+    public LocalDate getIsentaAte() {
+        return isentaAte;
     }
 
     public int getVersaoDireitos() {

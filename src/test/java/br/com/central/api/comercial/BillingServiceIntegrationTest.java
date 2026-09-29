@@ -484,6 +484,81 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         assertThatThrownBy(() -> pagar(contratacao.id(), primeira.id())).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> pagar(contratacao.id(), outra.id())).isInstanceOf(BadRequestException.class);
         assertThat(porId(billingService.financeiro(contratacao.id()), outra.id()).observacao()).isEqualTo("Cortesia");
+        assertThat(porId(billingService.financeiro(contratacao.id()), outra.id()).status()).isEqualTo(Cobranca.Status.ISENTA);
+    }
+
+    @Test
+    void cobrancaDeValorZeroNasceIsentaENaoVence() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, new BigDecimal("0.00"), 10,
+                hoje.minusMonths(2).withDayOfMonth(1));
+
+        FinanceiroResponse financeiro = financeiro(contratacao);
+        billingService.gerarCobrancasDeTodas();
+
+        assertThat(financeiro.cobrancas()).isNotEmpty().allSatisfy(cobranca -> {
+            assertThat(cobranca.status()).isEqualTo(Cobranca.Status.ISENTA);
+            assertThat(cobranca.vencida()).isFalse();
+            assertThat(cobranca.observacao()).isEqualTo("Valor zero");
+        });
+        assertThat(financeiro.resumo().vencidas()).isZero();
+        assertThat(contratacaoService.buscar(contratacao.id()).situacaoComercial()).isEqualTo(SituacaoComercial.TRIAL);
+    }
+
+    @Test
+    void isentarContratacaoAteUmMesIsentaAsAbertasDoPeriodoERegulariza() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, hoje.minusMonths(2).withDayOfMonth(1));
+        financeiro(contratacao);
+        billingService.gerarCobrancasDeTodas();
+        assertThat(contratacaoService.buscar(contratacao.id()).situacaoComercial()).isEqualTo(SituacaoComercial.INADIMPLENTE);
+
+        YearMonth esteMes = YearMonth.from(hoje);
+        FinanceiroResponse financeiro = billingService.isentarContratacao(contratacao.id(), "Paróquia parceira", esteMes);
+        financeiro = billingService.gerarAdiantadas(contratacao.id(), null, esteMes.plusMonths(3));
+
+        for (CobrancaResponse cobranca : financeiro.cobrancas()) {
+            boolean dentro = !YearMonth.from(cobranca.competenciaInicio()).isAfter(esteMes);
+            assertThat(cobranca.status()).as(cobranca.competenciaInicio().toString())
+                    .isEqualTo(dentro ? Cobranca.Status.ISENTA : Cobranca.Status.ABERTA);
+            if (dentro) {
+                assertThat(cobranca.observacao()).isEqualTo("Paróquia parceira");
+            }
+        }
+        assertThat(financeiro.resumo().vencidas()).isZero();
+        ContratacaoResponse depois = contratacaoService.buscar(contratacao.id());
+        assertThat(depois.situacaoComercial()).isEqualTo(SituacaoComercial.ATIVA);
+        assertThat(depois.isenta()).isTrue();
+        assertThat(depois.isencaoMotivo()).isEqualTo("Paróquia parceira");
+        assertThat(depois.isentaAte()).isEqualTo(esteMes.atEndOfMonth());
+    }
+
+    @Test
+    void encerrarIsencaoReabreAsIsentasDosProximosMeses() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, hoje.withDayOfMonth(1));
+        YearMonth esteMes = YearMonth.from(hoje);
+        billingService.isentarContratacao(contratacao.id(), "Piloto", null);
+        FinanceiroResponse isenta = billingService.gerarAdiantadas(contratacao.id(), null, esteMes.plusMonths(2));
+        assertThat(isenta.cobrancas()).hasSize(3).allSatisfy(c -> assertThat(c.status()).isEqualTo(Cobranca.Status.ISENTA));
+
+        billingService.encerrarIsencao(contratacao.id());
+        FinanceiroResponse depois = billingService.gerarAdiantadas(contratacao.id(), null, esteMes.plusMonths(3));
+
+        for (CobrancaResponse cobranca : depois.cobrancas()) {
+            boolean desteMes = YearMonth.from(cobranca.competenciaInicio()).equals(esteMes);
+            assertThat(cobranca.status()).as(cobranca.competenciaInicio().toString())
+                    .isEqualTo(desteMes ? Cobranca.Status.ISENTA : Cobranca.Status.ABERTA);
+        }
+        assertThat(contratacaoService.buscar(contratacao.id()).isenta()).isFalse();
+        assertThatThrownBy(() -> billingService.encerrarIsencao(contratacao.id())).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void isencaoPedeMotivoENaoTerminaNoPassado() {
+        ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, hoje.withDayOfMonth(1));
+
+        assertThatThrownBy(() -> billingService.isentarContratacao(contratacao.id(), " ", null))
+                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> billingService.isentarContratacao(contratacao.id(), "Cortesia",
+                YearMonth.from(hoje).minusMonths(1))).isInstanceOf(BadRequestException.class);
     }
 
     @Test

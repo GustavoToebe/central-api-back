@@ -146,6 +146,9 @@ public final class ContratacaoDtos {
             String adminEmail,
             int versaoDireitos,
             DireitosInstancia direitos,
+            boolean isenta,
+            String isencaoMotivo,
+            LocalDate isentaAte,
             List<AdicionalContratadoResponse> adicionais,
             List<HistoricoResponse> historico
     ) {

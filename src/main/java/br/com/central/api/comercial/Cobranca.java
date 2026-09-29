@@ -34,7 +34,9 @@ public class Cobranca {
     public enum Status {
         ABERTA,
         PAGA,
-        CANCELADA
+        CANCELADA,
+        /** Não é cobrada: valor zero, isenção da contratação ou o botão "Isentar" (V010). Ocupa a competência. */
+        ISENTA
     }
 
     @Id
@@ -143,6 +145,23 @@ public class Cobranca {
         if (motivo != null) {
             this.observacao = motivo;
         }
+    }
+
+    public void isentar(String motivo) {
+        if (status != Status.ABERTA) {
+            throw new IllegalStateException("Só cobrança em aberto fica isenta.");
+        }
+        this.status = Status.ISENTA;
+        this.observacao = motivo;
+    }
+
+    /** Volta a isenta para em aberto (fim da isenção da contratação). */
+    public void reabrirIsenta() {
+        if (status != Status.ISENTA) {
+            throw new IllegalStateException("Só cobrança isenta volta a ficar em aberto.");
+        }
+        this.status = Status.ABERTA;
+        this.observacao = null;
     }
 
     public boolean vencidaEm(LocalDate hoje) {

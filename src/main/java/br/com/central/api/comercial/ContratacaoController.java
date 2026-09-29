@@ -10,10 +10,12 @@ import br.com.central.api.comercial.dto.ContratacaoDtos.SubstituirAdicionaisRequ
 import br.com.central.api.comercial.dto.FinanceiroDtos.FinanceiroResponse;
 import br.com.central.api.comercial.dto.FinanceiroDtos.GerarCobrancasRequest;
 import br.com.central.api.comercial.dto.FinanceiroDtos.IsentarCobrancaRequest;
+import br.com.central.api.comercial.dto.FinanceiroDtos.IsentarContratacaoRequest;
 import br.com.central.api.comercial.dto.FinanceiroDtos.RegistrarPagamentoRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,5 +120,16 @@ public class ContratacaoController {
     public FinanceiroResponse isentar(@PathVariable UUID id, @PathVariable UUID cobrancaId,
                                       @RequestBody(required = false) IsentarCobrancaRequest request) {
         return billingService.isentar(id, cobrancaId, request == null ? null : request.motivo());
+    }
+
+    @PostMapping("/{id}/isencao")
+    public FinanceiroResponse isentarContratacao(@PathVariable UUID id,
+                                                 @Valid @RequestBody IsentarContratacaoRequest request) {
+        return billingService.isentarContratacao(id, request.motivo(), request.ate());
+    }
+
+    @DeleteMapping("/{id}/isencao")
+    public FinanceiroResponse encerrarIsencao(@PathVariable UUID id) {
+        return billingService.encerrarIsencao(id);
     }
 }

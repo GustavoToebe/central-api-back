@@ -302,6 +302,9 @@ public class ContratacaoService {
                 contratacao.getAdminEmail(),
                 contratacao.getVersaoDireitos(),
                 direitos.ler(contratacao),
+                contratacao.isIsenta(),
+                contratacao.getIsencaoMotivo(),
+                contratacao.getIsentaAte(),
                 adicionais,
                 historico);
     }

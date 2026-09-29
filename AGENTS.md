@@ -58,6 +58,8 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   `INADIMPLENTE`; não bloqueia. Cobrança tem itens (`cobranca_item`: plano + adicionais,
   preço mensal × meses); valor = soma dos itens; adicionais mudaram → refaz só as abertas
   não vencidas. Competência começa no dia 1. `/cobrancas` = lista geral, detalhe e pagamento em lote.
+  Cobrança `ISENTA` (V010): valor zero nasce isenta; contratação isenta (`isenta`, `isencao_motivo`, `isenta_ate`)
+  isenta as competências do período; ver `docs/cobrancas/README.md`.
   Número curto para o operador: coluna `sequencial` (identity, V007) em cliente, contratação, cobrança,
   produto, plano, adicional e recurso; `@Generated` na entidade. Não é `numero` (cliente já tem, do endereço). Provisionar espera 1 min, 5 min, 15 min e 1 h e
   então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.

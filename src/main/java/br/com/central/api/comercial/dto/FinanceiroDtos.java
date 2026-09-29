@@ -5,6 +5,7 @@ import br.com.central.api.comercial.CobrancaItem;
 import br.com.central.api.comercial.Contratacao;
 import br.com.central.api.comercial.FormaPagamento;
 import br.com.central.api.comercial.Periodicidade;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -32,6 +33,13 @@ public final class FinanceiroDtos {
     }
 
     /** {@code de} vazio = desde o início da contratação. Só cria as que faltam. */
+    /** Isenção da contratação: {@code ate} é a última competência isenta (vazio = sem data para acabar). */
+    public record IsentarContratacaoRequest(
+            @NotBlank(message = "Informe o motivo da isenção.") String motivo,
+            YearMonth ate
+    ) {
+    }
+
     public record GerarCobrancasRequest(
             YearMonth de,
             @NotNull(message = "Informe até qual competência gerar.") YearMonth ate

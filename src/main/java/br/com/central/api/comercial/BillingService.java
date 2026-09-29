@@ -170,9 +170,9 @@ public class BillingService {
         atual.cancelar("Substituída por nova emissão");
         entityManager.flush();
         List<ContratacaoAdicional> adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacaoId);
-        cobrancaRepository.save(new Cobranca(
+        cobrancaRepository.save(aplicarIsencao(contratacao, new Cobranca(
                 contratacao, atual.getCompetenciaInicio(), atual.getCompetenciaFim(), atual.getVencimento(),
-                itensDe(contratacao, adicionais)));
+                itensDe(contratacao, adicionais))));
         return montar(contratacaoId);
     }
 
@@ -184,15 +184,87 @@ public class BillingService {
             throw new BadRequestException("Só é possível isentar cobrança em aberto.");
         }
         String texto = texto(motivo);
-        cobranca.cancelar(texto == null ? "Isenta" : texto);
+        cobranca.isentar(texto == null ? "Isenta" : texto);
         entityManager.flush();
-        if (contratacao.getSituacaoComercial() == SituacaoComercial.INADIMPLENTE
-                && !cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(
-                contratacaoId, Cobranca.Status.ABERTA, hoje())) {
-            contratacao.setSituacaoComercial(SituacaoComercial.ATIVA);
+        if (regularizar(contratacao)) {
             direitos.publicar(contratacao, "ISENCAO", texto);
         }
         return montar(contratacaoId);
+    }
+
+    /**
+     * Isenta a contratação (29/09/2026): as cobranças das competências até {@code ate} (vazio = sem fim)
+     * nascem isentas, e as em aberto desse período ficam isentas agora.
+     */
+    @Transactional
+    public FinanceiroResponse isentarContratacao(UUID contratacaoId, String motivo, YearMonth ate) {
+        Contratacao contratacao = carregar(contratacaoId);
+        exigirNaoCancelada(contratacao);
+        String texto = texto(motivo);
+        if (texto == null) {
+            throw new BadRequestException("Informe o motivo da isenção.");
+        }
+        if (ate != null && ate.isBefore(YearMonth.from(hoje()))) {
+            throw new BadRequestException("A isenção não pode terminar num mês que já passou.");
+        }
+        contratacao.isentar(texto, ate == null ? null : ate.atEndOfMonth());
+        for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacaoId)) {
+            if (cobranca.getStatus() == Cobranca.Status.ABERTA && contratacao.isentaEm(cobranca.getCompetenciaInicio())) {
+                cobranca.isentar(texto);
+            }
+        }
+        entityManager.flush();
+        regularizar(contratacao);
+        direitos.publicar(contratacao, "ISENCAO_CONTRATACAO", texto);
+        return montar(contratacaoId);
+    }
+
+    /**
+     * Encerra a isenção: as próximas cobranças nascem normais, e as isentas já geradas para depois deste mês
+     * voltam a ficar em aberto (as de valor zero continuam isentas).
+     */
+    @Transactional
+    public FinanceiroResponse encerrarIsencao(UUID contratacaoId) {
+        Contratacao contratacao = carregar(contratacaoId);
+        if (!contratacao.isIsenta()) {
+            throw new BadRequestException("A contratação não está isenta.");
+        }
+        LocalDate proximoMes = YearMonth.from(hoje()).plusMonths(1).atDay(1);
+        String motivo = contratacao.getIsencaoMotivo();
+        contratacao.encerrarIsencao();
+        for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacaoId)) {
+            if (cobranca.getStatus() == Cobranca.Status.ISENTA && cobranca.getValor().signum() > 0
+                    && !cobranca.getCompetenciaInicio().isBefore(proximoMes)) {
+                cobranca.reabrirIsenta();
+            }
+        }
+        entityManager.flush();
+        direitos.publicar(contratacao, "FIM_ISENCAO", motivo);
+        return montar(contratacaoId);
+    }
+
+    /** Valor zero ou competência dentro da isenção da contratação: a cobrança em aberto fica isenta. */
+    private static Cobranca aplicarIsencao(Contratacao contratacao, Cobranca cobranca) {
+        if (cobranca.getStatus() != Cobranca.Status.ABERTA) {
+            return cobranca;
+        }
+        if (cobranca.getValor().signum() == 0) {
+            cobranca.isentar("Valor zero");
+        } else if (contratacao.isentaEm(cobranca.getCompetenciaInicio())) {
+            cobranca.isentar(contratacao.getIsencaoMotivo());
+        }
+        return cobranca;
+    }
+
+    /** Inadimplente sem nenhuma cobrança vencida em aberto volta a ativa. Devolve se mudou. */
+    private boolean regularizar(Contratacao contratacao) {
+        if (contratacao.getSituacaoComercial() == SituacaoComercial.INADIMPLENTE
+                && !cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(
+                contratacao.getId(), Cobranca.Status.ABERTA, hoje())) {
+            contratacao.setSituacaoComercial(SituacaoComercial.ATIVA);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -216,6 +288,13 @@ public class BillingService {
                     contratacao.getId(), Cobranca.Status.ABERTA, hoje())) {
                 contratacao.setSituacaoComercial(SituacaoComercial.INADIMPLENTE);
                 direitos.publicar(contratacao, "INADIMPLENTE", "Cobrança vencida");
+            }
+        }
+        // Quem ficou sem vencida (isenção, valor zero virado isento pela V010) volta a ativa.
+        for (Contratacao contratacao : contratacaoRepository.findBySituacaoComercialIn(
+                List.of(SituacaoComercial.INADIMPLENTE))) {
+            if (regularizar(contratacao)) {
+                direitos.publicar(contratacao, "REGULARIZADA", "Sem cobrança vencida");
             }
         }
         return total;
@@ -365,7 +444,8 @@ public class BillingService {
             if (adicionais == null) {
                 adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacao.getId());
             }
-            novas.add(new Cobranca(contratacao, inicioPeriodo, fimPeriodo, vencimento, itensDe(contratacao, adicionais)));
+            novas.add(aplicarIsencao(contratacao,
+                    new Cobranca(contratacao, inicioPeriodo, fimPeriodo, vencimento, itensDe(contratacao, adicionais))));
         }
         cobrancaRepository.saveAll(novas);
         return novas.size();
@@ -382,6 +462,7 @@ public class BillingService {
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacao.getId())) {
             if (cobranca.getStatus() == Cobranca.Status.ABERTA && !cobranca.getVencimento().isBefore(hoje)) {
                 cobranca.definirItens(itensDe(contratacao, adicionais));
+                aplicarIsencao(contratacao, cobranca);
             }
         }
         entityManager.flush();
