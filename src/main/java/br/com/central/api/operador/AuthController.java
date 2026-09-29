@@ -8,6 +8,7 @@ import br.com.central.api.web.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +26,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final SecurityProperties properties;
+    private final String refreshCookiePath;
 
-    public AuthController(AuthService authService, SecurityProperties properties) {
+    public AuthController(AuthService authService, SecurityProperties properties,
+                          @Value("${central.security.refresh-cookie-path:/auth}") String refreshCookiePath) {
         this.authService = authService;
         this.properties = properties;
+        this.refreshCookiePath = refreshCookiePath;
     }
 
     @PostMapping("/login")
@@ -79,16 +83,16 @@ public class AuthController {
     }
 
     private ResponseCookie cookie(String valor, long maxAgeSeconds) {
-        return cookieDeRefresh(valor, maxAgeSeconds);
+        return cookieDeRefresh(refreshCookiePath, valor, maxAgeSeconds);
     }
 
     /** Também usado pela troca de senha, que devolve um refresh novo fora de /auth. */
-    static ResponseCookie cookieDeRefresh(String valor, long maxAgeSeconds) {
+    static ResponseCookie cookieDeRefresh(String caminho, String valor, long maxAgeSeconds) {
         return ResponseCookie.from(REFRESH_TOKEN_COOKIE, valor)
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("None")
-                .path("/auth")
+                .path(caminho)
                 .maxAge(maxAgeSeconds)
                 .build();
     }

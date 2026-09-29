@@ -7,6 +7,7 @@ import br.com.central.api.security.SecurityProperties;
 import br.com.central.api.web.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,9 +25,12 @@ public class OperadorController {
     private final OperadorRepository operadorRepository;
     private final AuthService authService;
     private final SecurityProperties properties;
+    private final String refreshCookiePath;
 
     public OperadorController(OperadorRepository operadorRepository, AuthService authService,
-                              SecurityProperties properties) {
+                              SecurityProperties properties,
+                              @Value("${central.security.refresh-cookie-path:/auth}") String refreshCookiePath) {
+        this.refreshCookiePath = refreshCookiePath;
         this.operadorRepository = operadorRepository;
         this.authService = authService;
         this.properties = properties;
@@ -51,7 +55,7 @@ public class OperadorController {
                                             HttpServletRequest httpRequest) {
         String refresh = authService.trocarSenha(atual.id(), request.senhaAtual(), request.novaSenha(),
                 httpRequest.getRemoteAddr());
-        String cookie = AuthController.cookieDeRefresh(refresh, properties.refreshTokenTtl().toSeconds()).toString();
+        String cookie = AuthController.cookieDeRefresh(refreshCookiePath, refresh, properties.refreshTokenTtl().toSeconds()).toString();
         return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookie).build();
     }
 }

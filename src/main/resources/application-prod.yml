@@ -14,6 +14,9 @@ central:
     # (ex.: servirea.com.br). Mesmo host: definir vazia (CENTRAL_CSRF_COOKIE_DOMAIN=).
     csrf:
       cookie-domain: ${CENTRAL_CSRF_COOKIE_DOMAIN}
+    # A API é servida em /api do domínio do painel (o Caddy tira o prefixo). O
+    # cookie de refresh só volta ao servidor nesse caminho.
+    refresh-cookie-path: /api/auth
   # Sem valor padrão: faltando a variável, a Central não sobe (em vez de subir
   # sem chave e falhar em toda chamada de integração).
   integracao:
