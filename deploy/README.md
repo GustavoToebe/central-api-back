@@ -5,8 +5,8 @@ ca-central-1, com um projeto para cada sistema. Os fronts são arquivos estátic
 
 | Endereço | O quê | Onde |
 |---|---|---|
-| `app.servirea.com.br` | Servire (paróquias) | `sites/servire` |
-| `api.servirea.com.br` | API do Servire | container `servire-api:8080` |
+| `app.servirea.com.br` | Servirea (paróquias) | `sites/servire` |
+| `api.servirea.com.br` | API do Servirea | container `servire-api:8080` |
 | `central.servirea.com.br` | Painel da Central | `sites/central` |
 | `api-central.servirea.com.br` | API da Central | container `central-api:8081` |
 | `servirea.com.br`, `www` | redireciona para `app` | Caddy |
@@ -33,7 +33,7 @@ da VPS e todos como **DNS only (nuvem cinza)**. Com o proxy do Cloudflare ligado
   `DROP EVENT TRIGGER IF EXISTS ensure_rls; DROP FUNCTION IF EXISTS public.rls_auto_enable();`
   As migrations já ligam o RLS nas tabelas.
 - **Desligue a Data API** (Project Settings → Data API). Só a API Java usa o banco. As migrations
-  V039 (Servire) e V008 (Central) já fecham o schema `public`, e desligar aqui é uma segunda trava.
+  V039 (Servirea) e V008 (Central) já fecham o schema `public`, e desligar aqui é uma segunda trava.
 - **Desligue o cadastro de usuários do Supabase Auth** (Authentication → Sign In / Providers → "Allow
   new users to sign up").
 - **Conexão:** use Connect → **Session pooler**, que funciona por IPv4. Copie o host exatamente como o
@@ -77,7 +77,7 @@ e para as chaves de integração. Nunca reaproveite o mesmo segredo em dois luga
 | Variável | Valor |
 |---|---|
 | `SPRING_PROFILES_ACTIVE` | `prod` |
-| `DB_URL`, `DB_USER`, `DB_PASSWORD` | dados do Session pooler do projeto Servire |
+| `DB_URL`, `DB_USER`, `DB_PASSWORD` | dados do Session pooler do projeto Servirea |
 | `JWT_SECRET` | um segredo |
 | `CORS_ALLOWED_ORIGINS` | `https://app.servirea.com.br` |
 | `CSRF_COOKIE_DOMAIN` | `servirea.com.br` |
@@ -98,14 +98,14 @@ e para as chaves de integração. Nunca reaproveite o mesmo segredo em dois luga
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | dados do Session pooler do projeto Central |
 | `CENTRAL_JWT_SEGREDO` | um segredo |
 | `CORS_ALLOWED_ORIGINS` | `https://central.servirea.com.br` |
-| `CENTRAL_CSRF_COOKIE_DOMAIN` | `servirea.com.br` (o cookie se chama `CENTRAL-XSRF-TOKEN` e não colide com o do Servire) |
+| `CENTRAL_CSRF_COOKIE_DOMAIN` | `servirea.com.br` (o cookie se chama `CENTRAL-XSRF-TOKEN` e não colide com o do Servirea) |
 | `CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA` | `servire:<segredo B>` |
 | `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID` | `central` |
 | `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_SEGREDO` | `<segredo A>` |
 
 Como as chaves se cruzam:
-- O segredo A é usado pela Central para chamar o Servire.
-- O segredo B é usado pelo Servire para chamar a Central.
+- O segredo A é usado pela Central para chamar o Servirea.
+- O segredo B é usado pelo Servirea para chamar a Central.
 
 O compose define duas coisas: a `SERVIRE_INTEGRACAO_CENTRAL_URL` (`http://central-api:8081`, pela rede
 interna do Docker) e o pool do Hikari, que fica em 5 conexões por API.
@@ -134,7 +134,7 @@ VALUES (gen_random_uuid(), 'Gustavo', '<e-mail>',
         '{bcrypt}' || extensions.crypt('<senha>', extensions.gen_salt('bf', 10)));
 ```
 
-**Produto Servire na Central.** Cadastre o produto com a URL de integração
+**Produto Servirea na Central.** Cadastre o produto com a URL de integração
 `http://servire-api:8080`, que é a rede interna do Docker. Depois cadastre a cliente, a contratação e o
 provisionamento da paróquia. O administrador recebe o convite por e-mail.
 

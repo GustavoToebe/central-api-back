@@ -3,7 +3,7 @@
 Backend Java da **Central**: gestão comercial (clientes, contratações, planos,
 cobranças, direitos) de todos os aplicativos do ecossistema. O front é o
 irmão **`central-api-front`** (outro git). O primeiro aplicativo atendido é o
-Servire (`servire-api-back` / `servire-api-front`). Idioma do código,
+Servirea (`servire-api-back` / `servire-api-front`). Idioma do código,
 comentários, mensagens de erro e commits: **português**.
 
 - Índice: `docs/README.md`. Desenho e decisões: `docs/arquitetura-central.md`.
@@ -39,7 +39,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 ## Onde está o código
 - `web/` — `ApiError` (com `codigo`), `ApiException`, `GlobalExceptionHandler`, `RequestIdFilter`,
   `Formatos` (CPF/CNPJ do cliente conforme PF/PJ, CNPJ alfanumérico, CEP, UF, telefone; e-mail com
-  `@Email(regexp = Formatos.EMAIL)`). Grava sempre formatado; mesmas regras do Servire e do front.
+  `@Email(regexp = Formatos.EMAIL)`). Grava sempre formatado; mesmas regras do Servirea e do front.
   Teste que cria cliente usa `Documentos.cpf()`/`cnpj()` (documento válido e único).
 - `security/` — JWT próprio (`CENTRAL_JWT_SEGREDO`), BCrypt, cookie httpOnly de refresh.
 - `operador/` — login, refresh, logout, `GET /operadores/eu`, `PUT /operadores/eu/senha` (confere a atual, derruba
@@ -65,7 +65,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.
 - Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
-- CSRF: domínio do `CENTRAL-XSRF-TOKEN` (nome próprio: o Servire usa `XSRF-TOKEN` no mesmo domínio pai) em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
+- CSRF: domínio do `CENTRAL-XSRF-TOKEN` (nome próprio: o Servirea usa `XSRF-TOKEN` no mesmo domínio pai) em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
   domínio pai; obrigatória em produção). Variáveis de produção sem valor padrão, conferidas por
   `ConfiguracaoProducaoTest`.
 - Idempotency-Key é sempre o id da contratação. Nome, slug e admin só mudam antes de um envio que

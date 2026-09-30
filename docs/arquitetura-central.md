@@ -7,7 +7,7 @@
 
 ## 1. Objetivo
 
-Construir um ecossistema de aplicativos SaaS independentes (Servire hoje;
+Construir um ecossistema de aplicativos SaaS independentes (Servirea hoje;
 academia e finanças pessoais/de casal no futuro) com **uma plataforma central
 de gestão comercial** — a **Central** (`central-api-back` + `central-api-front`).
 
@@ -44,7 +44,7 @@ Princípios:
    comandos + webhooks │ HMAC                 sync │ HMAC (a cada 8h)
                        ▼                           │
    ┌─────────────────────────────┐   ┌─────────────────────────────┐
-   │ SERVIRE (api + front)       │   │ ACADEMIA (futuro)           │
+   │ SERVIREA (api + front)       │   │ ACADEMIA (futuro)           │
    │ usuários, perfis, senhas    │   │ usuários, perfis, senhas    │
    │ paróquias, escalas, ...     │   │ alunos, treinos, ...        │
    │ direitos_locais (cópia)     │   │ direitos_locais (cópia)     │
@@ -73,21 +73,21 @@ Princípios:
 ### 4.1 Cliente, contratação e instância
 
 Um **cliente** pode ter N **contratações**. Cada contratação é de **um produto**
-e gera **uma instância** no app (no Servire, instância = paróquia = tenant),
+e gera **uma instância** no app (no Servirea, instância = paróquia = tenant),
 com **plano, status, vencimento, adicionais e direitos próprios**.
 
 Exemplo — cliente #001 Lucas Fernando:
 
 | Situação | Cliente | Aplicativo | Instância | Plano |
 |---|---|---|---|---|
-| 1. Contrata o Servire | #001 Lucas | Servire | Paróquia São José | Profissional |
+| 1. Contrata o Servirea | #001 Lucas | Servirea | Paróquia São José | Profissional |
 | 2. Contrata a academia | #001 Lucas | Academia | Academia Lucas | Premium |
-| 3. Contrata o Servire de novo | #001 Lucas | Servire | Paróquia Santa Maria | Básico |
+| 3. Contrata o Servirea de novo | #001 Lucas | Servirea | Paróquia Santa Maria | Básico |
 
 Se Lucas deixar de pagar a Santa Maria, **só aquela contratação** é bloqueada;
 São José e a academia continuam funcionando.
 
-No Servire, Lucas é **um único usuário** (o `usuario` do Servire é global) com
+No Servirea, Lucas é **um único usuário** (o `usuario` do Servirea é global) com
 **dois vínculos** (São José e Santa Maria), cada um com seu perfil. Com a Santa
 Maria bloqueada, ele entra normalmente e só consegue selecionar a São José.
 Na academia ele tem outro login, independente.
@@ -97,7 +97,7 @@ Na academia ele tem outro login, independente.
 ```
 operador, operador_log                     login e histórico dos operadores do SaaS
 cliente                                    PF/PJ, documento, endereço, contatos 1:N
-produto                                    SERVIRE, ACADEMIA...; url_base_integracao; ativo
+produto                                    SERVIREA, ACADEMIA...; url_base_integracao; ativo
 recurso                                    produto_id, codigo, tipo (LIMITE | FUNCIONALIDADE), unidade, valor_padrao
 plano                                      produto_id, codigo, nome, ativo
 plano_recurso                              plano_id, recurso_id, valor
@@ -112,7 +112,7 @@ contratacao                                cliente_id, produto_id, plano_id, per
                                            versao_direitos, direitos_atuais (jsonb)
 contratacao_adicional                      contratacao_id, adicional_id, quantidade
 cobranca                                   por contratação, com o pagamento na própria linha
-                                           (reaproveita o billing do Servire; não há tabela pagamento);
+                                           (reaproveita o billing do Servirea; não há tabela pagamento);
                                            competência sempre a partir do dia 1 do mês de início
 cobranca_item                              plano do período + cada adicional (preço mensal × quantidade × meses);
                                            cópia do momento; abertas não vencidas são refeitas quando os adicionais mudam
@@ -152,13 +152,13 @@ virar automático, muda só a Central — o app obedece `acessoLiberado`.
 
 ## 5. Provisionamento
 
-### 5.1 Fluxo (Lucas contrata o Servire)
+### 5.1 Fluxo (Lucas contrata o Servirea)
 
 ```
-Operador na Central                  Central                                   Servire
+Operador na Central                  Central                                   Servirea
 ────────────────────────────────────────────────────────────────────────────────────────
 cadastra cliente #001 Lucas  ─────► cliente
-Servire + Profissional + adicionais ► contratacao (PENDENTE), direitos v1,
+Servirea + Profissional + adicionais ► contratacao (PENDENTE), direitos v1,
                                      idempotency_key = contratacao.id
                                      PROCESSANDO
                                      POST /integracao/v1/instancias ────────► 1 transação:
@@ -170,7 +170,7 @@ Servire + Profissional + adicionais ► contratacao (PENDENTE), direitos v1,
                                                                               depois do commit: convite/aviso
                                      ◄──────────────────── 201 {tenantId} ────
                                      id_externo = tenantId; ATIVA
-Lucas abre o e-mail do convite e define a senha no Servire (a Central nunca vê a senha)
+Lucas abre o e-mail do convite e define a senha no Servirea (a Central nunca vê a senha)
 ```
 
 ### 5.2 Garantias contra duplicidade
@@ -201,7 +201,7 @@ Lucas abre o e-mail do convite e define a senha no Servire (a Central nunca vê 
 
 ### 5.3 Segunda paróquia do mesmo cliente
 
-Mesmo fluxo. Se o e-mail do administrador **já existe** no Servire, o app só
+Mesmo fluxo. Se o e-mail do administrador **já existe** no Servirea, o app só
 cria o vínculo (perfil Administrador da nova paróquia) e envia um **aviso de
 acesso concedido** — sem convite de senha.
 
@@ -209,7 +209,7 @@ acesso concedido** — sem convite de senha.
 
 ### 6.1 Usuário × sistema
 
-| | Usuário (ex.: Lucas no Servire) | Sistema (Central ↔ app) |
+| | Usuário (ex.: Lucas no Servirea) | Sistema (Central ↔ app) |
 |---|---|---|
 | Quem prova identidade | pessoa, com e-mail e senha | servidor, com segredo compartilhado |
 | Quem valida | o próprio app | o lado que recebe |
@@ -249,7 +249,7 @@ Cada app guarda, por instância, a última versão dos direitos
 plano, limites, funcionalidades, versão e `confirmadoEm` (última vez que a
 Central confirmou esse estado, por webhook ou sincronização).
 
-Exemplo no Servire:
+Exemplo no Servirea:
 
 | Campo | Valor |
 |---|---|
@@ -272,7 +272,7 @@ Exemplo no Servire:
   da alteração (outbox). Um job envia; falhou, reenvia com espera crescente.
 - A sincronização de 8h busca **todos** os snapshots do produto (são poucos)
   e aplica os de versão maior; mesmo quando nada mudou, atualiza `confirmadoEm`.
-- O Kill Switch que já existe no Servire (revalida o tenant a cada
+- O Kill Switch que já existe no Servirea (revalida o tenant a cada
   requisição) passa a derivar o status da cópia local. Nenhuma chamada de rede
   no caminho da requisição.
 - Login: lê a cópia local. Instância sem acesso → mensagem clara e a paróquia
@@ -305,9 +305,9 @@ dias"); quem transforma atraso em bloqueio é a Central.
 - Efeito colateral útil: a sincronização periódica mantém o banco da Central
   em uso (Supabase free pausa projeto parado).
 
-## 8. Servire — o que muda
+## 8. Servirea — o que muda
 
-### 8.1 Sai do Servire (vai para a Central ou deixa de existir)
+### 8.1 Sai do Servirea (vai para a Central ou deixa de existir)
 
 - `billing/` inteiro (planos, preços, assinatura, cobrança, `BillingJob`) → Central.
 - `backoffice/` inteiro (`/admin/**`, login de operador, lista de paróquias,
@@ -316,7 +316,7 @@ dias"); quem transforma atraso em bloqueio é a Central.
 - Tabelas `plano`, `preco_plano`, `assinatura`, `cobranca`, `backoffice_log`.
 - Telas de backoffice do `servire-api-front` → `central-api-front`.
 
-### 8.2 Entra no Servire
+### 8.2 Entra no Servirea
 
 | Item | Descrição |
 |---|---|
@@ -378,7 +378,7 @@ Comportamento da matriz:
 - "Marcar todos" por seção.
 - **"Liberar todas as opções"** = `acesso_total`: desabilita a grade e libera
   tudo, inclusive permissões criadas no futuro.
-- As travas por canal do SIN+ (web/app) ficam de fora: o Servire só tem web.
+- As travas por canal do SIN+ (web/app) ficam de fora: o Servirea só tem web.
 
 **Catálogo** (códigos; cada um vira `PERM_<CODIGO>` no `@PreAuthorize`):
 
@@ -451,7 +451,7 @@ Decisões:
 
 ## 9. Bancos de dados
 
-**Servire**: continua no Supabase atual. ~~Baseline novo~~ **Mudou na
+**Servirea**: continua no Supabase atual. ~~Baseline novo~~ **Mudou na
 implementação (25/09/2026):** em vez de substituir V001–V032 por um `V001`
 limpo, o modelo novo entrou em migrations **aditivas** (V035 perfis e
 convite, V036 integração v1), para não mexer na produção antes do corte. As
@@ -462,9 +462,9 @@ limpeza apaga tudo no corte. O recadastro manual das 3 crianças continua.
 
 **Central**: segundo projeto free do Supabase, banco próprio, Flyway próprio.
 
-**Produção (27/09/2026)**: os dois projetos (Servire e Central) foram criados do zero no Supabase
+**Produção (27/09/2026)**: os dois projetos (Servirea e Central) foram criados do zero no Supabase
 **ca-central-1**, na mesma cidade da VPS (Montreal); sa-east-1 dava 120 ms por conexão. Bancos montados só
-pelo Flyway (Servire V001–V039, Central V001–V008). A V039/V008 fecham o `public` para a Data API (RLS em
+pelo Flyway (Servirea V001–V039, Central V001–V008). A V039/V008 fecham o `public` para a Data API (RLS em
 tudo, sem policy, sem grant para anon/authenticated); a Data API e o cadastro do Supabase Auth ficam
 desligados no painel. Não marcar "Enable automatic RLS" ao criar projeto (o Flyway não começa).
 
@@ -478,7 +478,7 @@ em `direitos_locais`.
 ## 10. Limites e redução de plano (modelado agora, aplicado depois)
 
 - **Agora**: a Central cadastra recursos, limites por plano e adicionais,
-  calcula o total e envia no snapshot; o Servire guarda na cópia local e
+  calcula o total e envia no snapshot; o Servirea guarda na cópia local e
   **não bloqueia nada** ainda.
 - **Depois** (quando houver cliente pagante): o app aplica.
   - Criar além do limite → recusado com código `LIMITE_PLANO`.
@@ -496,35 +496,35 @@ em `direitos_locais`.
 | Etapa | Onde | Entrega |
 |---|---|---|
 | **0. Desenho** | `central-api-back/docs` | este documento + `contrato-integracao-v1.md` |
-| **1. Servire: acesso** | servire back + front | baseline `V001` novo sem billing/backoffice; perfis e permissões por módulo; usuários, convite e "Meu perfil"; telas Perfis e Usuários; remove telas de backoffice; atualiza AGENTS/README/testes |
-| **2. Servire: integração** | servire back | `direitos_locais` + Kill Switch derivado + regra das 72h e alerta; filtro HMAC com nonce; provisionamento idempotente; webhook de direitos; código de suporte; job de sincronização de 8h |
-| **3. Central: back** | `central-api-back` | operadores e login; clientes, produtos, recursos, planos, preços, adicionais; contratações com cálculo de direitos versionado; provisionamento com estados e repetição; outbox de webhooks; endpoint de sincronização; cobrança manual (reaproveitada do Servire); histórico |
+| **1. Servirea: acesso** | servire back + front | baseline `V001` novo sem billing/backoffice; perfis e permissões por módulo; usuários, convite e "Meu perfil"; telas Perfis e Usuários; remove telas de backoffice; atualiza AGENTS/README/testes |
+| **2. Servirea: integração** | servire back | `direitos_locais` + Kill Switch derivado + regra das 72h e alerta; filtro HMAC com nonce; provisionamento idempotente; webhook de direitos; código de suporte; job de sincronização de 8h |
+| **3. Central: back** | `central-api-back` | operadores e login; clientes, produtos, recursos, planos, preços, adicionais; contratações com cálculo de direitos versionado; provisionamento com estados e repetição; outbox de webhooks; endpoint de sincronização; cobrança manual (reaproveitada do Servirea); histórico |
 | **4. Central: front** | `central-api-front` | clientes; grade de contratações; planos e adicionais; cobranças; "Tentar novamente"; entrar em suporte |
-| **5. Corte** | produção | recria o banco do Servire pelo baseline (trocando a senha do banco); sobe a Central na VPS; cadastra a cliente #001; provisiona a paróquia; convite; recadastro das 3 crianças; apaga as fotos órfãs do bucket |
+| **5. Corte** | produção | recria o banco do Servirea pelo baseline (trocando a senha do banco); sobe a Central na VPS; cadastra a cliente #001; provisiona a paróquia; convite; recadastro das 3 crianças; apaga as fotos órfãs do bucket |
 | **Depois** | — | aplicar limites e redução de plano; foto do usuário; gateway de pagamento; biblioteca compartilhada (acesso + cliente da Central) quando vier o 2º app |
 
 As etapas 1 e 2 são validadas sozinhas (testes de integração chamando
 `/integracao/v1` com requisições assinadas) antes da Central existir. A
-produção atual do Servire fica intacta até o corte.
+produção atual do Servirea fica intacta até o corte.
 
 Reaproveitamento entre apps: o módulo de acesso (usuários/perfis) e o
 "cliente da Central" (HMAC, cópia local, sync) nascem em pacotes isolados no
-Servire e são **copiados** para o 2º app; biblioteca Maven só se, no 3º, as
+Servirea e são **copiados** para o 2º app; biblioteca Maven só se, no 3º, as
 cópias continuarem iguais.
 
 ## 12. Riscos
 
 1. **Bloqueio após 72h**: se a Central (ou o banco free dela) cair num fim de
-   semana e o alerta passar batido, o Servire para. Mitigação: alerta às 24h +
+   semana e o alerta passar batido, o Servirea para. Mitigação: alerta às 24h +
    chave de emergência.
-2. **Escopo**: duas etapas grandes no Servire e um sistema novo. A Central
+2. **Escopo**: duas etapas grandes no Servirea e um sistema novo. A Central
    começa só com o fluxo manual.
 3. **Baseline novo**: durante o trabalho some a proteção de migration aplicada.
 4. **Divergência Central × app** por webhook perdido: versão + sync de 8h +
    relatório de conciliação (tenant sem contratação e vice-versa).
 5. **A Central é o sistema mais sensível** (bloqueia e cria em todos os apps):
    segredos separados, acesso restrito, 2FA dos operadores no futuro.
-6. **Segredos**: a senha do banco do Servire já vazou uma vez no histórico
+6. **Segredos**: a senha do banco do Servirea já vazou uma vez no histórico
    (`.env.example`); trocar no corte. Segredos só em env var.
 7. **Perfis customizáveis**: risco de a paróquia se trancar para fora — coberto
    pelo perfil de sistema e pela regra do administrador mínimo.
@@ -548,22 +548,22 @@ cópias continuarem iguais.
 | 11 | Sem campo de senha: só convite / redefinição |
 | 12 | Nome/e-mail de usuário com outras paróquias: só leitura para o admin; o próprio usuário edita em "Meu perfil" |
 | 13 | Avatar só com iniciais por enquanto |
-| 14 | Servire com banco recriado no corte e recadastro manual das 3 crianças (migrations aditivas V035/V036 em vez de baseline novo — seção 9) |
+| 14 | Servirea com banco recriado no corte e recadastro manual das 3 crianças (migrations aditivas V035/V036 em vez de baseline novo — seção 9) |
 | 15 | Sem backup por enquanto; Supabase Pro + VPS maior a partir de 2 clientes |
 | 16 | Bloqueio por atraso continua manual (decisão de 23/09/2026) |
 | 17 | Commits dos repositórios da Central direto na `main` |
-| 18 | Diocese é só agrupamento informativo no Servire (sem cota); diocese que contratar em bloco vira cliente na Central |
+| 18 | Diocese é só agrupamento informativo no Servirea (sem cota); diocese que contratar em bloco vira cliente na Central |
 | 19 | Idempotency-Key é sempre o id da contratação; nome, slug e administrador só são editáveis antes de um envio que possa ter criado a instância (26/09/2026) |
 | 20 | Testes na mesma versão major do Postgres da produção: 17 (Supabase 17.6, 26/09/2026) |
 | 21 | Produção em uma VPS (Integrator Host, Montreal) com Docker Compose + Caddy; um domínio só (`servirea.com.br`) com subdomínios `app`, `api`, `central`, `api-central`; DNS no Cloudflare como "DNS only" (27/09/2026) |
 | 22 | Supabase na mesma região da VPS (ca-central-1) |
-| 23 | Cookie CSRF da Central com nome próprio (`CENTRAL-XSRF-TOKEN`): o Servire usa `XSRF-TOKEN` no mesmo domínio pai |
+| 23 | Cookie CSRF da Central com nome próprio (`CENTRAL-XSRF-TOKEN`): o Servirea usa `XSRF-TOKEN` no mesmo domínio pai |
 | 24 | Atualizar a produção = commit/push na `main` com testes verdes + `deploy/atualizar.sh` na VPS |
 | 25 | WhatsApp (próximo): EvolutionGo na VPS, na rede interna, com número dedicado; a Central vira a central de mensagens (WhatsApp + e-mail) dos apps; só recebe quem autorizou (`autorizaWhatsapp`) |
 
 ## 14. Estado da implementação
 
-### 14.1 Servire (25/09/2026)
+### 14.1 Servirea (25/09/2026)
 
 Etapas 1 e 2 implementadas no `servire-api-back` (commit `bb42ecc` e a
 revisão seguinte). Diferenças e detalhes em relação ao desenho acima:
@@ -591,7 +591,7 @@ Diferenças e detalhes em relação ao desenho acima:
 |---|---|
 | Migrations | V001 (operador e nonce), V002 (domínio comercial), V003 (`ultimo_status_provisionamento`), V004 (`cliente.cep` com hífen, 26/09/2026). RLS sem policy nas 17 tabelas |
 | Operadores | Login, refresh em cookie httpOnly `central_refresh_token` (path `/auth`, `Secure`, `SameSite=None`), logout, JWT próprio. Seed só no profile `dev` |
-| CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Cookie `CENTRAL-XSRF-TOKEN` (o Servire usa `XSRF-TOKEN` no mesmo domínio pai), domínio em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
+| CSRF | Métodos seguros não exigem; escrita em `/auth` exige; Bearer fora de `/auth` não exige; anônimo sem o cookie de refresh recebe 401. Cookie `CENTRAL-XSRF-TOKEN` (o Servirea usa `XSRF-TOKEN` no mesmo domínio pai), domínio em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios: o domínio pai), obrigatória em produção |
 | Pagamento | Mora na `cobranca` (não há tabela `pagamento`) |
 | Troca de plano | Atualiza a mesma contratação: cobranças pagas ficam; abertas a partir da data da troca são apagadas e geradas de novo |
 | Situação comercial | Pagar tudo leva `INADIMPLENTE` e `TRIAL` para `ATIVA`; `BLOQUEADA` continua bloqueada. Isentar a última vencida devolve `INADIMPLENTE` para `ATIVA`. Job diário às 03:00 (America/Sao_Paulo) gera cobranças e marca `INADIMPLENTE`; não bloqueia |
@@ -600,17 +600,17 @@ Diferenças e detalhes em relação ao desenho acima:
 | Idempotency-Key | Sempre o id da contratação. A edição de nome, slug e administrador só vale antes de um envio que possa ter criado a instância (seção 5.2); a resposta da contratação traz `provisionamentoEditavel` |
 | Operador | `POST /contratacoes/{id}/tentar-provisionamento` depois de `ERRO` (recusa se provisionada ou cancelada); `POST /contratacoes/{id}/suporte` devolve `{codigo, urlAcesso, expiraEm}` e grava `operador_log` |
 | Sincronização | `GET /integracao/v1/produtos/{produto}/direitos?pagina&tamanho` (tamanho 1 a 100, padrão 100): só contratações com `id_externo`, inclusive bloqueadas e canceladas |
-| Formatos | `web/Formatos` (26/09/2026): cliente PF exige CPF válido, PJ exige CNPJ válido (inclusive alfanumérico); CEP, UF, telefone e e-mail conferidos. Tudo grava formatado, então o mesmo documento com ou sem pontuação é o mesmo cliente. Mesmas regras no Servire e nos fronts |
+| Formatos | `web/Formatos` (26/09/2026): cliente PF exige CPF válido, PJ exige CNPJ válido (inclusive alfanumérico); CEP, UF, telefone e e-mail conferidos. Tudo grava formatado, então o mesmo documento com ou sem pontuação é o mesmo cliente. Mesmas regras no Servirea e nos fronts |
 | Painel | Listas não paginadas por enquanto; `GET` por id em cliente e contratação. O resumo de `GET /contratacoes` traz `diaVencimento` e `vigenteAte` para a grade |
 | Variáveis | Em produção sem valor padrão: `CENTRAL_JWT_SEGREDO`, `CORS_ALLOWED_ORIGINS`, `CENTRAL_CSRF_COOKIE_DOMAIN` e as `CENTRAL_PRODUTO_SERVIRE_*` |
 
 ### 14.3 Painel do operador (26/09/2026)
 
 Etapa 4 implementada no `central-api-front` (Angular 21, visual do
-backoffice antigo do Servire). Validada de ponta a ponta com Central e Servire
-rodando juntos: contratação no painel → paróquia criada no Servire; bloqueio
-no painel → Servire bloqueia pelo webhook; suporte → aba com o código de uso
-único do Servire; sessão renovada pelo cookie com `X-XSRF-TOKEN`.
+backoffice antigo do Servirea). Validada de ponta a ponta com Central e Servirea
+rodando juntos: contratação no painel → paróquia criada no Servirea; bloqueio
+no painel → Servirea bloqueia pelo webhook; suporte → aba com o código de uso
+único do Servirea; sessão renovada pelo cookie com `X-XSRF-TOKEN`.
 
 | Tema | Como ficou |
 |---|---|
@@ -618,7 +618,7 @@ no painel → Servire bloqueia pelo webhook; suporte → aba com o código de us
 | Sessão | Access token no `sessionStorage`; refresh só no cookie httpOnly. Um refresh compartilhado por vez no 401; sem cookie `CENTRAL-XSRF-TOKEN` o painel nem tenta renovar (a Central devolveria 403) |
 | Regras na tela | "Tentar novamente" só com `ERRO` sem `id_externo`; edição de nome/slug/admin só com `provisionamentoEditavel`; suporte só com a instância criada |
 | Fora do escopo | Log de ações dos operadores: não há endpoint (o histórico vem dentro da contratação) |
-| Número curto (26/09/2026) | Coluna `sequencial` (identity, V007) em cliente, contratação, cobrança, produto, plano, adicional e recurso; o painel mostra "(2108)" e copia ao clicar. No Servire é por paróquia (V038) |
+| Número curto (26/09/2026) | Coluna `sequencial` (identity, V007) em cliente, contratação, cobrança, produto, plano, adicional e recurso; o painel mostra "(2108)" e copia ao clicar. No Servirea é por paróquia (V038) |
 | Recursos (26/09/2026) | O cadastro de recurso sugere os códigos que o app publica (contrato 5.5); o código fica como o app usa (sem maiúsculas) |
 | Logs de erro (26/09/2026) | Os apps mandam erros 5xx (contrato 6.2); tela "Logs" com filtro por data e busca e aba "Erros" na contratação; 90 dias; usuário só pelo id |
 | Cobranças (26/09/2026) | `GET /cobrancas` com filtros (produto, situação, forma, vencimento, competência, busca por cliente/instância), `GET /cobrancas/{id}` com os itens e `POST /cobrancas/pagamentos` para várias contratações de uma vez |
@@ -631,8 +631,8 @@ Etapa 5 feita. Roteiro em `deploy/README.md`.
 
 | Tema | Como ficou |
 |---|---|
-| Endereços | `app.servirea.com.br` (Servire), `api.servirea.com.br`, `central.servirea.com.br` (painel), `api-central.servirea.com.br`; `servirea.com.br` e `www` redirecionam para `app` |
+| Endereços | `app.servirea.com.br` (Servirea), `api.servirea.com.br`, `central.servirea.com.br` (painel), `api-central.servirea.com.br`; `servirea.com.br` e `www` redirecionam para `app` |
 | VPS | Integrator Host "VPS ICP CORE" (4 vCPU, 6 GB, Ubuntu 26.04), IP 184.107.176.76, Montreal. O painel ICP (`:2090`) trazia um nginx nas portas 80/443: parado (`docker update --restart=no` + `stop`) para o Caddy. Firewall (ufw): 22, 80, 443, 2090 |
 | Deploy | `/opt/ecossistema` com os quatro repositórios (deploy key só leitura em cada um, alias `gh-<repo>`), `servire.env`/`central.env` (600, segredos gerados na VPS), `sites/` com os fronts. `atualizar.sh`: pull, build dos fronts no `node:24-alpine`, `docker compose up -d --build` |
 | Primeiro acesso | Operador da Central criado pelo `psql` (bcrypt via `extensions.crypt`); "Meu perfil" troca a senha |
-| Pendências | Storage das fotos (variáveis vazias: só o envio de foto falha); backup (Supabase Pro a partir de 2 clientes); primeira contratação/paróquia pela Central; migration de limpeza das tabelas antigas de billing do Servire; renomear/remover a paróquia `placeholder` (V020) |
+| Pendências | Storage das fotos (variáveis vazias: só o envio de foto falha); backup (Supabase Pro a partir de 2 clientes); primeira contratação/paróquia pela Central; migration de limpeza das tabelas antigas de billing do Servirea; renomear/remover a paróquia `placeholder` (V020) |

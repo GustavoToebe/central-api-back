@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Cobrança manual por contratação, adaptada do billing do Servire.
+ * Cobrança manual por contratação, adaptada do billing do Servirea.
  * O job diário gera cobranças e marca INADIMPLENTE. Bloqueio continua manual.
  *
  * <p>Desde 26/09/2026 (teste de telas) a competência começa sempre no dia 1 do

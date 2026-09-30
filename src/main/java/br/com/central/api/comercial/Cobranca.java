@@ -25,7 +25,7 @@ import java.util.UUID;
 
 /**
  * Um período cobrado. O pagamento fica na própria linha (billing manual
- * do Servire). "Vencida" não é status: é ABERTA com vencimento anterior a hoje.
+ * do Servirea). "Vencida" não é status: é ABERTA com vencimento anterior a hoje.
  */
 @Entity
 @Table(name = "cobranca")

@@ -33,7 +33,7 @@ import java.util.UUID;
  * provisionamento; com {@code id_externo} vira PUT de direitos. 409 e 422
  * não repetem. Rede, timeout e os demais status seguem a agenda. A
  * Idempotency-Key é o id da contratação em toda tentativa — o contrato e o
- * Servire exigem que ela seja igual ao {@code contratacaoId} do corpo. Cada
+ * Servirea exigem que ela seja igual ao {@code contratacaoId} do corpo. Cada
  * resposta do POST fica em {@code ultimo_status_provisionamento} (0 = sem
  * resposta), que decide se o operador ainda pode editar nome, slug e
  * administrador ({@link Contratacao#dadosDeProvisionamentoEditaveis()}).

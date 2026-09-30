@@ -5,7 +5,7 @@ import java.util.Set;
 
 /**
  * Validação e formato único de documentos e contatos (26/09/2026, mesmo
- * pedido e mesmas regras do {@code web/Formatos} do Servire).
+ * pedido e mesmas regras do {@code web/Formatos} do Servirea).
  *
  * <p>Cada método aceita o valor com ou sem pontuação, devolve {@code null}
  * para vazio e grava sempre no mesmo formato ({@code 123.456.789-09},

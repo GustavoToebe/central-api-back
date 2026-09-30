@@ -1,7 +1,7 @@
 # Central — API
 
 Plataforma central de gestão comercial do ecossistema de aplicativos SaaS
-(Servire hoje; academia e finanças no futuro): clientes, produtos, planos,
+(Servirea hoje; academia e finanças no futuro): clientes, produtos, planos,
 adicionais, contratações, cobranças e direitos de uso. Cada aplicativo
 continua dono dos próprios usuários, perfis, permissões e dados de negócio;
 a Central só diz **quem é cliente, o que contratou e se pode usar**.
@@ -30,13 +30,13 @@ se o e-mail e a senha vierem no ambiente.
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/arquitetura-central.md`](docs/arquitetura-central.md) | objetivo, responsabilidades, modelo, provisionamento, sincronização, mudanças no Servire (perfis/usuários no estilo SIN+), plano de etapas, riscos e decisões |
+| [`docs/arquitetura-central.md`](docs/arquitetura-central.md) | objetivo, responsabilidades, modelo, provisionamento, sincronização, mudanças no Servirea (perfis/usuários no estilo SIN+), plano de etapas, riscos e decisões |
 | [`docs/contrato-integracao-v1.md`](docs/contrato-integracao-v1.md) | contrato técnico Central ↔ apps: HMAC (com vetores de teste), erros, snapshot de direitos, endpoints |
 
 ## Ponta a ponta local (Windows, tudo no PC)
 
-Quatro programas e um Postgres no Docker, sem tocar no Supabase. Portas: Servire API 8080, Central API 8081,
-Servire front 4200, Central front **4201** (os dois fronts usam 4200 por padrão). O segredo de teste dos
+Quatro programas e um Postgres no Docker, sem tocar no Supabase. Portas: Servirea API 8080, Central API 8081,
+Servirea front 4200, Central front **4201** (os dois fronts usam 4200 por padrão). O segredo de teste dos
 vetores, em Base64, é `c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5`
 (**só para uso local**, nunca em produção).
 
@@ -68,7 +68,7 @@ Get-Content src\test\resources\testcontainers\supabase-stubs.sql | docker exec -
 Container já existe ("name is already in use")? Tudo bem: `docker start ecossistema-db`. Começar do zero:
 `docker rm -f ecossistema-db` e repetir.
 
-**2. API do Servire (terminal só dela, pasta `servire-api-back`).** Se houver `application-dev-local.yml`,
+**2. API do Servirea (terminal só dela, pasta `servire-api-back`).** Se houver `application-dev-local.yml`,
 ele não pode ter `datasource` (passaria por cima do banco local).
 
 ```powershell
@@ -103,9 +103,9 @@ mvn spring-boot:run -DskipTests "-Dspring-boot.run.profiles=dev"
 `npm start -- --port 4201` (http://localhost:4201). Depois de um `git pull` que mexeu no `package.json`,
 rode `npm ci` antes.
 
-**Primeiro acesso.** Central: login com o e-mail e a senha do passo 3. Servire: não há usuário pronto; o
+**Primeiro acesso.** Central: login com o e-mail e a senha do passo 3. Servirea: não há usuário pronto; o
 primeiro nasce do convite da contratação (passo 2 abaixo). Com o provedor de e-mail `log`, o link aparece no
-terminal da API do Servire (`[STUB] Convite para ...`); com o Resend no `application-dev-local.yml`, chega no
+terminal da API do Servirea (`[STUB] Convite para ...`); com o Resend no `application-dev-local.yml`, chega no
 e-mail de verdade.
 
 **Problemas já vistos**
@@ -113,15 +113,15 @@ e-mail de verdade.
 | Sintoma | Causa |
 |---|---|
 | "E-mail ou senha inválidos" na Central | variáveis do seed coladas em outro terminal, ou operador já criado com outra senha |
-| "Entrega ... adiada ... Falha de rede" no log da Central | API do Servire fora do ar ou URL do produto errada (tem que ser `http://localhost:8080`, não 4200); a Central tenta de novo em 1, 5, 15 min e 1 h |
+| "Entrega ... adiada ... Falha de rede" no log da Central | API do Servirea fora do ar ou URL do produto errada (tem que ser `http://localhost:8080`, não 4200); a Central tenta de novo em 1, 5, 15 min e 1 h |
 | Contratação em "Aguardando envio" | normal por até 1 minuto; a tela não se atualiza sozinha (F5) |
 
 No painel, ou pela API com o token do operador:
 
-1. Cadastre o produto com código `SERVIRE` e URL base `http://localhost:8080`. O Servire pede exatamente esse código na sincronização.
-2. Cadastre cliente, plano e uma contratação com slug e e-mail do administrador. Ela nasce `PENDENTE`. Em até um minuto o job faz `POST /integracao/v1/instancias`. A paróquia aparece no Servire e o convite vai para o log.
-3. Bloqueie a contratação. O job manda `PUT .../direitos` e o Servire passa a recusar o acesso na hora.
-4. Pare a Central. O Servire continua na cópia local. Sem novo webhook, a regra das 72 h (`SERVIRE_INTEGRACAO_TOLERANCIA_HORAS`, padrão 72) bloqueia a paróquia. O log de erro da sincronização avisa a partir de 24 h.
+1. Cadastre o produto com código `SERVIREA` e URL base `http://localhost:8080`. O Servirea pede exatamente esse código na sincronização.
+2. Cadastre cliente, plano e uma contratação com slug e e-mail do administrador. Ela nasce `PENDENTE`. Em até um minuto o job faz `POST /integracao/v1/instancias`. A paróquia aparece no Servirea e o convite vai para o log.
+3. Bloqueie a contratação. O job manda `PUT .../direitos` e o Servirea passa a recusar o acesso na hora.
+4. Pare a Central. O Servirea continua na cópia local. Sem novo webhook, a regra das 72 h (`SERVIRE_INTEGRACAO_TOLERANCIA_HORAS`, padrão 72) bloqueia a paróquia. O log de erro da sincronização avisa a partir de 24 h.
 
 Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e então a contratação fica `ERRO`. 409 e 422 não repetem. Contratação cancelada antes de chegar ao app não é mais enviada: a instância não é criada e o histórico mostra o descarte. `POST /contratacoes/{id}/tentar-provisionamento` reenvia com a mesma `Idempotency-Key`, que é o id da contratação. Nome, slug e administrador só podem ser editados antes do primeiro envio ou depois de uma recusa 4xx que não seja 409 (`provisionamentoEditavel` na resposta). O webhook de direitos espera até 72 h e então o evento fica `FALHOU`, com alerta no log.
 
@@ -130,9 +130,9 @@ Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e ent
 Etapas 1 a 5 prontas: em produção desde 27/09/2026 (`docs/arquitetura-central.md`, seção 14.4;
 roteiro em `deploy/README.md`).
 
-1. Primeira contratação pela Central (produto Servire com URL de integração `http://servire-api:8080`, cliente,
+1. Primeira contratação pela Central (produto Servirea com URL de integração `http://servire-api:8080`, cliente,
    contratação, provisionamento e convite).
-2. Ajustes do uso real (Servire e Central) e bugs.
+2. Ajustes do uso real (Servirea e Central) e bugs.
 3. WhatsApp e e-mail pela Central (EvolutionGo na VPS; decisão 25).
 4. Segurança da VPS: Fail2Ban e SSH só por chave.
 5. Storage das fotos e backup (Supabase Pro) quando houver clientes pagantes.

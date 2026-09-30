@@ -51,7 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Cobrança manual adaptada do Servire: a paróquia virou contratação.
+ * Cobrança manual adaptada do Servirea: a paróquia virou contratação.
  * Bloqueio manual não volta sozinho quando se quita; INADIMPLENTE volta para ATIVA.
  */
 class BillingServiceIntegrationTest extends AbstractIntegrationTest {

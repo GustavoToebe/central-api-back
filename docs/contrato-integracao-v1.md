@@ -2,7 +2,7 @@
 
 > Etapa 0. Versão 1 do contrato, 25/09/2026. Visão geral e motivos em
 > [`arquitetura-central.md`](arquitetura-central.md). Os exemplos usam o
-> Servire; outro app implementa o mesmo contrato trocando o produto e os
+> Servirea; outro app implementa o mesmo contrato trocando o produto e os
 > campos específicos da instância.
 
 ## 1. Convenções
@@ -15,7 +15,7 @@
 - Rotas de integração não usam cookie nem JWT de usuário, então não há CSRF.
 - Endereços (provisórios):
   - Central: `https://central.servirea.com.br`
-  - Servire: `https://api.servirea.com.br`
+  - Servirea: `https://api.servirea.com.br`
 - Os relógios dos servidores ficam sincronizados por NTP (a janela de horário
   depende disso).
 
@@ -24,8 +24,8 @@
 ### 2.1 Chaves
 
 - Um segredo **por aplicativo e por direção**:
-  - `central → servire`: a Central assina, o Servire valida.
-  - `servire → central`: o Servire assina, a Central valida.
+  - `central → servire`: a Central assina, o Servirea valida.
+  - `servire → central`: o Servirea assina, a Central valida.
 - Segredo: no mínimo 32 bytes aleatórios, em Base64, **só em env var** (nunca
   no git, nunca no `.env.example`).
 - Cada segredo tem um **identificador** (ex.: `central-servire-2026a`) enviado
@@ -36,13 +36,13 @@ Variáveis de ambiente propostas:
 
 | Onde | Variável | Conteúdo |
 |---|---|---|
-| Servire | `SERVIRE_INTEGRACAO_CHAVES_ENTRADA` | `id:segredoBase64[,id:segredoBase64]` (chaves que a Central usa) |
-| Servire | `SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID` / `..._SEGREDO` | chave com que o Servire assina |
-| Servire | `SERVIRE_INTEGRACAO_CENTRAL_URL` | URL base da Central |
-| Servire | `SERVIRE_INTEGRACAO_TOLERANCIA_HORAS` | tolerância técnica (padrão 72) |
-| Servire | `SERVIRE_INTEGRACAO_ALERTA_EMAIL` | quem recebe o alerta de 24h sem confirmação |
-| Central | `CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA` | chaves que o Servire usa |
-| Central | `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID` / `..._SEGREDO` | chave com que a Central assina para o Servire |
+| Servirea | `SERVIRE_INTEGRACAO_CHAVES_ENTRADA` | `id:segredoBase64[,id:segredoBase64]` (chaves que a Central usa) |
+| Servirea | `SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID` / `..._SEGREDO` | chave com que o Servirea assina |
+| Servirea | `SERVIRE_INTEGRACAO_CENTRAL_URL` | URL base da Central |
+| Servirea | `SERVIRE_INTEGRACAO_TOLERANCIA_HORAS` | tolerância técnica (padrão 72) |
+| Servirea | `SERVIRE_INTEGRACAO_ALERTA_EMAIL` | quem recebe o alerta de 24h sem confirmação |
+| Central | `CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA` | chaves que o Servirea usa |
+| Central | `CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_ID` / `..._SEGREDO` | chave com que a Central assina para o Servirea |
 
 ### 2.2 Headers
 
@@ -63,7 +63,7 @@ Variáveis de ambiente propostas:
 - `MÉTODO` em maiúsculas (`POST`).
 - `CAMINHO` = caminho + query string **exatamente como enviados** na linha de
   requisição (percent-encoded), sem esquema nem host
-  (`/integracao/v1/produtos/SERVIRE/direitos?pagina=0`).
+  (`/integracao/v1/produtos/SERVIREA/direitos?pagina=0`).
 - `SHA256_HEX(CORPO)` = SHA-256 dos **bytes exatos** do corpo, em hex
   minúsculo; corpo vazio → hash da string vazia
   (`e3b0c442…b855`).
@@ -119,7 +119,7 @@ ASSINATURA v1=976359d02a3d078c41896cff976ba58fcb6cad78060392fbc43b676a95f8b113
 
 ## 3. Erros
 
-Mesmo formato do `ApiError` do Servire, com um campo novo `codigo` (estável,
+Mesmo formato do `ApiError` do Servirea, com um campo novo `codigo` (estável,
 para a máquina decidir) além da `message` (para humanos):
 
 ```json
@@ -153,7 +153,7 @@ o **estado completo**, nunca uma diferença.
 {
   "contratacaoId": "0f8e2c1a-1111-4a2b-9c3d-000000000001",
   "clienteId": "9d3b7a10-3333-4c4d-8e5f-000000000003",
-  "produto": "SERVIRE",
+  "produto": "SERVIREA",
   "tenantId": "25c1d0e4-4444-4d5e-9f60-000000000004",
   "versao": 18,
   "situacao": "ATIVA",
@@ -212,7 +212,7 @@ liberado = acessoLiberado  E  (agora − confirmadoEm) ≤ tolerância técnica 
 O app, **numa transação**:
 
 1. Grava `integracao_operacao` (chave única + SHA-256 do corpo).
-2. Cria o tenant (nome, slug; demais dados da paróquia o admin preenche no Servire).
+2. Cria o tenant (nome, slug; demais dados da paróquia o admin preenche no Servirea).
 3. Cria os perfis padrão (Administrador, Secretário, Coordenador).
 4. Usuário do administrador: e-mail inexistente → cria sem senha + token
    `CONVITE`; e-mail existente → só cria o vínculo.
@@ -394,7 +394,7 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
 - O app junta em memória e manda a cada minuto; a Central fora do ar nunca atrasa a requisição da
   instância. A Central acha a contratação pelo `tenantId` e guarda 90 dias.
 
-## 7. Tabelas de apoio no app (Servire)
+## 7. Tabelas de apoio no app (Servirea)
 
 ```
 direitos_locais      tenant_id (PK, FK tenant), contratacao_id, versao, situacao,

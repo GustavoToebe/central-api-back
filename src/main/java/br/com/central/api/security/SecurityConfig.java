@@ -81,7 +81,7 @@ public class SecurityConfig {
     }
 
     /**
-     * Nome do cookie CSRF: o Servire grava {@code XSRF-TOKEN} no mesmo domínio pai (servirea.com.br); com o mesmo
+     * Nome do cookie CSRF: o Servirea grava {@code XSRF-TOKEN} no mesmo domínio pai (servirea.com.br); com o mesmo
      * nome, logar num derrubava a sessão do outro no mesmo navegador (27/09/2026). O header continua
      * {@code X-XSRF-TOKEN}.
      */

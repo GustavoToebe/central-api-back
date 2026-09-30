@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Mesmo corpo de erro do Servire, com {@code codigo} estável para a máquina
+ * Mesmo corpo de erro do Servirea, com {@code codigo} estável para a máquina
  * (contrato de integração, seção 3).
  */
 public record ApiError(
