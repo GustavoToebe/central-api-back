@@ -73,4 +73,4 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   `PROVISIONAMENTO_NAO_EDITAVEL`.
 - Produção: `deploy/` (compose com as duas APIs e o Caddy, `atualizar.sh`, roteiro no README de lá).
 - Testes: `mvn clean verify` (Docker, Postgres 17 — mesma versão major da produção). Ao somar migration, atualizar o total
-  em `FlywayMigrationIntegrationTest`.
+  em `FlywayMigrationIntegrationTest`. **Migration nova também pede `scripts/gerar-schema.ps1` e o `schema.sql` commitado junto** (mapa do banco em `SCHEMA.md` + `schema.sql`).

@@ -56,6 +56,7 @@ foreach ($r in "servire-api-back", "servire-api-front", "central-api-back", "cen
 ```
 
 **1. Banco (uma vez; Docker Desktop aberto).** Porta 5433 para não bater com outro Postgres na 5432.
+O atalho é `scripts\subir-local.ps1` (cria o container, as duas bases e o stub do Supabase). O manual:
 
 ```powershell
 docker run --name ecossistema-db -e POSTGRES_PASSWORD=postgres -p 5433:5432 -d postgres:17
@@ -103,10 +104,19 @@ mvn spring-boot:run -DskipTests "-Dspring-boot.run.profiles=dev"
 `npm start -- --port 4201` (http://localhost:4201). Depois de um `git pull` que mexeu no `package.json`,
 rode `npm ci` antes.
 
-**Primeiro acesso.** Central: login com o e-mail e a senha do passo 3. Servirea: não há usuário pronto; o
-primeiro nasce do convite da contratação (passo 2 abaixo). Com o provedor de e-mail `log`, o link aparece no
-terminal da API do Servirea (`[STUB] Convite para ...`); com o Resend no `application-dev-local.yml`, chega no
-e-mail de verdade.
+**Primeiro acesso.** Com o profile `dev` e o JDBC em `localhost`, as duas APIs povoam sozinhas, só nesse
+Postgres, e não repetem se a paróquia `paroquia-teste` já existe.
+
+| Onde | Login | Senha |
+|---|---|---|
+| Central (http://localhost:4201) | `gustavo2@teste.local` | `12345678` |
+| Servirea (http://localhost:4200) | `paroquia@teste.local` | `12345678` |
+
+A Central já tem o cliente "Paróquia de Teste", o produto `SERVIREA` e a contratação `paroquia-teste` marcada como
+provisionada, apontando para a paróquia do Servirea. No Servirea há três voluntários (Ana Souza, Bruno Lima, Carla Dias)
+e os dois layouts padrão. O botão **Acessar aplicativo** na ficha do cliente usa o código de suporte de uso único;
+para ele funcionar, as chaves dos passos 2 e 3 precisam estar nos dois terminais e as duas APIs no ar. Uma contratação
+nova, criada na tela, continua nascendo `PENDENTE` e segue o fluxo do convite abaixo.
 
 **Problemas já vistos**
 

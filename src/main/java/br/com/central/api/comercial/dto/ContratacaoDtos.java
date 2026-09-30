@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -77,7 +78,7 @@ public final class ContratacaoDtos {
     ) {
     }
 
-    public record MotivoRequest(@NotBlank(message = "Informe o motivo.") String motivo) {
+    public record MotivoRequest(@NotBlank(message = "Informe o motivo.") @Size(max = 500, message = "O motivo pode ter até 500 caracteres.") String motivo) {
     }
 
     public record AdicionalContratadoResponse(
