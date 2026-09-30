@@ -3,6 +3,15 @@
 # (Node na imagem oficial, sem instalar nada na VPS) e recria as APIs.
 # Uso, na VPS: /opt/ecossistema/central-api-back/deploy/atualizar.sh
 set -euo pipefail
+
+# Só um deploy por vez na VPS. Os quatro repositórios chamam este script, e o GitHub só enfileira
+# dentro de cada repositório. Quem chega enquanto outro roda espera até 30 minutos.
+exec 9>/var/lock/ecossistema-deploy.lock
+if ! flock -w 1800 9; then
+  echo "Outro deploy está rodando há mais de 30 minutos. Nada foi alterado."
+  exit 1
+fi
+
 BASE=/opt/ecossistema
 cd "$BASE"
 

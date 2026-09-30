@@ -164,3 +164,23 @@ Regras do WhatsApp:
 
 Não instale apps pela App Store do painel ICP. Vários ligam de novo o nginx dele, que disputa as portas 80 e 443
 com o Caddy.
+
+## 8. Deploy automático (GitHub Actions)
+
+Cada um dos quatro repositórios tem `.github/workflows/deploy.yml`. Push na `main` (menos commit só de `.md`) **testa** e, se passar, **publica**: entra na VPS e roda o `atualizar.sh`. O botão "Run workflow" (aba Actions) faz o mesmo à mão.
+
+- **Um deploy por vez.** O GitHub só enfileira dentro de cada repositório, então a trava fica no `atualizar.sh` (`flock` em `/var/lock/ecossistema-deploy.lock`, espera até 30 min).
+- **Chave própria do deploy**, sem relação com a chave pessoal de root. No `~/.ssh/authorized_keys` da VPS ela vai numa linha com comando fixo, então só consegue rodar o deploy (e **quem conecta com ela dispara um deploy**, não abre shell):
+  ```
+  command="bash /opt/ecossistema/central-api-back/deploy/atualizar.sh",no-pty,no-port-forwarding,no-agent-forwarding,no-X11-forwarding ssh-ed25519 <chave pública> github-actions
+  ```
+- **Secrets** (os mesmos nos quatro repositórios, ou da organização):
+
+| Secret | Valor |
+|---|---|
+| `VPS_HOST` | `184.107.176.76` |
+| `VPS_USER` | `root` |
+| `VPS_SSH_KEY` | a chave **privada** do deploy, inteira, com as linhas `BEGIN` e `END` |
+| `VPS_KNOWN_HOSTS` | a linha `ed25519` do servidor, vinda do `known_hosts` de um PC confiável (fixa o servidor; o job não confia no primeiro que aparecer) |
+
+Sem os quatro, o job `publicar` falha e a produção não muda. Migration nova roda quando a API sobe: **migration destrutiva vai para produção assim que a `main` passar nos testes.**
