@@ -49,8 +49,8 @@ apt update && apt upgrade -y
 curl -fsSL https://get.docker.com | sh
 ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw allow 2090/tcp && ufw --force enable
 mkdir -p /opt/ecossistema && cd /opt/ecossistema
-git clone gh-servire-api-back:GustavoToebe/servire-api-back.git
-git clone gh-servire-api-front:GustavoToebe/servire-api-front.git
+git clone gh-servire-api-back:GustavoToebe/servirea-api-back.git servire-api-back
+git clone gh-servire-api-front:GustavoToebe/servirea-api-front.git servire-api-front
 git clone gh-central-api-back:GustavoToebe/central-api-back.git
 git clone gh-central-api-front:GustavoToebe/central-api-front.git
 ```
