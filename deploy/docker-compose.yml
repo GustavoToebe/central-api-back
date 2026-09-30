@@ -37,7 +37,7 @@ services:
       PASSKEY_PUBLIC_URL: https://whatsapp.servirea.com.br
       DATABASE_SAVE_MESSAGES: "false"
       CONNECT_ON_STARTUP: "true"
-      OS_NAME: Servirea
+      OS_NAME: Servire
       EVENT_IGNORE_GROUP: "true"
       EVENT_IGNORE_STATUS: "true"
       DEBUG_ENABLED: INFO

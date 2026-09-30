@@ -462,7 +462,7 @@ limpeza apaga tudo no corte. O recadastro manual das 3 crianças continua.
 
 **Central**: segundo projeto free do Supabase, banco próprio, Flyway próprio.
 
-**Produção (27/09/2026)**: os dois projetos (Servirea e Central) foram criados do zero no Supabase
+**Produção (27/09/2026)**: os dois projetos (Servire e Central) foram criados do zero no Supabase
 **ca-central-1**, na mesma cidade da VPS (Montreal); sa-east-1 dava 120 ms por conexão. Bancos montados só
 pelo Flyway (Servire V001–V039, Central V001–V008). A V039/V008 fecham o `public` para a Data API (RLS em
 tudo, sem policy, sem grant para anon/authenticated); a Data API e o cadastro do Supabase Auth ficam
