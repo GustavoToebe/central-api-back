@@ -60,20 +60,20 @@ O atalho é `scripts\subir-local.ps1` (cria o container, as duas bases e o stub 
 
 ```powershell
 docker run --name ecossistema-db -e POSTGRES_PASSWORD=postgres -p 5433:5432 -d postgres:17
-docker exec ecossistema-db createdb -U postgres servire_dev
+docker exec ecossistema-db createdb -U postgres servirea_dev
 docker exec ecossistema-db createdb -U postgres central_dev
-# na pasta do servire-api-back: stub do Supabase (schemas auth/storage e roles) antes do Flyway
-Get-Content src\test\resources\testcontainers\supabase-stubs.sql | docker exec -i ecossistema-db psql -U postgres -d servire_dev
+# na pasta do servirea-api-back: stub do Supabase (schemas auth/storage e roles) antes do Flyway
+Get-Content src\test\resources\testcontainers\supabase-stubs.sql | docker exec -i ecossistema-db psql -U postgres -d servirea_dev
 ```
 
 Container já existe ("name is already in use")? Tudo bem: `docker start ecossistema-db`. Começar do zero:
 `docker rm -f ecossistema-db` e repetir.
 
-**2. API do Servirea (terminal só dela, pasta `servire-api-back`).** Se houver `application-dev-local.yml`,
+**2. API do Servirea (terminal só dela, pasta `servirea-api-back`).** Se houver `application-dev-local.yml`,
 ele não pode ter `datasource` (passaria por cima do banco local).
 
 ```powershell
-$env:DB_URL="jdbc:postgresql://localhost:5433/servire_dev"; $env:DB_PASSWORD="postgres"
+$env:DB_URL="jdbc:postgresql://localhost:5433/servirea_dev"; $env:DB_PASSWORD="postgres"
 $s="c2VncmVkby1kZS10ZXN0ZS1uYW8tdXNhci1lbS1wcm9kdWNhby0wMTIzNDU2Nzg5"
 $env:SERVIRE_INTEGRACAO_CHAVES_ENTRADA="teste-central:$s"
 $env:SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID="teste-servire"

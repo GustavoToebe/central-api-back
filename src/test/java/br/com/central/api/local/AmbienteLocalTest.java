@@ -9,7 +9,7 @@ class AmbienteLocalTest {
 
     @Test
     void aceitaSoOsHostsDaPropriaMaquina() {
-        assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://localhost:5433/servire_dev")).isTrue();
+        assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://localhost:5433/servirea_dev")).isTrue();
         assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://LOCALHOST/db")).isTrue();
         assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://127.0.0.1:5432/db")).isTrue();
         assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://[::1]:5432/db")).isTrue();
