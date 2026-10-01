@@ -85,6 +85,8 @@ e para as chaves de integração. Nunca reaproveite o mesmo segredo em dois luga
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | as fotos; podem ficar vazias por enquanto, e só o envio de foto falha |
 | `TURNSTILE_SECRET_KEY` | a chave secreta do Turnstile (Cloudflare) |
 | `RESEND_API_KEY` | a chave do Resend (o domínio `servirea.com.br` já está verificado) |
+| `WHATSAPP_PROVIDER` | `evolution`. Sem ela vale `log`, que não envia nada e mesmo assim responde "enviada" |
+| `EVOLUTION_URL` | `http://evolution:4000` (rede interna do compose) |
 | `SERVIRE_INTEGRACAO_CHAVES_ENTRADA` | `central:<segredo A>` |
 | `SERVIRE_INTEGRACAO_CHAVE_SAIDA_ID` | `servire` |
 | `SERVIRE_INTEGRACAO_CHAVE_SAIDA_SEGREDO` | `<segredo B>` |
