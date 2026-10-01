@@ -49,8 +49,8 @@ apt update && apt upgrade -y
 curl -fsSL https://get.docker.com | sh
 ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw allow 2090/tcp && ufw --force enable
 mkdir -p /opt/ecossistema && cd /opt/ecossistema
-git clone gh-servire-api-back:GustavoToebe/servirea-api-back.git servire-api-back
-git clone gh-servire-api-front:GustavoToebe/servirea-api-front.git servire-api-front
+git clone gh-servirea-api-back:GustavoToebe/servirea-api-back.git servirea-api-back
+git clone gh-servirea-api-front:GustavoToebe/servirea-api-front.git servirea-api-front
 git clone gh-central-api-back:GustavoToebe/central-api-back.git
 git clone gh-central-api-front:GustavoToebe/central-api-front.git
 ```
@@ -66,13 +66,13 @@ ca-central-1, na mesma cidade da VPS (sa-east-1 dava 120 ms por conexão).
 
 ## 4. Segredos
 
-São dois arquivos, fora do git: `/opt/ecossistema/servire.env` e `/opt/ecossistema/central.env`,
+São dois arquivos, fora do git: `/opt/ecossistema/servirea.env` e `/opt/ecossistema/central.env`,
 os dois com `chmod 600`.
 
 Gere cada segredo com `openssl rand -base64 48 | tr -d '\n'` (uma linha só). Ele serve para os JWT
 e para as chaves de integração. Nunca reaproveite o mesmo segredo em dois lugares.
 
-**servire.env.** Parta do `servire-api-back/.env.example`. As variáveis:
+**servirea.env.** Parta do `servirea-api-back/.env.example`. As variáveis:
 
 | Variável | Valor |
 |---|---|
@@ -119,7 +119,7 @@ bash /opt/ecossistema/central-api-back/deploy/atualizar.sh
 ```
 
 Rode o mesmo comando a cada atualização. Para ver os logs:
-`cd /opt/ecossistema/central-api-back/deploy && docker compose logs -f servire-api`.
+`cd /opt/ecossistema/central-api-back/deploy && docker compose logs -f servirea-api`.
 
 ## 6. Primeiro acesso
 
@@ -137,7 +137,7 @@ VALUES (gen_random_uuid(), 'Gustavo', '<e-mail>',
 ```
 
 **Produto Servirea na Central.** Cadastre o produto com a URL de integração
-`http://servire-api:8080`, que é a rede interna do Docker. Depois cadastre a cliente, a contratação e o
+`http://servirea-api:8080`, que é a rede interna do Docker (o nome antigo `servire-api` continua como alias). Depois cadastre a cliente, a contratação e o
 provisionamento da paróquia. O administrador recebe o convite por e-mail.
 
 ## 7. WhatsApp (EvolutionGo) e Fail2Ban (27/09/2026)

@@ -15,7 +15,7 @@ fi
 BASE=/opt/ecossistema
 cd "$BASE"
 
-for repo in servire-api-back servire-api-front central-api-back central-api-front; do
+for repo in servirea-api-back servirea-api-front central-api-back central-api-front; do
   git -C "$repo" pull --ff-only
 done
 
@@ -28,7 +28,7 @@ compilar_front() { # $1 repositório  $2 pasta do dist  $3 destino em sites/
 }
 
 mkdir -p sites
-compilar_front servire-api-front paroquia-escalas-front servire
+compilar_front servirea-api-front paroquia-escalas-front servirea
 compilar_front central-api-front central-api-front central
 
 cd central-api-back/deploy

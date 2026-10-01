@@ -48,8 +48,8 @@ nesse mesmo terminal. Cada API tem o seu terminal, com as suas variáveis colada
 
 ```powershell
 $base = "$env:USERPROFILE\OneDrive\Documents"
-foreach ($r in "servire-api-back", "servire-api-front", "central-api-back", "central-api-front") {
-  $p = @("$base\servire\$r", "$base\central\$r", "$base\$r") | Where-Object { Test-Path "$_\.git" } | Select-Object -First 1
+foreach ($r in "servirea-api-back", "servirea-api-front", "central-api-back", "central-api-front") {
+  $p = @("$base\servirea\$r", "$base\servire\$r", "$base\central\$r", "$base\$r") | Where-Object { Test-Path "$_\.git" } | Select-Object -First 1
   if ($p) { Write-Host "== $r ($p)" -ForegroundColor Cyan; git -C $p pull --ff-only }
   else { Write-Host "== $r nao encontrado" -ForegroundColor Red }
 }
@@ -100,7 +100,7 @@ $env:CENTRAL_PRODUTO_SERVIRE_CHAVE_SAIDA_SEGREDO=$s
 mvn spring-boot:run -DskipTests "-Dspring-boot.run.profiles=dev"
 ```
 
-**4. Fronts.** `servire-api-front`: `npm start` (http://localhost:4200). `central-api-front`:
+**4. Fronts.** `servirea-api-front`: `npm start` (http://localhost:4200). `central-api-front`:
 `npm start -- --port 4201` (http://localhost:4201). Depois de um `git pull` que mexeu no `package.json`,
 rode `npm ci` antes.
 
@@ -140,7 +140,7 @@ Rede, timeout e 5xx no provisionamento esperam 1 min, 5 min, 15 min e 1 h, e ent
 Etapas 1 a 5 prontas: em produção desde 27/09/2026 (`docs/arquitetura-central.md`, seção 14.4;
 roteiro em `deploy/README.md`).
 
-1. Primeira contratação pela Central (produto Servirea com URL de integração `http://servire-api:8080`, cliente,
+1. Primeira contratação pela Central (produto Servirea com URL de integração `http://servirea-api:8080`, cliente,
    contratação, provisionamento e convite).
 2. Ajustes do uso real (Servirea e Central) e bugs.
 3. WhatsApp e e-mail pela Central (EvolutionGo na VPS; decisão 25).

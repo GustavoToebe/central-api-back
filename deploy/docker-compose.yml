@@ -1,19 +1,24 @@
 # Produção na VPS (27/09/2026): as duas APIs e o Caddy (HTTPS automático).
 # Layout em /opt/ecossistema (ver deploy/README.md):
-#   servire-api-back/  servire-api-front/  central-api-back/  central-api-front/
-#   servire.env  central.env  (segredos, chmod 600, fora do git)
-#   sites/servire  sites/central  (fronts compilados pelo atualizar.sh)
+#   servirea-api-back/  servirea-api-front/  central-api-back/  central-api-front/
+#   servirea.env  central.env  (segredos, chmod 600, fora do git)
+#   sites/servirea  sites/central  (fronts compilados pelo atualizar.sh)
 # As APIs não publicam porta: só o Caddy fala com a internet (80/443).
 name: ecossistema
 
 services:
-  servire-api:
-    build: ../../servire-api-back
-    env_file: ../../servire.env
+  servirea-api:
+    build: ../../servirea-api-back
+    env_file: ../../servirea.env
     environment:
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
       SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE: 5
       SERVIRE_INTEGRACAO_CENTRAL_URL: http://central-api:8081
+    networks:
+      default:
+        # Nome antigo (até 30/09/2026): a URL de integração do produto fica no banco da Central.
+        aliases:
+          - servire-api
     mem_limit: 1536m
     restart: unless-stopped
 
@@ -72,7 +77,7 @@ services:
     # Usuário e hash (base64) do acesso ao whatsapp.servirea.com.br.
     env_file: ../../caddy.env
     depends_on:
-      - servire-api
+      - servirea-api
       - central-api
       - evolution
     restart: unless-stopped
