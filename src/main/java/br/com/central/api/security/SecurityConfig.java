@@ -67,12 +67,13 @@ public class SecurityConfig {
                         .spa()
                         .csrfTokenRepository(csrfTokenRepository(properties))
                         .requireCsrfProtectionMatcher(SecurityConfig::exigeCsrf)
-                        .ignoringRequestMatchers("/auth/login", "/integracao/**"))
+                        .ignoringRequestMatchers("/auth/login", "/integracao/**", "/webhooks/mercadopago"))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.POST,"/webhooks/mercadopago").permitAll()
                         .requestMatchers(ROTAS_PUBLICAS).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(integracaoFiltro, UsernamePasswordAuthenticationFilter.class)

@@ -17,6 +17,13 @@ spring:
     baseline-on-migrate: false
 
 central:
+  mercadopago:
+    access-token: ${MP_ACCESS_TOKEN:}
+    webhook-secret: ${MP_WEBHOOK_SECRET:}
+    collector-id: ${MP_COLLECTOR_ID:}
+    retorno-url: ${MP_RETORNO_URL:}
+    notificacao-url: ${MP_NOTIFICACAO_URL:}
+    producao: ${MP_PRODUCAO:false}
   security:
     jwt:
       access-token-ttl: PT15M

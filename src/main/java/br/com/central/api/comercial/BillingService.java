@@ -136,9 +136,10 @@ public class BillingService {
         for (Cobranca cobranca : cobrancas) {
             porContratacao.computeIfAbsent(cobranca.getContratacaoId(), chave -> new ArrayList<>()).add(cobranca);
         }
-        for (Map.Entry<UUID, List<Cobranca>> grupo : porContratacao.entrySet()) {
+        for (Map.Entry<UUID, List<Cobranca>> grupo : porContratacao.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
             Contratacao contratacao = carregar(grupo.getKey());
             exigirNaoCancelada(contratacao);
+            grupo.getValue().forEach(entityManager::refresh);
             pagar(contratacao, grupo.getValue(), request);
         }
         return cobrancas.size();
@@ -473,7 +474,10 @@ public class BillingService {
         List<Cobranca> apagar = new ArrayList<>();
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacaoId)) {
             if (cobranca.getStatus() == Cobranca.Status.ABERTA && !cobranca.getCompetenciaInicio().isBefore(data)) {
-                apagar.add(cobranca);
+                Integer checkouts=(Integer)entityManager.createNativeQuery("select count(*) from checkout_mercadopago where cobranca_id=?",Integer.class)
+                    .setParameter(1,cobranca.getId()).getSingleResult();
+                if (checkouts>0) cobranca.cancelar("Substituída após mudança comercial; checkout preservado para conciliação.");
+                else apagar.add(cobranca);
             }
         }
         cobrancaRepository.deleteAll(apagar);
@@ -577,6 +581,9 @@ public class BillingService {
     }
 
     private Contratacao carregar(UUID id) {
+        if (!org.springframework.transaction.support.TransactionSynchronizationManager.isCurrentTransactionReadOnly()) {
+            contratacaoRepository.buscarParaAlterar(id).orElseThrow(() -> new ResourceNotFoundException("Contratação não encontrada."));
+        }
         Contratacao contratacao = contratacaoRepository.buscarComReferencias(id);
         if (contratacao == null) {
             throw new ResourceNotFoundException("Contratação não encontrada.");

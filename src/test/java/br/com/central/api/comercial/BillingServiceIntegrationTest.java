@@ -729,4 +729,98 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         String codigo = "T" + UUID.randomUUID().toString().substring(0, 8);
         return catalogoService.criarPlano(new SalvarPlanoRequest(produtoId, codigo, "Plano " + codigo, true, null));
     }
+
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate mpJdbc;
+    @Autowired private org.springframework.transaction.PlatformTransactionManager mpTm;
+    @Autowired private CobrancaRepository mpCobrancas;
+    @Autowired private ContratacaoRepository mpContratos;
+
+    private record MpFixture(CobrancaResponse cobranca,UUID tentativa,String pagamento,
+        br.com.central.api.pagamento.MercadoPagoHttp http,br.com.central.api.pagamento.ConciliacaoMercadoPago conciliacao) {}
+
+    private MpFixture mpFixture() {
+        var contratacao=contratar(Periodicidade.MENSAL,CEM,10,hoje);
+        var cobranca=maisAntiga(financeiro(contratacao));UUID tentativa=UUID.randomUUID();
+        String pagamento=Long.toUnsignedString(UUID.randomUUID().getMostSignificantBits());
+        var http=org.mockito.Mockito.mock(br.com.central.api.pagamento.MercadoPagoHttp.class);
+        org.mockito.Mockito.when(http.configurado()).thenReturn(true);
+        org.mockito.Mockito.when(http.criarCheckout(org.mockito.ArgumentMatchers.eq(tentativa),org.mockito.ArgumentMatchers.any()))
+            .thenAnswer(inv -> {
+                assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                return new br.com.central.api.pagamento.MercadoPagoHttp.Checkout("preferencia","https://www.mercadopago.com.br/checkout");
+            });
+        var service=new br.com.central.api.pagamento.CheckoutMercadoPagoService(mpJdbc,mpCobrancas,mpContratos,http,mpTm);
+        assertThat(service.criar(cobranca.id(),tentativa).situacao()).isEqualTo("PRONTO");
+        service.criar(cobranca.id(),tentativa);
+        org.mockito.Mockito.verify(http,org.mockito.Mockito.times(1)).criarCheckout(org.mockito.ArgumentMatchers.eq(tentativa),org.mockito.ArgumentMatchers.any());
+        var conciliacao=new br.com.central.api.pagamento.ConciliacaoMercadoPago(mpJdbc,http,billingService,mpContratos,mpTm,"123",false);
+        mpJdbc.update("insert into pagamento_mercadopago(id) values(?)",pagamento);
+        return new MpFixture(cobranca,tentativa,pagamento,http,conciliacao);
+    }
+    private void respostaMp(MpFixture f,String status,String valor,String moeda,String coletor) {
+        org.mockito.Mockito.when(f.http().consultarPagamento(f.pagamento())).thenAnswer(inv -> {
+            assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+            return new br.com.central.api.pagamento.MercadoPagoHttp.Pagamento(f.pagamento(),f.tentativa().toString(),status,
+                new BigDecimal(valor),moeda,coletor,false,hoje+"T12:00:00-03:00","bank_transfer");
+        });
+    }
+    @Test void mercadoPagoConfirmaNaFonteOficialERepeticaoNaoDaBaixaDuasVezes() {
+        var f=mpFixture();respostaMp(f,"approved","100.00","BRL","123");f.conciliacao().processar();
+        assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.PAGA);
+        mpJdbc.update("update pagamento_mercadopago set situacao='PENDENTE',revisao=revisao+1,proxima_tentativa=now() where id=?",f.pagamento());
+        f.conciliacao().processar();
+        assertThat(mpJdbc.queryForObject("select situacao from pagamento_mercadopago where id=?",String.class,f.pagamento())).isEqualTo("CONCILIADO");
+        assertThat(mpJdbc.queryForObject("select aplicado from pagamento_mercadopago where id=?",Boolean.class,f.pagamento())).isTrue();
+    }
+    @Test void mercadoPagoRecusaDivergenciaDeValorMoedaERecebedor() {
+        for (var dados:List.of(List.of("99.00","BRL","123"),List.of("100.00","USD","123"),List.of("100.00","BRL","999"))) {
+            var f=mpFixture();respostaMp(f,"approved",dados.get(0),dados.get(1),dados.get(2));f.conciliacao().processar();
+            assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.ABERTA);
+            assertThat(mpJdbc.queryForObject("select situacao from pagamento_mercadopago where id=?",String.class,f.pagamento())).isEqualTo("REVISAR");
+        }
+    }
+    @Test void mercadoPagoPagamentoPendenteNaoLiberaEEstornoMantemHistorico() {
+        var f=mpFixture();respostaMp(f,"pending","100.00","BRL","123");f.conciliacao().processar();
+        assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.ABERTA);
+        mpJdbc.update("update pagamento_mercadopago set situacao='PENDENTE',revisao=revisao+1,proxima_tentativa=now() where id=?",f.pagamento());
+        respostaMp(f,"approved","100.00","BRL","123");f.conciliacao().processar();
+        mpJdbc.update("update pagamento_mercadopago set situacao='PENDENTE',revisao=revisao+1,proxima_tentativa=now() where id=?",f.pagamento());
+        respostaMp(f,"refunded","100.00","BRL","123");f.conciliacao().processar();
+        assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.PAGA);
+        assertThat(mpJdbc.queryForObject("select situacao from pagamento_mercadopago where id=?",String.class,f.pagamento())).isEqualTo("REVISAR");
+    }
+
+    @Test void notificacaoDuranteConsultaNaoAplicaResultadoDaRevisaoAntiga() {
+        var f=mpFixture();
+        org.mockito.Mockito.when(f.http().consultarPagamento(f.pagamento())).thenAnswer(inv -> {
+            mpJdbc.update("update pagamento_mercadopago set revisao=revisao+1,proxima_tentativa=now() where id=?",f.pagamento());
+            return new br.com.central.api.pagamento.MercadoPagoHttp.Pagamento(f.pagamento(),f.tentativa().toString(),"approved",CEM,"BRL","123",false,hoje+"T12:00:00-03:00","bank_transfer");
+        });
+        f.conciliacao().processar();
+        assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.ABERTA);
+        assertThat(mpJdbc.queryForObject("select reservado_por from pagamento_mercadopago where id=?",UUID.class,f.pagamento())).isNull();
+        respostaMp(f,"approved","100.00","BRL","123");f.conciliacao().processar();
+        assertThat(mpCobrancas.findById(f.cobranca().id()).orElseThrow().getStatus()).isEqualTo(Cobranca.Status.PAGA);
+    }
+    @Test void duasCriacoesDeCheckoutCompartilhamReservaEHttpFicaForaDeTransacao() throws Exception {
+        var cobranca=maisAntiga(financeiro(contratar(Periodicidade.MENSAL,CEM,10,hoje)));UUID tentativa=UUID.randomUUID();
+        var http=org.mockito.Mockito.mock(br.com.central.api.pagamento.MercadoPagoHttp.class);
+        org.mockito.Mockito.when(http.configurado()).thenReturn(true);
+        var iniciou=new java.util.concurrent.CountDownLatch(1);var liberar=new java.util.concurrent.CountDownLatch(1);
+        org.mockito.Mockito.when(http.criarCheckout(org.mockito.ArgumentMatchers.eq(tentativa),org.mockito.ArgumentMatchers.any())).thenAnswer(inv -> {
+            assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+            iniciou.countDown();if(!liberar.await(10,java.util.concurrent.TimeUnit.SECONDS)) throw new IllegalStateException();
+            return new br.com.central.api.pagamento.MercadoPagoHttp.Checkout("pref","https://www.mercadopago.com.br/checkout");
+        });
+        var service=new br.com.central.api.pagamento.CheckoutMercadoPagoService(mpJdbc,mpCobrancas,mpContratos,http,mpTm);
+        try(var executor=java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            var primeiro=executor.submit(() -> service.criar(cobranca.id(),tentativa));
+            try {
+                assertThat(iniciou.await(5,java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThatThrownBy(() -> service.criar(cobranca.id(),tentativa)).isInstanceOf(ConflictException.class);
+            } finally { liberar.countDown(); }
+            assertThat(primeiro.get(10,java.util.concurrent.TimeUnit.SECONDS).situacao()).isEqualTo("PRONTO");
+        }
+        org.mockito.Mockito.verify(http,org.mockito.Mockito.times(1)).criarCheckout(org.mockito.ArgumentMatchers.eq(tentativa),org.mockito.ArgumentMatchers.any());
+    }
 }

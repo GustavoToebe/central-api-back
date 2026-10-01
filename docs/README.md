@@ -17,3 +17,5 @@
 - [Limites de integração](integracao-limites.md): payload, nonce e erros do filtro HMAC.
 
 - [outbox.md](outbox.md): reserva, transações curtas, concorrência e retomada após crash.
+
+- [Mercado Pago](mercadopago.md): configuração, checkout, notificações e limites da conciliação.

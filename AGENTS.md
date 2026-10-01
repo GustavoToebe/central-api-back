@@ -88,3 +88,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Ordem de lock: contratação antes do evento. Ler contratacaoId por projeção antes da trava para não carregar evento obsoleto no persistence context.
 - Nunca limpar reserva ao descartar uma versão ainda em envio. Conclusão confere UUID de posse e prazo; resultado antigo não altera nova tentativa.
 - Se os direitos mudarem durante POST, preservar a versão atual e a identidade criada. O PUT seguinte precisa preencher tenantId da instância.
+
+## Checkout Mercado Pago (V012)
+
+- docs/mercadopago.md: checkout por cobrança, sem débito recorrente automático. Valor vem do servidor.
+- Webhook POST /webhooks/mercadopago valida assinatura e persiste caixa antes de 200. Nunca confiar no body/retorno do navegador para dar baixa.
+- Conciliador HTTP fora de transação, fonte oficial, valor/moeda/coletor/ambiente, posse e revisão. Refund/chargeback exige revisão; nunca apaga baixa automaticamente.
