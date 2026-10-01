@@ -274,7 +274,11 @@ instância: antes do primeiro envio, ou depois de uma recusa 4xx que não seja
 ```
 
 `uso` é só contagem (nada de dado pessoal). Usado pela tela da Central e pelo
-relatório de conciliação.
+relatório de conciliação. **Limitação atual do Servirea:** `uso.armazenamento_mb`
+é um placeholder 0; o exemplo 120 ilustra o contrato pretendido, não uma medição
+implementada nessa rota. Não usar para faturamento ou espaço disponível. A medição
+real de arquivos vinculados desta etapa está em `/minha-conta/consumo`, rota local
+autenticada; integrar o consumo ao painel da Central permanece pendente (F06/F26).
 
 ### 5.3 Webhook de direitos
 
@@ -483,4 +487,8 @@ Assinatura e nonce continuam obrigatórios. Métodos de direitos, erros e minha-
 
 `pessoas`, `voluntarios`, `usuarios` são limites aplicados, inteiros não negativos e códigos com esta caixa. Pessoas incluem responsáveis/voluntários/inativos; voluntários incluem cadastros inativos; usuários incluem vínculos ATIVO e convites (desativar vínculo libera vaga). Zero bloqueia crescimento; omissão mantém compatibilidade sem cota configurada. Plano reduzido preserva dados e edições sem crescimento. Registro acima do limite retorna 409 COTA_EXCEDIDA; configuração inválida 503 COTAS_INVALIDAS. Aplicação de direitos e operações de crescimento serializam pela paróquia.
 
-GET /minha-conta/consumo é consulta **local do aplicativo**, com PERM_PAROQUIA, sem HMAC ou dados pessoais; não altera as rotas deste contrato. Armazenamento, documentos, envios e funcionalidades ainda não estão aplicados; não anunciar consumo comercial implementado para estes. Detalhe operacional em servirea-api-back/docs/cotas-plano.md.
+GET /minha-conta/consumo é consulta **local do aplicativo**, com PERM_PAROQUIA, sem HMAC ou dados pessoais; não altera as rotas deste contrato. Armazenamento de arquivos vinculados aplicado (V057 do Servirea, descrito abaixo); importação de documentos, envios e funcionalidades ainda não estão aplicados; não anunciar consumo comercial implementado para estes. Detalhe operacional em servirea-api-back/docs/cotas-plano.md.
+
+### Armazenamento de arquivos vinculados (V057 Servirea)
+
+`armazenamento_mb` anuncia aplicado=true; inteiro não negativo, 1 MB = 1.048.576 bytes. Inclui fotos referenciadas de voluntários/inscrições/eventos e anexos de comunicados ainda retidos. Foto compartilhada conta uma vez. Não mede arquivos órfãos, versões antigas ou o banco inteiro. O DTO local de consumo retorna unidade=bytes; limite/usado/disponivel nessa unidade. Legado desconhecido tem INVENTARIO_PENDENTE, pendentes e disponível NULL, nunca zero inventado. Com teto, novos arquivos exigem inventário completo, conferível por ação autorizada no aplicativo. Provisão de consumo sem limite mantém compatibilidade. Não anunciar envios/importação como cotas aplicadas. Detalhes em servirea-api-back/docs/armazenamento-cotas.md; Central não recebe fotos/caminhos nem consulta o bucket.
