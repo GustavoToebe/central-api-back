@@ -1,6 +1,7 @@
 package br.com.central.api.integracao;
 
 import br.com.central.api.AbstractIntegrationTest;
+import br.com.central.api.Documentos;
 import br.com.central.api.comercial.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,7 +57,8 @@ class MinhaContaIntegracaoControllerTest extends AbstractIntegrationTest {
         plano.setAtivo(true);
         plano = planoRepository.saveAndFlush(plano);
 
-        Cliente cliente = new Cliente(TipoCliente.PJ, "12345678000199", "Paroquia Teste");
+        String documento = Documentos.cnpj();
+        Cliente cliente = new Cliente(TipoCliente.PJ, documento, "Paroquia Teste");
         cliente = clienteRepository.saveAndFlush(cliente);
 
         Contratacao contratacao = new Contratacao(cliente, produto, plano, Periodicidade.MENSAL,
@@ -103,8 +105,16 @@ class MinhaContaIntegracaoControllerTest extends AbstractIntegrationTest {
                 .header("X-Integracao-Assinatura", assinatura))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cliente.nome").value("Paroquia Teste"))
-                .andExpect(jsonPath("$.cliente.documento").value("12345678000199"))
+                .andExpect(jsonPath("$.cliente.documento").value(documento))
+                .andExpect(jsonPath("$.cliente.endereco").isMap())
+                .andExpect(jsonPath("$.cliente.contatos").isArray())
                 .andExpect(jsonPath("$.contratacao.planoNome").value("Plano Base"))
+                .andExpect(jsonPath("$.contratacao.periodicidade").value("MENSAL"))
+                .andExpect(jsonPath("$.contratacao.situacaoComercial").value("ATIVA"))
+                .andExpect(jsonPath("$.contratacao.diaVencimento").value(10))
+                .andExpect(jsonPath("$.contratacao.adicionais").isArray())
+                .andExpect(jsonPath("$.cobrancas[0].situacao").value("ABERTA"))
+                .andExpect(jsonPath("$.cobrancas[0].competenciaInicio").exists())
                 .andExpect(jsonPath("$.cobrancas").isArray())
                 .andExpect(jsonPath("$.cobrancas.length()").value(2))
                 .andExpect(jsonPath("$.cobrancas[0].id").value(cobranca2.getId().toString()))
@@ -113,7 +123,10 @@ class MinhaContaIntegracaoControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.cobrancas[0].vencida").value(false))
                 .andExpect(jsonPath("$.contratacao.isencaoMotivo").doesNotExist())
                 .andExpect(jsonPath("$.contratacao.idempotencyKey").doesNotExist())
-                .andExpect(jsonPath("$.contratacao.direitos").doesNotExist());
+                .andExpect(jsonPath("$.contratacao.direitos").doesNotExist())
+                .andExpect(jsonPath("$.contratacao.adminEmail").doesNotExist())
+                .andExpect(jsonPath("$.contratacao.slugInstancia").doesNotExist())
+                .andExpect(jsonPath("$.contratacao.situacaoProvisionamento").doesNotExist());
     }
 
     @Test

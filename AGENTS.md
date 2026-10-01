@@ -51,7 +51,8 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   lista só contratações já provisionadas. `GET /produtos/{id}/recursos-do-app` pergunta ao app os códigos
   de limite/funcionalidade (contrato 5.5); código de recurso fica como o app usa (sem maiúsculas).
   `POST /integracao/v1/produtos/{produto}/erros` recebe erros 5xx (`erro_aplicativo`, V006, 90 dias; `GET /erros`
-  para a tela "Logs"). `POST /contratacoes/{id}/suporte` e
+  para a tela "Logs"). `GET /integracao/v1/produtos/{produto}/instancias/{idExterno}/minha-conta` (contrato 6.3,
+  `MinhaContaService`): só o que a paróquia pode ver, cobranças só da contratação. `POST /contratacoes/{id}/suporte` e
   `POST /contratacoes/{id}/tentar-provisionamento` são do operador.
 - `comercial/` — cliente, produto, recurso, plano, preço, adicional, contratação,
   direitos, cobrança manual e `evento_saida`. O job diário gera cobranças e marca

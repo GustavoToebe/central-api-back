@@ -394,6 +394,48 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
 - O app junta em memória e manda a cada minuto; a Central fora do ar nunca atrasa a requisição da
   instância. A Central acha a contratação pelo `tenantId` e guarda 90 dias.
 
+### 6.3 Minha conta (dados comerciais da instância)
+
+`GET /integracao/v1/produtos/{produto}/instancias/{idExterno}/minha-conta` → `200` (01/10/2026)
+
+Assinado como o resto do contrato (seção 2), corpo vazio. `idExterno` é o `tenantId` da instância. O app
+chama quando a pessoa abre "Minha conta" (no Servirea, `GET /minha-conta`, só com `PERM_PAROQUIA`).
+
+```json
+{
+  "cliente": {
+    "nome": "Paróquia São José Operário",
+    "documento": "12.345.678/0001-95",
+    "endereco": {
+      "logradouro": "Rua General Osório", "numero": "3191", "complemento": null,
+      "bairro": "Centro", "cidade": "Cascavel", "uf": "PR", "cep": "85810-000"
+    },
+    "contatos": [ { "nome": "Maria", "email": "maria@…", "telefone": "(45) 99965-0660", "principal": true } ]
+  },
+  "contratacao": {
+    "planoNome": "Plano Base", "periodicidade": "MENSAL", "valor": 150.00, "diaVencimento": 10,
+    "inicio": "2026-09-01", "vigenteAte": null, "situacaoComercial": "ATIVA",
+    "nomeInstancia": "São José Operário",
+    "adicionais": [ { "nome": "Usuários extras", "quantidade": 3 } ]
+  },
+  "cobrancas": [
+    {
+      "id": "7b1c…", "competenciaInicio": "2026-10-01", "competenciaFim": "2026-10-31",
+      "vencimento": "2026-10-10", "valor": 150.00, "situacao": "ABERTA", "vencida": true, "pagoEm": null
+    }
+  ]
+}
+```
+
+- Só o que a paróquia pode ver. **Não** vão: motivo de isenção, `idempotencyKey`, direitos,
+  dados de provisionamento (slug, admin), versões nem ids internos de cliente, produto e plano.
+- Documento, CEP e telefone já vêm **formatados** (`Formatos`); o app mostra como veio.
+- `situacao` da cobrança: `ABERTA`, `PAGA`, `CANCELADA` ou `ISENTA`. `vencida` = aberta com vencimento
+  antes de hoje (fuso de Brasília). Cobranças só desta contratação, da mais recente para a mais antiga.
+- Erros: `404` produto ou instância inexistente; `401` assinatura ausente ou inválida.
+- No app (Servirea): `404` da Central → `404 CONTA_NAO_ENCONTRADA`; Central fora do ar, `5xx` ou
+  assinatura recusada → `502 CENTRAL_INDISPONIVEL`; integração sem chave → `503 INTEGRACAO_NAO_CONFIGURADA`.
+
 ## 7. Tabelas de apoio no app (Servirea)
 
 ```
