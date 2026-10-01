@@ -24,3 +24,5 @@
 
 - [estado-projeto.json](estado-projeto.json): componente, comandos e migration local quando houver. Não confirma publicação.
 - Histórico explica decisões antigas; contrato e código atuais definem o comportamento vigente.
+
+- [Limites de login](login-limites.md): tentativas, saturação e limites por instância.
