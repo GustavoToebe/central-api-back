@@ -158,7 +158,22 @@ class MinhaContaIntegracaoControllerTest extends AbstractIntegrationTest {
                 .header("X-Integracao-Timestamp", timestamp)
                 .header("X-Integracao-Nonce", nonce)
                 .header("X-Integracao-Assinatura", assinatura))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void chaveAssinadaNaoConsultaDireitosNemGravaErrosDeOutroProduto() throws Exception {
+        for(String rota:List.of("direitos","erros")) {
+            String caminho="/integracao/v1/produtos/OUTRO/"+rota;
+            String ts=String.valueOf(java.time.Instant.now().getEpochSecond());String nonce=UUID.randomUUID().toString();
+            byte[] corpo=rota.equals("erros") ? "{\"erros\":[]}".getBytes(StandardCharsets.UTF_8) : new byte[0];
+            var requisicao=rota.equals("erros") ? org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post(caminho)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content(corpo) : get(caminho);
+            String assinatura=HmacAssinatura.assinar("segredo-de-teste-nao-usar-em-producao-0123456789".getBytes(StandardCharsets.UTF_8),
+                rota.equals("erros") ? "POST" : "GET",caminho,ts,nonce,corpo);
+            mvc.perform(requisicao.header("X-Integracao-Chave","teste-servire").header("X-Integracao-Timestamp",ts)
+                .header("X-Integracao-Nonce",nonce).header("X-Integracao-Assinatura",assinatura)).andExpect(status().isForbidden());
+        }
     }
 
     @Test

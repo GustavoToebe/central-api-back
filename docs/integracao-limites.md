@@ -19,3 +19,12 @@ Testes: `mvn test -Dtest=IntegracaoFiltroTest,HmacAssinaturaTest`; os testes HTT
 Se o JDK falhar em `UnixDomainSockets.connect` ao criar o cliente HTTP ("Unable to establish loopback connection"), criar um diretório de sockets sob Documents/Codex e passar `-DargLine=-Djdk.net.unixdomain.tmpdir=<diretorio>` ao Maven. Isto é um ajuste da execução local; não incluir caminho Windows no profile de produção. A propriedade e o problema de virtualização de arquivos são descritos pela [equipe OpenJDK](https://mail.openjdk.org/pipermail/nio-dev/2023-March/013297.html).
 
 Em 01/10/2026, `mvn -o -B -q verify` com essa propriedade passou em PostgreSQL 17 via Testcontainers. Nenhum segredo ou configuração de produção foi necessário.
+
+
+## Autorização por produto — 01/10/2026
+
+Na Central, cada entrada de CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA aceita `id:segredoBase64:produto`. Exemplo de estrutura, sem segredo: `servirea-a:<BASE64>:SERVIREA,outro-a:<BASE64>:OUTRO`. O emissor continua enviando somente o identificador; o produto autorizado é definido pelo receptor, nunca por header/body do cliente.
+
+Formato legado `id:segredoBase64` está restrito a SERVIREA, conforme a finalidade original da variável. Para código de produto diferente, acrescentar o código explicitamente antes da publicação. Não existe wildcard. Identificadores duplicados, produto vazio ou formato inválido impedem inicialização. Cada chave tem somente um produto; rotação pode usar duas chaves do mesmo produto.
+
+Assinatura e nonce continuam obrigatórios. Métodos de direitos, erros e minha-conta exigem também o produto vinculado à chave, comparado sem diferenciar maiúsculas. Assinatura válida para outro produto retorna 403 antes de executar o serviço. Saúde comum continua acessível com HMAC válido, sem fichas comerciais. Operador/JWT não ganha acesso à integração. Sem mudança de payload, schema ou assinatura.

@@ -469,3 +469,12 @@ Kill Switch fora do contexto de tenant. RLS ligado sem policy.
 ## Limite de entrada e validação antecipada
 
 Ver [limites de integração](integracao-limites.md): corpo até 1 MiB, inclusive sem Content-Length; excesso retorna `413 CORPO_EXCEDIDO`. Headers inválidos são recusados antes da leitura. O formato da assinatura e os vetores HMAC permanecem iguais.
+
+
+## Autorização por produto — 01/10/2026
+
+Na Central, cada entrada de CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA aceita `id:segredoBase64:produto`. Exemplo de estrutura, sem segredo: `servirea-a:<BASE64>:SERVIREA,outro-a:<BASE64>:OUTRO`. O emissor continua enviando somente o identificador; o produto autorizado é definido pelo receptor, nunca por header/body do cliente.
+
+Formato legado `id:segredoBase64` está restrito a SERVIREA, conforme a finalidade original da variável. Para código de produto diferente, acrescentar o código explicitamente antes da publicação. Não existe wildcard. Identificadores duplicados, produto vazio ou formato inválido impedem inicialização. Cada chave tem somente um produto; rotação pode usar duas chaves do mesmo produto.
+
+Assinatura e nonce continuam obrigatórios. Métodos de direitos, erros e minha-conta exigem também o produto vinculado à chave, comparado sem diferenciar maiúsculas. Assinatura válida para outro produto retorna 403 antes de executar o serviço. Saúde comum continua acessível com HMAC válido, sem fichas comerciais. Operador/JWT não ganha acesso à integração. Sem mudança de payload, schema ou assinatura.

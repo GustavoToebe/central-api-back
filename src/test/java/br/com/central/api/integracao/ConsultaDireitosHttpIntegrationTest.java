@@ -49,6 +49,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ConsultaDireitosHttpIntegrationTest extends AbstractIntegrationTest {
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private IntegracaoProperties properties;
+
     private static final byte[] SEGREDO =
             "segredo-de-teste-nao-usar-em-producao-0123456789".getBytes(StandardCharsets.UTF_8);
 
@@ -91,6 +94,8 @@ class ConsultaDireitosHttpIntegrationTest extends AbstractIntegrationTest {
                 TipoCliente.PF, Documentos.cpf(), "Cliente " + sufixo,
                 null, null, null, null, null, null, null, null)).id();
         codigo = "P" + sufixo;
+        org.mockito.Mockito.when(properties.chaves()).thenReturn(java.util.Map.of("teste-servire",SEGREDO));
+        org.mockito.Mockito.when(properties.produtos()).thenReturn(java.util.Map.of("teste-servire",codigo));
         UUID produtoId = catalogoService.criarProduto(new SalvarProdutoRequest(
                 codigo, "Produto " + sufixo, "http://app.test", true)).id();
         UUID limite = catalogoService.criarRecurso(new SalvarRecursoRequest(

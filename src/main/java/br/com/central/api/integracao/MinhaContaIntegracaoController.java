@@ -19,7 +19,7 @@ public class MinhaContaIntegracaoController {
     }
 
     @GetMapping("/produtos/{produto}/instancias/{idExterno}/minha-conta")
-    @PreAuthorize("hasAuthority('PERM_INTEGRACAO')")
+    @PreAuthorize("hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)")
     public MinhaContaDto minhaConta(@PathVariable String produto, @PathVariable UUID idExterno) {
         return minhaContaService.obterMinhaConta(produto, idExterno);
     }

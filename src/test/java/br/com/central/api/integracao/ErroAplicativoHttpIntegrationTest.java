@@ -52,6 +52,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class ErroAplicativoHttpIntegrationTest extends AbstractIntegrationTest {
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private IntegracaoProperties properties;
+
     private static final byte[] SEGREDO =
             "segredo-de-teste-nao-usar-em-producao-0123456789".getBytes(StandardCharsets.UTF_8);
 
@@ -95,6 +98,8 @@ class ErroAplicativoHttpIntegrationTest extends AbstractIntegrationTest {
         UUID clienteId = clienteService.criar(new SalvarClienteRequest(
                 TipoCliente.PJ, Documentos.cnpj(), clienteNome, null, null, null, null, null, null, null, null)).id();
         codigo = "L" + sufixo;
+        org.mockito.Mockito.when(properties.chaves()).thenReturn(java.util.Map.of("teste-servire",SEGREDO));
+        org.mockito.Mockito.when(properties.produtos()).thenReturn(java.util.Map.of("teste-servire",codigo));
         produtoId = catalogoService.criarProduto(new SalvarProdutoRequest(codigo, "Produto", "http://app.test", true)).id();
         UUID planoId = catalogoService.criarPlano(new SalvarPlanoRequest(produtoId, "PL" + sufixo, "Plano", true, List.of())).id();
         contratacaoId = contratacaoService.criar(new CriarContratacaoRequest(

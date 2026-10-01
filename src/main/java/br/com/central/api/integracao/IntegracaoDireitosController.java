@@ -26,7 +26,7 @@ public class IntegracaoDireitosController {
 
     /** Contrato 6.2: erros de servidor do app para a tela "Logs". */
     @PostMapping("/produtos/{produto}/erros")
-    @PreAuthorize("hasAuthority('PERM_INTEGRACAO')")
+    @PreAuthorize("hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public IntegracaoDtos.ErrosRecebidos erros(@PathVariable String produto,
                                                @Valid @RequestBody IntegracaoDtos.LoteDeErros lote) {
@@ -34,7 +34,7 @@ public class IntegracaoDireitosController {
     }
 
     @GetMapping("/produtos/{produto}/direitos")
-    @PreAuthorize("hasAuthority('PERM_INTEGRACAO')")
+    @PreAuthorize("hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)")
     public IntegracaoDtos.PaginaDireitos direitos(@PathVariable String produto,
                                                   @RequestParam(defaultValue = "0") int pagina,
                                                   @RequestParam(defaultValue = "100") int tamanho) {

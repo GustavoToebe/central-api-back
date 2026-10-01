@@ -74,7 +74,7 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
         String chaveId = request.getHeader(CHAVE);
-        byte[] segredo = properties.chaves().get(chaveId);
+        byte[] segredo = chaveId == null ? null : properties.chaves().get(chaveId);
         if (segredo == null) {
             recusar(response, request, "CHAVE_DESCONHECIDA", "chave=" + chaveId);
             return;
