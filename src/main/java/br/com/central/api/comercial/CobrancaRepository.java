@@ -15,6 +15,8 @@ public interface CobrancaRepository extends JpaRepository<Cobranca, UUID> {
 
     List<Cobranca> findByContratacaoIdOrderByCompetenciaInicioDesc(UUID contratacaoId);
 
+    List<Cobranca> findByContratacaoIdOrderByVencimentoDesc(UUID contratacaoId);
+
     List<Cobranca> findByIdInAndContratacaoId(List<UUID> ids, UUID contratacaoId);
 
     boolean existsByContratacaoIdAndStatusAndVencimentoBefore(UUID contratacaoId, Cobranca.Status status,
