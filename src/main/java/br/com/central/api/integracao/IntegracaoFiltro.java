@@ -49,6 +49,8 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
     public static final String AUTHORITY = "PERM_INTEGRACAO";
 
     private static final long JANELA_SEGUNDOS = 300;
+    /** Limite independente de Content-Length, inclusive para transferência chunked. */
+    static final int MAX_CORPO_BYTES = 1_048_576;
     private static final Logger log = LoggerFactory.getLogger(IntegracaoFiltro.class);
 
     private final IntegracaoProperties properties;
@@ -71,7 +73,6 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        byte[] corpo = request.getInputStream().readAllBytes();
         String chaveId = request.getHeader(CHAVE);
         byte[] segredo = properties.chaves().get(chaveId);
         if (segredo == null) {
@@ -87,11 +88,29 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
             return;
         }
         long agora = Instant.now().getEpochSecond();
-        if (Math.abs(agora - epoch) > JANELA_SEGUNDOS) {
+        if (epoch < agora - JANELA_SEGUNDOS || epoch > agora + JANELA_SEGUNDOS) {
             recusar(response, request, "TIMESTAMP_FORA_DA_JANELA", "delta=" + (agora - epoch));
             return;
         }
         String nonce = request.getHeader(NONCE);
+        String assinatura = request.getHeader(ASSINATURA);
+        if (assinatura == null || !assinatura.matches("v1=[0-9a-f]{64}")) {
+            recusar(response, request, "ASSINATURA_INVALIDA", "formato inválido");
+            return;
+        }
+        if (nonce == null || nonce.isBlank() || nonce.length() > 128) {
+            recusar(response, request, "NONCE_REPETIDO", "nonce inválido");
+            return;
+        }
+        if (request.getContentLengthLong() > MAX_CORPO_BYTES) {
+            corpoExcedido(response, request);
+            return;
+        }
+        byte[] corpo = request.getInputStream().readNBytes(MAX_CORPO_BYTES + 1);
+        if (corpo.length > MAX_CORPO_BYTES) {
+            corpoExcedido(response, request);
+            return;
+        }
         String caminho = request.getRequestURI();
         if (request.getQueryString() != null) {
             caminho = caminho + "?" + request.getQueryString();
@@ -101,7 +120,7 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
             recusar(response, request, "ASSINATURA_INVALIDA", "caminho=" + caminho);
             return;
         }
-        if (nonce == null || nonce.isBlank() || !nonceService.registrar(chaveId, nonce)) {
+        if (!nonceService.registrar(chaveId, nonce)) {
             recusar(response, request, "NONCE_REPETIDO", "nonce=" + nonce);
             return;
         }
@@ -118,13 +137,21 @@ public class IntegracaoFiltro extends OncePerRequestFilter {
 
     private void recusar(HttpServletResponse response, HttpServletRequest request, String codigo, String detalhe)
             throws IOException {
-        log.warn("Integração recusada: {} ({})", codigo, detalhe);
+        log.warn("Integração recusada: {}", codigo);
         ApiError body = new ApiError(
                 Instant.now(), 401, "UNAUTHORIZED", "Requisição de integração recusada.", codigo,
                 request.getRequestURI(), MDC.get(RequestIdFilter.MDC_KEY), null);
         response.setStatus(401);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         jsonMapper.writeValue(response.getWriter(), body);
+    }
+
+    private void corpoExcedido(HttpServletResponse response, HttpServletRequest request) throws IOException {
+        response.setStatus(413);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        jsonMapper.writeValue(response.getWriter(), new ApiError(
+                Instant.now(), 413, "PAYLOAD_TOO_LARGE", "Corpo da integração excede 1 MiB.",
+                "CORPO_EXCEDIDO", request.getRequestURI(), MDC.get(RequestIdFilter.MDC_KEY), null));
     }
 
     private static final class CorpoCacheado extends HttpServletRequestWrapper {

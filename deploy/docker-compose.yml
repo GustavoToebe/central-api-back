@@ -20,6 +20,12 @@ services:
         aliases:
           - servire-api
     mem_limit: 1536m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
 
   central-api:
@@ -29,6 +35,12 @@ services:
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
       SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE: 5
     mem_limit: 1024m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     restart: unless-stopped
 
   # WhatsApp (27/09/2026): EvolutionGo, sem porta publicada. A Central chama http://evolution:4000; o QR code

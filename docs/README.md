@@ -13,3 +13,5 @@
 | [../AGENTS.md](../AGENTS.md) | Regras de implementação |
 | [../README.md](../README.md) | Como rodar |
 | [../deploy/README.md](../deploy/README.md) | Produção na VPS |
+
+- [Limites de integração](integracao-limites.md): payload, nonce e erros do filtro HMAC.

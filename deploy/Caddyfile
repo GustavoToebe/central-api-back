@@ -37,6 +37,10 @@ app.servirea.com.br {
 	# connect-src ainda lista o host antigo da API para quem não atualizou o front.
 	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.servirea.com.br https://viacep.com.br https://challenges.cloudflare.com https://qcybebkhwhrudbwoweip.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:"
 	handle /api/* {
+        # Preserva os uploads de até 6 MiB; a integração também limita a leitura na API.
+        request_body {
+            max_size 6MiB
+        }
 		uri strip_prefix /api
 		reverse_proxy servirea-api:8080 {
 			header_up X-Forwarded-For {remote_host}
@@ -51,6 +55,9 @@ app.servirea.com.br {
 # O proxy sobrescreve o X-Forwarded-For com o IP de quem conectou (não
 # repassa o que o navegador mandou) — README do servirea-api-back.
 api.servirea.com.br {
+    request_body {
+        max_size 6MiB
+    }
 	import seguranca
 	encode zstd gzip
 	reverse_proxy servirea-api:8080 {
@@ -62,6 +69,10 @@ central.servirea.com.br {
 	import seguranca
 	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://api-central.servirea.com.br https://viacep.com.br; frame-src 'none'; worker-src 'self' blob:"
 	handle /api/* {
+        # Preserva os uploads de até 6 MiB; a integração também limita a leitura na API.
+        request_body {
+            max_size 6MiB
+        }
 		uri strip_prefix /api
 		reverse_proxy central-api:8081 {
 			header_up X-Forwarded-For {remote_host}
@@ -74,6 +85,9 @@ central.servirea.com.br {
 }
 
 api-central.servirea.com.br {
+    request_body {
+        max_size 6MiB
+    }
 	import seguranca
 	encode zstd gzip
 	reverse_proxy central-api:8081 {

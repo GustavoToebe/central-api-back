@@ -75,3 +75,10 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Produção: `deploy/` (compose com as duas APIs e o Caddy, `atualizar.sh`, roteiro no README de lá).
 - Testes: `mvn clean verify` (Docker, Postgres 17 — mesma versão major da produção). Ao somar migration, atualizar o total
   em `FlywayMigrationIntegrationTest`. **Migration nova também pede `scripts/gerar-schema.ps1` e o `schema.sql` commitado junto** (mapa do banco em `SCHEMA.md` + `schema.sql`).
+
+## Segurança e CI na branch de melhorias
+
+- `/integracao/**`: corpo de entrada até 1 MiB; headers baratos são conferidos antes da leitura, inclusive sem Content-Length. Contrato em `docs/integracao-limites.md`.
+- Pull requests executam CI; o job de publicação aceita apenas main e nunca publica um PR. Backends usam `mvn verify`.
+
+- Deploy versionado: healthchecks das duas APIs e espera de saúde no Compose; corpo no Caddy até 6 MiB. Ver `deploy/README.md`. Ainda não substitui rollback nem ensaio de restauração.

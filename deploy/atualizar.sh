@@ -32,6 +32,6 @@ compilar_front servirea-api-front paroquia-escalas-front servirea
 compilar_front central-api-front central-api-front central
 
 cd central-api-back/deploy
-docker compose up -d --build
+docker compose up -d --build --wait --wait-timeout 180
 docker image prune -f
 docker compose ps

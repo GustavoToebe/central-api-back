@@ -465,3 +465,7 @@ Kill Switch fora do contexto de tenant. RLS ligado sem policy.
 - [ ] Sync de 8h + retry de 30 min; alerta às 24 h; bloqueio às 72 h; tolerância configurável.
 - [ ] Outbox na Central com repetição e descarte de versões obsoletas.
 - [ ] Código de suporte de uso único; troca por JWT do app; auditoria.
+
+## Limite de entrada e validação antecipada
+
+Ver [limites de integração](integracao-limites.md): corpo até 1 MiB, inclusive sem Content-Length; excesso retorna `413 CORPO_EXCEDIDO`. Headers inválidos são recusados antes da leitura. O formato da assinatura e os vetores HMAC permanecem iguais.

@@ -186,3 +186,9 @@ Cada um dos quatro repositórios tem `.github/workflows/deploy.yml`. Push na `ma
 | `VPS_KNOWN_HOSTS` | a linha `ed25519` do servidor, vinda do `known_hosts` de um PC confiável (fixa o servidor; o job não confia no primeiro que aparecer) |
 
 Sem os quatro, o job `publicar` falha e a produção não muda. Migration nova roda quando a API sobe: **migration destrutiva vai para produção assim que a `main` passar nos testes.**
+
+## Verificações da branch de melhorias (01/10/2026)
+
+As duas APIs passam a ter healthcheck interno a cada 30 segundos. O script aguarda saúde com `docker compose up --wait`, até 180 segundos, e termina com erro se os serviços não ficarem saudáveis. Isso verifica a API/banco; não substitui ensaio de restauração ou smoke test dos fluxos de negócio. Rollback de release continua uma tarefa separada.
+
+O Caddy limita corpos recebidos pelas quatro entradas de API a 6 MiB, preservando o limite multipart atual. Cada receptor HMAC limita adicionalmente a integração a 1 MiB. Consultar a [diretiva request_body](https://caddyserver.com/docs/caddyfile/directives/request_body). Antes de publicar: validar Caddy/Compose e confirmar saúde em staging. Estas configurações ainda não foram implantadas na VPS.
