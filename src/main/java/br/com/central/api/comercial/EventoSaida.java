@@ -51,6 +51,33 @@ public class EventoSaida {
     @Column(name = "criado_em", nullable = false, insertable = false, updatable = false)
     private Instant criadoEm;
 
+    @Column(name = "reservado_por")
+    private UUID reservadoPor;
+
+    @Column(name = "reserva_ate")
+    private Instant reservaAte;
+
+    public boolean reservaAtiva(Instant agora) {
+        return reservadoPor != null && reservaAte != null && reservaAte.isAfter(agora);
+    }
+
+    public void reservar(UUID dono, Instant ate) {
+        reservadoPor = dono;
+        reservaAte = ate;
+    }
+
+    public boolean pertenceA(UUID dono) {
+        return dono != null && dono.equals(reservadoPor);
+    }
+
+    public void liberarReserva() {
+        reservadoPor = null;
+        reservaAte = null;
+    }
+
+    public UUID getReservadoPor() { return reservadoPor; }
+    public Instant getReservaAte() { return reservaAte; }
+
     protected EventoSaida() {
     }
 

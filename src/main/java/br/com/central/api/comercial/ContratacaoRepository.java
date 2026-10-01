@@ -1,5 +1,7 @@
 package br.com.central.api.comercial;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,10 @@ import java.util.List;
 import java.util.UUID;
 
 public interface ContratacaoRepository extends JpaRepository<Contratacao, UUID> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Contratacao c where c.id = :id")
+    java.util.Optional<Contratacao> buscarParaAlterar(@Param("id") UUID id);
 
     boolean existsByProduto_IdAndSlugInstancia(UUID produtoId, String slug);
 

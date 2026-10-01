@@ -82,3 +82,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Pull requests executam CI; o job de publicação aceita apenas main e nunca publica um PR. Backends usam `mvn verify`.
 
 - Deploy versionado: healthchecks das duas APIs e espera de saúde no Compose; corpo no Caddy até 6 MiB. Ver `deploy/README.md`. Ainda não substitui rollback nem ensaio de restauração.
+
+## Outbox com reserva (V011)
+- Reserva e conclusão em transações curtas; HTTP fora delas. `docs/outbox.md` explica posse, expiração e garantia pelo menos uma vez.
+- Ordem de lock: contratação antes do evento. Ler contratacaoId por projeção antes da trava para não carregar evento obsoleto no persistence context.
+- Nunca limpar reserva ao descartar uma versão ainda em envio. Conclusão confere UUID de posse e prazo; resultado antigo não altera nova tentativa.
+- Se os direitos mudarem durante POST, preservar a versão atual e a identidade criada. O PUT seguinte precisa preencher tenantId da instância.

@@ -104,7 +104,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse atualizarProvisionamento(UUID id, AtualizarProvisionamentoRequest request) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         exigirNaoCancelada(contratacao);
         String slug = slug(request.slugInstancia());
         boolean mudou = !contratacao.getNomeInstancia().equals(request.nomeInstancia().trim())
@@ -137,7 +137,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse alterarPlano(UUID id, AlterarPlanoRequest request) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         exigirNaoCancelada(contratacao);
         Plano plano = planoDoProduto(request.planoId(), contratacao.getProduto().getId());
         if (!plano.isAtivo()) {
@@ -159,7 +159,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse substituirAdicionais(UUID id, SubstituirAdicionaisRequest request) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         exigirNaoCancelada(contratacao);
         contratacaoAdicionalRepository.deleteByContratacao_Id(id);
         entityManager.flush();
@@ -171,7 +171,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse bloquear(UUID id, String motivo) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
             throw new BadRequestException("Contratação cancelada não pode ser bloqueada.");
         }
@@ -190,7 +190,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse desbloquear(UUID id, String motivo) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         if (contratacao.getSituacaoComercial() != SituacaoComercial.BLOQUEADA) {
             throw new BadRequestException("Só é possível desbloquear uma contratação bloqueada.");
         }
@@ -204,7 +204,7 @@ public class ContratacaoService {
 
     @Transactional
     public ContratacaoResponse cancelar(UUID id, String motivo) {
-        Contratacao contratacao = carregar(id);
+        Contratacao contratacao = carregarParaAlterar(id);
         if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
             throw new BadRequestException("Contratação já está cancelada.");
         }
@@ -251,6 +251,12 @@ public class ContratacaoService {
             throw new BadRequestException("O plano não pertence a este produto.");
         }
         return plano;
+    }
+
+    private Contratacao carregarParaAlterar(UUID id) {
+        contratacaoRepository.buscarParaAlterar(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contratação não encontrada."));
+        return carregar(id);
     }
 
     private Contratacao carregar(UUID id) {

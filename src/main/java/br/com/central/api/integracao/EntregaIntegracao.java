@@ -16,6 +16,7 @@ import br.com.central.api.web.BadRequestException;
 import br.com.central.api.web.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -74,15 +75,14 @@ public class EntregaIntegracao {
 
     public int enviarProntos() {
         List<UUID> ids = transacao.execute(status ->
-                eventoRepository.idsProntos(SituacaoEvento.PENDENTE, clock.instant()));
+                eventoRepository.idsProntos(SituacaoEvento.PENDENTE, clock.instant(), PageRequest.of(0, 30)));
         if (ids == null || ids.isEmpty()) {
             return 0;
         }
         int tratados = 0;
         for (UUID id : ids) {
             try {
-                transacao.executeWithoutResult(status -> entregar(id));
-                tratados++;
+                if (entregar(id)) tratados++;
             } catch (RuntimeException e) {
                 log.error("Falha ao entregar o evento {}.", id, e);
             }
@@ -93,13 +93,13 @@ public class EntregaIntegracao {
     public ContratacaoResponse tentarNovamente(UUID contratacaoId) {
         UUID eventoId = transacao.execute(status -> prepararNovaTentativa(contratacaoId));
         if (eventoId != null) {
-            transacao.executeWithoutResult(status -> entregar(eventoId));
+            entregar(eventoId);
         }
         return contratacaoService.buscar(contratacaoId);
     }
 
     private UUID prepararNovaTentativa(UUID contratacaoId) {
-        Contratacao contratacao = carregar(contratacaoId);
+        Contratacao contratacao = carregarParaAlterar(contratacaoId);
         if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
             throw new BadRequestException("Contratação cancelada não é provisionada de novo.");
         }
@@ -123,65 +123,83 @@ public class EntregaIntegracao {
         return pendentes.getFirst().getId();
     }
 
-    private void entregar(UUID eventoId) {
-        EventoSaida evento = eventoRepository.findById(eventoId).orElse(null);
-        if (evento == null || evento.getSituacao() != SituacaoEvento.PENDENTE) {
-            return;
+    /** Reserva e conclusão usam transações curtas; o HTTP nunca ocupa a conexão do banco. */
+    private boolean entregar(UUID eventoId) {
+        Envio envio = transacao.execute(status -> reservar(eventoId));
+        if (envio == null) return false;
+        AplicativoHttp.Resposta resposta = null;
+        String falha = null;
+        try {
+            resposta = http.enviar(envio.url(), envio.metodo(), envio.caminho(), envio.corpo(), envio.idempotencia());
+        } catch (RuntimeException e) {
+            falha = e.getClass().getSimpleName();
         }
-        if (evento.getProximaTentativa().isAfter(clock.instant())) {
-            return;
-        }
-        Contratacao contratacao = carregar(evento.getContratacaoId());
+        AplicativoHttp.Resposta resultado = resposta;
+        String erro = falha;
+        transacao.executeWithoutResult(status -> concluir(envio, resultado, erro));
+        return true;
+    }
+
+    private Envio reservar(UUID eventoId) {
+        UUID contratacaoId = eventoRepository.contratacaoDoEvento(eventoId).orElse(null);
+        if (contratacaoId == null) return null;
+        // Ordem única de trava: contratação, depois evento. Serializa também versões distintas.
+        Contratacao contratacao = carregarParaAlterar(contratacaoId);
+        EventoSaida evento = eventoRepository.buscarParaAlterar(eventoId).orElse(null);
+        if (evento == null || evento.getSituacao() != SituacaoEvento.PENDENTE
+                || evento.getProximaTentativa().isAfter(clock.instant()) || evento.reservaAtiva(clock.instant())
+                || eventoRepository.existsByContratacaoIdAndReservaAteAfter(contratacao.getId(), clock.instant())) return null;
         boolean provisionar = contratacao.getIdExterno() == null;
         if (provisionar && contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) {
             descartarProvisionamento(contratacao, evento);
+            return null;
+        }
+        UUID dono = UUID.randomUUID();
+        String caminho = provisionar ? CAMINHO_PROVISIONAR
+                : CAMINHO_PROVISIONAR + "/" + contratacao.getIdExterno() + "/direitos";
+        byte[] corpo = provisionar ? corpoProvisionamento(contratacao, evento)
+                : json.writeValueAsBytes(comTenant(json.readValue(evento.getPayload(), DireitosInstancia.class), contratacao.getIdExterno()));
+        evento.reservar(dono, clock.instant().plusSeconds(120));
+        if (provisionar) {
+            contratacao.setSituacaoProvisionamento(SituacaoProvisionamento.PROCESSANDO);
+            // Mesmo se houver crash depois do POST, não liberar edição de identidade com a mesma chave.
+            contratacao.setUltimoStatusProvisionamento(0);
+        }
+        return new Envio(evento.getId(), contratacao.getId(), dono, provisionar,
+                contratacao.getProduto().getUrlBaseIntegracao(), provisionar ? "POST" : "PUT", caminho,
+                corpo, provisionar ? contratacao.getId().toString() : null);
+    }
+
+    private void concluir(Envio envio, AplicativoHttp.Resposta resposta, String erro) {
+        Contratacao contratacao = carregarParaAlterar(envio.contratacaoId());
+        EventoSaida evento = eventoRepository.buscarParaAlterar(envio.eventoId()).orElse(null);
+        if (evento == null || !evento.pertenceA(envio.dono())) return;
+        // Outra tentativa pode assumir após expiração. A resposta antiga nunca deve liberar a nova reserva.
+        if (!evento.reservaAtiva(clock.instant())) return;
+        boolean obsoleto = evento.getSituacao() != SituacaoEvento.PENDENTE;
+        evento.liberarReserva();
+        if (envio.provisionar() && resposta != null && resposta.status() >= 200 && resposta.status() < 300) {
+            // Os direitos podem mudar durante o HTTP. Preservar a versão atual e gravar a identidade criada.
+            contratacao.setUltimoStatusProvisionamento(resposta.status());
+            if (!concluirProvisionamento(contratacao, evento, resposta)) return;
+            if (!obsoleto) evento.marcarEnviado();
             return;
         }
-        if (provisionar && contratacao.getSituacaoProvisionamento() == SituacaoProvisionamento.PENDENTE) {
-            contratacao.setSituacaoProvisionamento(SituacaoProvisionamento.PROCESSANDO);
-        }
-        try {
-            AplicativoHttp.Resposta resposta = chamar(contratacao, evento, provisionar);
-            if (provisionar) {
-                contratacao.setUltimoStatusProvisionamento(resposta.status());
-            }
-            if (resposta.status() >= 200 && resposta.status() < 300) {
-                if (provisionar && !concluirProvisionamento(contratacao, evento, resposta)) {
-                    return;
-                }
-                evento.marcarEnviado();
-                return;
-            }
-            if (resposta.status() == 409 || resposta.status() == 422) {
-                falhaDefinitiva(contratacao, evento, provisionar, "HTTP " + resposta.status() + " " + trecho(resposta.corpo()));
-                return;
-            }
-            repetir(contratacao, evento, provisionar, "HTTP " + resposta.status());
-        } catch (RuntimeException e) {
-            if (provisionar) {
-                contratacao.setUltimoStatusProvisionamento(0);
-            }
-            repetir(contratacao, evento, provisionar, e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+        if (obsoleto) return;
+        if (envio.provisionar()) contratacao.setUltimoStatusProvisionamento(resposta == null ? 0 : resposta.status());
+        if (resposta == null) {
+            repetir(contratacao, evento, envio.provisionar(), erro);
+        } else if (resposta.status() >= 200 && resposta.status() < 300) {
+            evento.marcarEnviado();
+        } else if (resposta.status() == 409 || resposta.status() == 422) {
+            falhaDefinitiva(contratacao, evento, envio.provisionar(), "HTTP " + resposta.status());
+        } else {
+            repetir(contratacao, evento, envio.provisionar(), "HTTP " + resposta.status());
         }
     }
 
-    private AplicativoHttp.Resposta chamar(Contratacao contratacao, EventoSaida evento, boolean provisionar) {
-        if (provisionar) {
-            return http.enviar(
-                    contratacao.getProduto().getUrlBaseIntegracao(),
-                    "POST",
-                    CAMINHO_PROVISIONAR,
-                    corpoProvisionamento(contratacao, evento),
-                    contratacao.getId().toString());
-        }
-        String caminho = CAMINHO_PROVISIONAR + "/" + contratacao.getIdExterno() + "/direitos";
-        return http.enviar(
-                contratacao.getProduto().getUrlBaseIntegracao(),
-                "PUT",
-                caminho,
-                evento.getPayload().getBytes(StandardCharsets.UTF_8),
-                null);
-    }
+    private record Envio(UUID eventoId, UUID contratacaoId, UUID dono, boolean provisionar,
+                         String url, String metodo, String caminho, byte[] corpo, String idempotencia) { }
 
     private byte[] corpoProvisionamento(Contratacao contratacao, EventoSaida evento) {
         DireitosInstancia direitos = json.readValue(evento.getPayload(), DireitosInstancia.class);
@@ -196,19 +214,27 @@ public class EntregaIntegracao {
 
     /** @return false quando a resposta 2xx não trouxe tenant e a entrega já foi encerrada */
     private boolean concluirProvisionamento(Contratacao contratacao, EventoSaida evento, AplicativoHttp.Resposta resposta) {
-        JsonNode no = json.readTree(resposta.corpo());
-        String texto = no.path("tenantId").asString(null);
+        JsonNode no;
+        try {
+            no = json.readTree(resposta.corpo());
+        } catch (RuntimeException e) {
+            falhaDefinitiva(contratacao, evento, true, "Resposta de provisionamento inválida.");
+            return false;
+        }
+        String texto = no == null ? null : no.path("tenantId").asString(null);
         if (texto == null || texto.isBlank()) {
             falhaDefinitiva(contratacao, evento, true, "Resposta sem tenantId.");
             return false;
         }
-        UUID tenantId = UUID.fromString(texto);
+        UUID tenantId;
+        try {
+            tenantId = UUID.fromString(texto);
+        } catch (IllegalArgumentException e) {
+            falhaDefinitiva(contratacao, evento, true, "tenantId inválido.");
+            return false;
+        }
         DireitosInstancia atual = json.readValue(contratacao.getDireitosAtuais(), DireitosInstancia.class);
-        DireitosInstancia comTenant = new DireitosInstancia(
-                atual.contratacaoId(), atual.clienteId(), atual.produto(), tenantId,
-                atual.versao(), atual.situacao(), atual.acessoLiberado(), atual.motivoBloqueio(),
-                atual.vigenteAte(), atual.plano(), atual.limites(), atual.funcionalidades(), atual.geradoEm());
-        contratacao.setDireitosAtuais(json.writeValueAsString(comTenant));
+        contratacao.setDireitosAtuais(json.writeValueAsString(comTenant(atual, tenantId)));
         contratacao.setIdExterno(tenantId);
         contratacao.setSituacaoProvisionamento(SituacaoProvisionamento.ATIVA);
         historicoRepository.save(new HistoricoContratacao(
@@ -263,6 +289,12 @@ public class EntregaIntegracao {
                 evento.getId(), contratacao.getId(), texto);
     }
 
+    private Contratacao carregarParaAlterar(UUID id) {
+        contratacaoRepository.buscarParaAlterar(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contratação não encontrada."));
+        return carregar(id);
+    }
+
     private Contratacao carregar(UUID id) {
         Contratacao contratacao = contratacaoRepository.buscarComReferencias(id);
         if (contratacao == null) {
@@ -271,12 +303,10 @@ public class EntregaIntegracao {
         return contratacao;
     }
 
-    private static String trecho(byte[] corpo) {
-        if (corpo == null || corpo.length == 0) {
-            return "";
-        }
-        String texto = new String(corpo, StandardCharsets.UTF_8).replaceAll("\\s+", " ");
-        return texto.length() > 180 ? texto.substring(0, 180) : texto;
+    private static DireitosInstancia comTenant(DireitosInstancia atual, UUID tenantId) {
+        return new DireitosInstancia(atual.contratacaoId(), atual.clienteId(), atual.produto(), tenantId,
+                atual.versao(), atual.situacao(), atual.acessoLiberado(), atual.motivoBloqueio(),
+                atual.vigenteAte(), atual.plano(), atual.limites(), atual.funcionalidades(), atual.geradoEm());
     }
 
     private record CorpoProvisionamento(

@@ -15,3 +15,5 @@
 | [../deploy/README.md](../deploy/README.md) | Produção na VPS |
 
 - [Limites de integração](integracao-limites.md): payload, nonce e erros do filtro HMAC.
+
+- [outbox.md](outbox.md): reserva, transações curtas, concorrência e retomada após crash.

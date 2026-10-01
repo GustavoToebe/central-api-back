@@ -458,6 +458,76 @@ class EntregaIntegracaoTest extends AbstractIntegrationTest {
         assertThat(contratacaoService.buscar(criada.id()).versaoDireitos()).isEqualTo(1);
     }
 
+    @Test
+    void httpNaoMantemTransacaoEOutroWorkerNaoRepeteReservaAtiva() {
+        UUID tenant = UUID.randomUUID();
+        ClienteDeTeste.servidor.expect(requestTo("http://app.test/integracao/v1/instancias"))
+            .andRespond(request -> {
+                assertThat(org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
+                assertThat(entrega.enviarProntos()).isZero();
+                return withStatus(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(corpoCriado(criada.id(),tenant)).createResponse(request);
+            });
+        assertThat(entrega.enviarProntos()).isEqualTo(1);
+        ClienteDeTeste.servidor.verify();
+        assertThat(contratacaoService.buscar(criada.id()).idExterno()).isEqualTo(tenant);
+        assertThat(evento(criada.id()).getReservadoPor()).isNull();
+    }
+
+    @Test
+    void reservaExpiradaDepoisDeCrashPodeSerRetomada() {
+        EventoSaida e=evento(criada.id());
+        jdbc.update("update evento_saida set reservado_por=?, reserva_ate=? where id=?",UUID.randomUUID(),Timestamp.from(Instant.now().minusSeconds(5)),e.getId());
+        esperar("POST","/integracao/v1/instancias",201,corpoCriado(criada.id(),UUID.randomUUID()));
+        assertThat(entrega.enviarProntos()).isEqualTo(1); ClienteDeTeste.servidor.verify();
+        assertThat(evento(criada.id()).getSituacao()).isEqualTo(SituacaoEvento.ENVIADO);
+        assertThat(evento(criada.id()).getReservadoPor()).isNull();
+    }
+
+    @Test
+    void conclusaoAntigaNaoSobrescreveReservaDeOutroWorker() {
+        UUID novaPosse=UUID.randomUUID(); UUID eventoId=evento(criada.id()).getId();
+        ClienteDeTeste.servidor.expect(requestTo("http://app.test/integracao/v1/instancias"))
+            .andRespond(request -> {
+                jdbc.update("update evento_saida set reservado_por=?, reserva_ate=? where id=?",novaPosse,Timestamp.from(Instant.now().plusSeconds(120)),eventoId);
+                return withStatus(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(corpoCriado(criada.id(),UUID.randomUUID())).createResponse(request);
+            });
+        entrega.enviarProntos(); ClienteDeTeste.servidor.verify();
+        assertThat(evento(criada.id()).getReservadoPor()).isEqualTo(novaPosse);
+        assertThat(evento(criada.id()).getSituacao()).isEqualTo(SituacaoEvento.PENDENTE);
+        assertThat(contratacaoService.buscar(criada.id()).idExterno()).isNull();
+    }
+
+    @Test
+    void direitosAlteradosDurantePostPreservamIdentidadeEProximaEntregaUsaPut() {
+        UUID tenant=UUID.randomUUID();
+        ClienteDeTeste.servidor.expect(requestTo("http://app.test/integracao/v1/instancias"))
+            .andRespond(request -> {
+                contratacaoService.bloquear(criada.id(),"Bloqueio durante envio");
+                assertThat(entrega.enviarProntos()).isZero();
+                return withStatus(HttpStatus.CREATED).contentType(MediaType.APPLICATION_JSON).body(corpoCriado(criada.id(),tenant)).createResponse(request);
+            });
+        ClienteDeTeste.servidor.expect(requestTo("http://app.test/integracao/v1/instancias/"+tenant+"/direitos"))
+            .andExpect(method(HttpMethod.PUT))
+            .andExpect(request -> {
+                String corpo=((MockClientHttpRequest)request).getBodyAsString();
+                assertThat(corpo).contains("\"tenantId\":\""+tenant+"\"").contains("\"versao\":2").contains("\"acessoLiberado\":false");
+            }).andRespond(withStatus(HttpStatus.OK));
+        entrega.enviarProntos();
+        var atual=contratacaoService.buscar(criada.id());
+        assertThat(atual.idExterno()).isEqualTo(tenant); assertThat(atual.versaoDireitos()).isEqualTo(2);
+        assertThat(atual.situacaoComercial()).isEqualTo(SituacaoComercial.BLOQUEADA);
+        entrega.enviarProntos(); ClienteDeTeste.servidor.verify();
+        assertThat(eventoRepository.findByContratacaoId(criada.id())).noneMatch(e -> e.getSituacao()==SituacaoEvento.PENDENTE);
+    }
+
+    @Test
+    void respostaVazia2xxEncerraComoErroSemDeixarReservaPresa() {
+        esperar("POST","/integracao/v1/instancias",201,"");
+        entrega.enviarProntos(); ClienteDeTeste.servidor.verify();
+        assertThat(evento(criada.id()).getSituacao()).isEqualTo(SituacaoEvento.FALHOU);
+        assertThat(evento(criada.id()).getReservadoPor()).isNull();
+    }
+
     private void semRepeticao(int status) {
         esperar("POST", "/integracao/v1/instancias", status, "");
         entrega.enviarProntos();

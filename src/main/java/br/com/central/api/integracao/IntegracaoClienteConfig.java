@@ -15,7 +15,8 @@ public class IntegracaoClienteConfig {
 
     @Bean
     public AplicativoHttp aplicativoHttp(IntegracaoProperties properties, Clock clock) {
-        JdkClientHttpRequestFactory fabrica = new JdkClientHttpRequestFactory();
+        JdkClientHttpRequestFactory fabrica = new JdkClientHttpRequestFactory(
+                java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build());
         fabrica.setReadTimeout(Duration.ofSeconds(10));
         RestClient http = RestClient.builder().requestFactory(fabrica).build();
         return new AplicativoHttp(

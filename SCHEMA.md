@@ -2,7 +2,7 @@
 
 Postgres do painel. O Servire tem o banco da paróquia (`SCHEMA.md` no `servirea-api-back`). Este arquivo lista o que a Central usa. Atualizar quando entrar migration nova.
 
-Flyway: `src/main/resources/db/migration`, V001–V010. Migration já aplicada não se edita.
+Flyway: `src/main/resources/db/migration`, V001–V011. Migration já aplicada não se edita.
 
 Conferido com o schema exportado em 30/09/2026. Cada tabela abaixo tem entidade no código.
 
@@ -31,4 +31,5 @@ Conferido com o schema exportado em 30/09/2026. Cada tabela abaixo tem entidade 
 `flyway_schema_history` é o controle do Flyway.
 
 ## Esquema completo
-`schema.sql` (nesta pasta) é o esquema inteiro, com colunas, chaves, índices e checks, gerado das migrations V001–V010 num Postgres limpo. **Migration nova: rodar `scripts/gerar-schema.ps1` e commitar o `schema.sql` junto.** Nunca editar o arquivo à mão.
+`schema.sql` (nesta pasta) é o esquema inteiro, com colunas, chaves, índices e checks, gerado das migrations V001–V011 num Postgres limpo. **Migration nova: rodar `scripts/gerar-schema.ps1` e commitar o `schema.sql` junto.** Nunca editar o arquivo à mão.
+V011: `evento_saida.reservado_por` e `reserva_ate` registram posse e expiração do envio. Uma conclusão só altera o item se continuar dona da reserva.
