@@ -39,10 +39,15 @@ public class JwtService {
     }
 
     public String gerarAccessToken(UUID operadorId) {
+        return gerarAccessToken(operadorId, 0);
+    }
+
+    public String gerarAccessToken(UUID operadorId, long versao) {
         Instant agora = Instant.now();
         return Jwts.builder()
                 .subject(operadorId.toString())
                 .claim(CLAIM_PURPOSE, PURPOSE_ACCESS)
+                .claim("cv", versao)
                 .issuedAt(Date.from(agora))
                 .expiration(Date.from(agora.plus(config.accessTokenTtl())))
                 .signWith(key)
@@ -54,14 +59,21 @@ public class JwtService {
     }
 
     public UUID validarAccessToken(String token) {
+        return validarAcesso(token).operadorId();
+    }
+
+    public Acesso validarAcesso(String token) {
         try {
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             if (!PURPOSE_ACCESS.equals(claims.get(CLAIM_PURPOSE))) {
                 throw new UnauthorizedException("Token recusado.");
             }
-            return UUID.fromString(claims.getSubject());
+            Object cv = claims.get("cv");
+            if (cv != null && !(cv instanceof Number)) throw new UnauthorizedException("Token recusado.");
+            return new Acesso(UUID.fromString(claims.getSubject()), cv == null ? 0 : ((Number)cv).longValue());
         } catch (JwtException | IllegalArgumentException e) {
             throw new UnauthorizedException("Token recusado.");
         }
     }
+    public record Acesso(UUID operadorId, long versao) {}
 }

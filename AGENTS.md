@@ -97,6 +97,8 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 
 ## Fontes e estado verificável
 
+- MFA opt-in de operador (V013): `docs/mfa-operadores.md`. Segredos cifrados por keyring próprio, recuperação em hash. Login/alteração/refresh serializam operador com FOR NO KEY UPDATE; respeitar esta ordem e reler refresh após trava. Ativar/desativar incrementa versão JWT e apaga sessões. Nunca logar chave TOTP/códigos/senhas.
+
 - [Estado local](docs/estado-projeto.json) e [índice](docs/README.md). Histórico/plano não define a versão implantada.
 - Executar `python scripts/verificar-docs.py` ao mudar docs, schema ou migrations; atualizar o estado junto.
 - Nesta tarefa, usar `melhoria/ecossistema-sem-ia`, conforme pedido do usuário. Publicação depende do fluxo e autorização vigentes.

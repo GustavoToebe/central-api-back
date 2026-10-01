@@ -12,6 +12,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
+    @Query("select t.operador.id from RefreshToken t where t.tokenHash = :hash")
+    Optional<UUID> operadorDoToken(String hash);
+
     @Modifying
     @Query("update RefreshToken t set t.revogadoEm = :quando where t.operador.id = :operadorId and t.revogadoEm is null")
     int revogarTodosAtivos(UUID operadorId, Instant quando);

@@ -1,5 +1,12 @@
 # Produção na VPS
 
+MFA opt-in de operadores (V013): configurar `CENTRAL_MFA_CHAVES` e
+`CENTRAL_MFA_CHAVE_ATIVA` no `central.env` protegido, passado pelo `env_file`
+existente. Chaves AES-256 próprias, com backup separado em cofre. Não remover
+chaves antigas: ainda não há recifragem de registros. Sem configuração, não é
+possível ativar novos autenticadores. Ver [contrato e recuperação](../docs/mfa-operadores.md).
+Esta documentação não indica que a migration ou configuração já foi implantada.
+
 Uma VPS Ubuntu, com as duas APIs e o Caddy no Docker. Os bancos ficam no Supabase, na região
 ca-central-1, com um projeto para cada sistema. Os fronts são arquivos estáticos servidos pelo Caddy.
 

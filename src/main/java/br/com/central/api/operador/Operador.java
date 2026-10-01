@@ -33,6 +33,28 @@ public class Operador {
     @Column(name = "criado_em", nullable = false, insertable = false, updatable = false)
     private Instant criadoEm;
 
+    @Column(name = "mfa_segredo") private String mfaSegredo;
+    @Column(name = "mfa_pendente") private String mfaPendente;
+    @Column(name = "mfa_pendente_ate") private Instant mfaPendenteAte;
+    @Column(name = "mfa_ultimo_passo", nullable = false) private long mfaUltimoPasso = -1;
+    @Column(name = "credenciais_versao", nullable = false) private long credenciaisVersao;
+
+    public String getMfaSegredo() {return mfaSegredo;}
+    public String getMfaPendente() {return mfaPendente;}
+    public Instant getMfaPendenteAte() {return mfaPendenteAte;}
+    public long getMfaUltimoPasso() {return mfaUltimoPasso;}
+    public long getCredenciaisVersao() {return credenciaisVersao;}
+    public void prepararMfa(String segredo, Instant ate) {mfaPendente = segredo; mfaPendenteAte = ate;}
+    public void consumirPassoMfa(long passo) {mfaUltimoPasso = passo;}
+    public void ativarMfa(long passo) {
+        mfaSegredo = mfaPendente; mfaPendente = null; mfaPendenteAte = null;
+        mfaUltimoPasso = passo; credenciaisVersao++;
+    }
+    public void desativarMfa() {
+        mfaSegredo = null; mfaPendente = null; mfaPendenteAte = null;
+        mfaUltimoPasso = -1; credenciaisVersao++;
+    }
+
     protected Operador() {
     }
 

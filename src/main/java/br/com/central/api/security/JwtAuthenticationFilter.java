@@ -44,10 +44,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            Operador operador = operadorRepository.findById(jwtService.validarAccessToken(header.substring(7)))
+            JwtService.Acesso acesso = jwtService.validarAcesso(header.substring(7));
+            Operador operador = operadorRepository.findById(acesso.operadorId())
                     .filter(Operador::isAtivo)
                     .orElse(null);
-            if (operador != null) {
+            if (operador != null && operador.getCredenciaisVersao() == acesso.versao()) {
                 var autenticado = new OperadorAutenticado(operador.getId(), operador.getEmail());
                 var autenticacao = new UsernamePasswordAuthenticationToken(
                         autenticado, null, List.of(new SimpleGrantedAuthority(ROLE_OPERADOR)));

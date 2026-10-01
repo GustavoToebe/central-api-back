@@ -18,25 +18,37 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final OperadorAuditoria auditoria;
+    private final MfaService mfa;
 
     public AuthService(OperadorRepository operadorRepository,
                        PasswordEncoder passwordEncoder,
                        JwtService jwtService,
                        RefreshTokenService refreshTokenService,
-                       OperadorAuditoria auditoria) {
+                       OperadorAuditoria auditoria, MfaService mfa) {
         this.operadorRepository = operadorRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.auditoria = auditoria;
+        this.mfa = mfa;
     }
 
     @Transactional
     public Sessao entrar(String email, String senha, String ip) {
-        Operador operador = operadorRepository.findByEmail(email.trim().toLowerCase()).orElse(null);
+        return entrar(email, senha, ip, null);
+    }
+
+    @Transactional
+    public Sessao entrar(String email, String senha, String ip, String codigoMfa) {
+        Operador operador = operadorRepository.buscarParaAutenticar(email.trim().toLowerCase(java.util.Locale.ROOT)).orElse(null);
         if (operador == null || !operador.isAtivo() || !passwordEncoder.matches(senha, operador.getSenhaHash())) {
             auditoria.registrar(operador == null ? null : operador.getId(), "LOGIN_RECUSADO", null, ip);
             throw new UnauthorizedException("E-mail ou senha inválidos.");
+        }
+        try {mfa.verificar(operador, codigoMfa);}
+        catch (MfaException ex) {
+            if (!"MFA_NECESSARIO".equals(ex.getCodigo())) auditoria.registrar(operador.getId(), "LOGIN_MFA_RECUSADO", null, ip);
+            throw ex;
         }
         auditoria.registrar(operador.getId(), "LOGIN", null, ip);
         return sessao(operador, refreshTokenService.emitir(operador, ip));
@@ -63,7 +75,7 @@ public class AuthService {
      */
     @Transactional
     public String trocarSenha(UUID operadorId, String senhaAtual, String novaSenha, String ip) {
-        Operador operador = operadorRepository.findById(operadorId)
+        Operador operador = operadorRepository.buscarParaAlterar(operadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Operador não encontrado."));
         if (!passwordEncoder.matches(senhaAtual, operador.getSenhaHash())) {
             auditoria.registrar(operadorId, "SENHA_RECUSADA", null, ip);
@@ -81,7 +93,7 @@ public class AuthService {
 
     private Sessao sessao(Operador operador, String refresh) {
         return new Sessao(
-                jwtService.gerarAccessToken(operador.getId()),
+                jwtService.gerarAccessToken(operador.getId(), operador.getCredenciaisVersao()),
                 jwtService.expiresInSeconds(),
                 refresh,
                 operador.getId(),

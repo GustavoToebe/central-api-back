@@ -14,13 +14,15 @@ public class RefreshTokenService {
     private final RefreshTokenRepository repository;
     private final SecurityProperties properties;
     private final RevogacaoDeSessao revogacaoDeSessao;
+    private final OperadorRepository operadores;
 
     public RefreshTokenService(RefreshTokenRepository repository,
                                SecurityProperties properties,
-                               RevogacaoDeSessao revogacaoDeSessao) {
+                               RevogacaoDeSessao revogacaoDeSessao, OperadorRepository operadores) {
         this.repository = repository;
         this.properties = properties;
         this.revogacaoDeSessao = revogacaoDeSessao;
+        this.operadores = operadores;
     }
 
     @Transactional
@@ -34,6 +36,12 @@ public class RefreshTokenService {
 
     @Transactional
     public Rotacao rotacionar(String tokenBruto, String ip) {
+        String hash = OpaqueTokenGenerator.hash(tokenBruto);
+        java.util.UUID operadorId = repository.operadorDoToken(hash)
+                .orElseThrow(() -> new UnauthorizedException("Sessão inválida. Entre de novo."));
+        Operador operador = operadores.buscarParaAlterar(operadorId)
+                .filter(Operador::isAtivo).orElseThrow(() -> new UnauthorizedException("Sessão inválida. Entre de novo."));
+        // Reler após a trava: ativação de MFA pode ter apagado o token durante a espera.
         RefreshToken atual = repository.findByTokenHash(OpaqueTokenGenerator.hash(tokenBruto))
                 .orElseThrow(() -> new UnauthorizedException("Sessão inválida. Entre de novo."));
         if (atual.isRevogado()) {
@@ -43,7 +51,6 @@ public class RefreshTokenService {
         if (atual.isExpirado(Instant.now())) {
             throw new UnauthorizedException("Sessão expirada. Entre de novo.");
         }
-        Operador operador = atual.getOperador();
         String novo = emitir(operador, ip);
         atual.revogar(Instant.now());
         repository.save(atual);

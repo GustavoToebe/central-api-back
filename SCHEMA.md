@@ -2,13 +2,15 @@
 
 Postgres do painel. O Servire tem o banco da paróquia (`SCHEMA.md` no `servirea-api-back`). Este arquivo lista o que a Central usa. Atualizar quando entrar migration nova.
 
-Flyway: `src/main/resources/db/migration`, V001–V012. Migration já aplicada não se edita.
+Flyway: `src/main/resources/db/migration`, V001–V013. Migration já aplicada não se edita.
 
-Conferido com o schema exportado em 30/09/2026. Cada tabela abaixo tem entidade no código.
+Conferido com o schema exportado em 01/10/2026. Tabelas de negócio usam entidades; recuperação MFA usa JDBC para consumo condicional.
 
 ## Quem entra no painel
 
 `operador` (login), `refresh_token` (sessão), `operador_log` (trilha).
+
+V013: `operador` guarda MFA ativo/pendente cifrado, validade da preparação, último passo TOTP e versão de credenciais. `operador_mfa_recuperacao` contém somente hashes e instante de uso; RLS sem policy. Ver `docs/mfa-operadores.md`.
 
 ## Catálogo
 

@@ -43,7 +43,9 @@ public class AuthController {
                                HttpServletResponse httpResponse) {
         try {limiteLogin.registrar(ip(httpRequest),request.email());}
         catch(LimiteLoginException ex){httpResponse.setHeader("Retry-After",Long.toString(ex.segundos()));throw ex;}
-        AuthService.Sessao sessao = authService.entrar(request.email(), request.senha(), ip(httpRequest));
+        AuthService.Sessao sessao = request.codigoMfa() == null
+                ? authService.entrar(request.email(), request.senha(), ip(httpRequest))
+                : authService.entrar(request.email(), request.senha(), ip(httpRequest), request.codigoMfa());
         gravarCookie(httpResponse, sessao.refreshTokenBruto());
         return resposta(sessao);
     }

@@ -13,7 +13,7 @@
     "python scripts/verificar-docs.py"
   ],
   "migrations": {
-    "ultima": "V012__checkout_mercadopago.sql",
-    "quantidade": 12
+    "ultima": "V013__mfa_operador.sql",
+    "quantidade": 13
   }
 }

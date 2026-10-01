@@ -1,11 +1,11 @@
--- Esquema do banco, gerado das migrations (V001-V012). NÃO editar à mão.
+-- Esquema do banco, gerado das migrations (V001-V013). NÃO editar à mão.
 -- Para regerar: scripts/gerar-schema.ps1 (precisa do Postgres local com a API em dev já ter subido).
 -- Só o schema public, sem dono e sem permissões. O banco de produção é criado pelo Flyway a partir destas migrations.
 
 --
 --
 
-\restrict eMWUd7pyLmUsOYgzFg95eaS2JyXQN3elpVB5l3stdj07XDPiaxL0QHUHWrQVgEq
+\restrict Y7i1cCvhbp7hFJGLmA9koNgbGAsKanYa0ImcGihNurwmt8U1xWq1tp86p8Plyki
 
 
 
@@ -385,7 +385,12 @@ CREATE TABLE public.operador (
     email character varying(180) NOT NULL,
     senha_hash character varying(120) NOT NULL,
     ativo boolean DEFAULT true NOT NULL,
-    criado_em timestamp with time zone DEFAULT now() NOT NULL
+    criado_em timestamp with time zone DEFAULT now() NOT NULL,
+    mfa_segredo text,
+    mfa_pendente text,
+    mfa_pendente_ate timestamp with time zone,
+    mfa_ultimo_passo bigint DEFAULT '-1'::integer NOT NULL,
+    credenciais_versao bigint DEFAULT 0 NOT NULL
 );
 
 
@@ -400,6 +405,17 @@ CREATE TABLE public.operador_log (
     detalhe character varying(500),
     ip character varying(64),
     criado_em timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: operador_mfa_recuperacao; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.operador_mfa_recuperacao (
+    operador_id uuid NOT NULL,
+    codigo_hash character varying(64) NOT NULL,
+    usado_em timestamp with time zone
 );
 
 
@@ -732,6 +748,14 @@ ALTER TABLE ONLY public.integracao_nonce
 
 ALTER TABLE ONLY public.operador_log
     ADD CONSTRAINT operador_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: operador_mfa_recuperacao operador_mfa_recuperacao_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.operador_mfa_recuperacao
+    ADD CONSTRAINT operador_mfa_recuperacao_pkey PRIMARY KEY (operador_id, codigo_hash);
 
 
 --
@@ -1114,6 +1138,14 @@ ALTER TABLE ONLY public.historico_contratacao
 
 
 --
+-- Name: operador_mfa_recuperacao operador_mfa_recuperacao_operador_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.operador_mfa_recuperacao
+    ADD CONSTRAINT operador_mfa_recuperacao_operador_id_fkey FOREIGN KEY (operador_id) REFERENCES public.operador(id) ON DELETE CASCADE;
+
+
+--
 -- Name: pagamento_mercadopago pagamento_mercadopago_checkout_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1246,6 +1278,12 @@ ALTER TABLE public.operador ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.operador_log ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: operador_mfa_recuperacao; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.operador_mfa_recuperacao ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pagamento_mercadopago; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1290,5 +1328,5 @@ ALTER TABLE public.refresh_token ENABLE ROW LEVEL SECURITY;
 --
 --
 
-\unrestrict eMWUd7pyLmUsOYgzFg95eaS2JyXQN3elpVB5l3stdj07XDPiaxL0QHUHWrQVgEq
+\unrestrict Y7i1cCvhbp7hFJGLmA9koNgbGAsKanYa0ImcGihNurwmt8U1xWq1tp86p8Plyki
 
