@@ -61,6 +61,8 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private BillingService billingService;
     @Autowired
+    private br.com.central.api.financeiro.FinanceiroService operacional;
+    @Autowired
     private ContratacaoService contratacaoService;
     @Autowired
     private CatalogoService catalogoService;
@@ -374,6 +376,7 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         ContratacaoResponse contratacao = contratar(Periodicidade.MENSAL, CEM, 10, proximoMes);
         CobrancaResponse cobranca = maisAntiga(financeiro(contratacao));
 
+        var saldoAntes=operacional.resumo(hoje,hoje);
         FinanceiroResponse depois = billingService.registrarPagamento(contratacao.id(), new RegistrarPagamentoRequest(
                 List.of(cobranca.id()), hoje, FormaPagamento.PIX, null, "PIX conferido"));
 
@@ -382,6 +385,10 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         assertThat(paga.formaPagamento()).isEqualTo(FormaPagamento.PIX);
         assertThat(paga.pagoEm()).isEqualTo(hoje);
         assertThat(paga.valorPago()).isEqualByComparingTo(CEM);
+        var saldoDepois=operacional.resumo(hoje,hoje);
+        assertThat(saldoDepois.receitasCobrancas().subtract(saldoAntes.receitasCobrancas())).isEqualByComparingTo(CEM);
+        assertThat(saldoDepois.receitas().subtract(saldoAntes.receitas())).isEqualByComparingTo(CEM);
+        assertThat(saldoDepois.saldoTotal()).isEqualByComparingTo(saldoAntes.saldoTotal());
         assertThat(paga.observacao()).isEqualTo("PIX conferido");
         assertThat(depois.resumo().totalPagoNoAno()).isEqualByComparingTo(CEM);
 

@@ -1,11 +1,11 @@
--- Esquema do banco, gerado das migrations (V001-V013). NÃO editar à mão.
+-- Esquema do banco, gerado das migrations (V001-V014). NÃO editar à mão.
 -- Para regerar: scripts/gerar-schema.ps1 (precisa do Postgres local com a API em dev já ter subido).
 -- Só o schema public, sem dono e sem permissões. O banco de produção é criado pelo Flyway a partir destas migrations.
 
 --
 --
 
-\restrict Y7i1cCvhbp7hFJGLmA9koNgbGAsKanYa0ImcGihNurwmt8U1xWq1tp86p8Plyki
+\restrict wzGg4v5lbRAm2SkX5sT6dJ5ThHCBii9V85h6sO9aEEpk05wCbCwSM7IbHhzmqVy
 
 
 
@@ -328,6 +328,54 @@ CREATE TABLE public.evento_saida (
     reserva_ate timestamp with time zone,
     CONSTRAINT ck_evento_saida_reserva CHECK (((reservado_por IS NULL) = (reserva_ate IS NULL))),
     CONSTRAINT evento_saida_situacao_check CHECK (((situacao)::text = ANY ((ARRAY['PENDENTE'::character varying, 'ENVIADO'::character varying, 'DESCARTADO'::character varying, 'FALHOU'::character varying])::text[])))
+);
+
+
+--
+-- Name: financeiro_categoria; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.financeiro_categoria (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    nome character varying(120) NOT NULL,
+    ativo boolean DEFAULT true NOT NULL
+);
+
+
+--
+-- Name: financeiro_conta; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.financeiro_conta (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    nome character varying(120) NOT NULL,
+    saldo_inicial numeric(14,2) DEFAULT 0 NOT NULL,
+    data_saldo_inicial date NOT NULL,
+    ativo boolean DEFAULT true NOT NULL
+);
+
+
+--
+-- Name: financeiro_movimento; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.financeiro_movimento (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    versao bigint DEFAULT 0 NOT NULL,
+    descricao character varying(200) NOT NULL,
+    tipo character varying(20) NOT NULL,
+    situacao character varying(20) DEFAULT 'PENDENTE'::character varying NOT NULL,
+    valor numeric(14,2) NOT NULL,
+    vencimento date NOT NULL,
+    data_pagamento date,
+    conta_id uuid NOT NULL,
+    categoria_id uuid NOT NULL,
+    observacoes character varying(1000),
+    criado_em timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT financeiro_movimento_check CHECK ((((situacao)::text = 'PAGO'::text) = (data_pagamento IS NOT NULL))),
+    CONSTRAINT financeiro_movimento_situacao_check CHECK (((situacao)::text = ANY ((ARRAY['PENDENTE'::character varying, 'PAGO'::character varying, 'CANCELADO'::character varying])::text[]))),
+    CONSTRAINT financeiro_movimento_tipo_check CHECK (((tipo)::text = ANY ((ARRAY['RECEITA'::character varying, 'DESPESA'::character varying])::text[]))),
+    CONSTRAINT financeiro_movimento_valor_check CHECK ((valor > (0)::numeric))
 );
 
 
@@ -719,6 +767,30 @@ ALTER TABLE ONLY public.evento_saida
 
 
 --
+-- Name: financeiro_categoria financeiro_categoria_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financeiro_categoria
+    ADD CONSTRAINT financeiro_categoria_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: financeiro_conta financeiro_conta_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financeiro_conta
+    ADD CONSTRAINT financeiro_conta_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: financeiro_movimento financeiro_movimento_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financeiro_movimento
+    ADD CONSTRAINT financeiro_movimento_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: flyway_schema_history flyway_schema_history_pk; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -958,6 +1030,20 @@ CREATE INDEX ix_evento_saida_reserva_contratacao ON public.evento_saida USING bt
 
 
 --
+-- Name: ix_financeiro_movimento_baixa; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_financeiro_movimento_baixa ON public.financeiro_movimento USING btree (data_pagamento, conta_id) WHERE ((situacao)::text = 'PAGO'::text);
+
+
+--
+-- Name: ix_financeiro_movimento_vencimento; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_financeiro_movimento_vencimento ON public.financeiro_movimento USING btree (vencimento, id);
+
+
+--
 -- Name: pagamento_mp_pendente; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -983,6 +1069,20 @@ CREATE UNIQUE INDEX uq_contratacao_externo ON public.contratacao USING btree (pr
 --
 
 CREATE UNIQUE INDEX uq_contratacao_slug ON public.contratacao USING btree (produto_id, slug_instancia);
+
+
+--
+-- Name: ux_financeiro_categoria_nome; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_financeiro_categoria_nome ON public.financeiro_categoria USING btree (lower((nome)::text));
+
+
+--
+-- Name: ux_financeiro_conta_nome; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX ux_financeiro_conta_nome ON public.financeiro_conta USING btree (lower((nome)::text));
 
 
 --
@@ -1103,6 +1203,22 @@ ALTER TABLE ONLY public.erro_aplicativo
 
 ALTER TABLE ONLY public.evento_saida
     ADD CONSTRAINT evento_saida_contratacao_id_fkey FOREIGN KEY (contratacao_id) REFERENCES public.contratacao(id);
+
+
+--
+-- Name: financeiro_movimento financeiro_movimento_categoria_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financeiro_movimento
+    ADD CONSTRAINT financeiro_movimento_categoria_id_fkey FOREIGN KEY (categoria_id) REFERENCES public.financeiro_categoria(id);
+
+
+--
+-- Name: financeiro_movimento financeiro_movimento_conta_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.financeiro_movimento
+    ADD CONSTRAINT financeiro_movimento_conta_id_fkey FOREIGN KEY (conta_id) REFERENCES public.financeiro_conta(id);
 
 
 --
@@ -1254,6 +1370,24 @@ ALTER TABLE public.erro_aplicativo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.evento_saida ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: financeiro_categoria; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.financeiro_categoria ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: financeiro_conta; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.financeiro_conta ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: financeiro_movimento; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.financeiro_movimento ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: historico_contratacao; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -1328,5 +1462,5 @@ ALTER TABLE public.refresh_token ENABLE ROW LEVEL SECURITY;
 --
 --
 
-\unrestrict Y7i1cCvhbp7hFJGLmA9koNgbGAsKanYa0ImcGihNurwmt8U1xWq1tp86p8Plyki
+\unrestrict wzGg4v5lbRAm2SkX5sT6dJ5ThHCBii9V85h6sO9aEEpk05wCbCwSM7IbHhzmqVy
 

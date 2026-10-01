@@ -102,3 +102,5 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - [Estado local](docs/estado-projeto.json) e [índice](docs/README.md). Histórico/plano não define a versão implantada.
 - Executar `python scripts/verificar-docs.py` ao mudar docs, schema ou migrations; atualizar o estado junto.
 - Nesta tarefa, usar `melhoria/ecossistema-sem-ia`, conforme pedido do usuário. Publicação depende do fluxo e autorização vigentes.
+
+- Financeiro do operador (V014): docs/financeiro-operacional.md. Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário.

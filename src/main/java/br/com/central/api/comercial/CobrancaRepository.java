@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public interface CobrancaRepository extends JpaRepository<Cobranca, UUID> {
 
+    @Query("select coalesce(sum(c.valor),0) from Cobranca c where c.status=br.com.central.api.comercial.Cobranca.Status.ABERTA and c.vencimento>=:de and c.vencimento<=:ate")
+    BigDecimal somarPrevisto(@Param("de") LocalDate de, @Param("ate") LocalDate ate);
+
     List<Cobranca> findByContratacaoId(UUID contratacaoId);
 
     List<Cobranca> findByContratacaoIdOrderByCompetenciaInicioDesc(UUID contratacaoId);

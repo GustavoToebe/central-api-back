@@ -20,4 +20,10 @@ public class OperadorAuditoria {
     public void registrar(UUID operadorId, String acao, String detalhe, String ip) {
         repository.save(new OperadorLog(operadorId, acao, detalhe, ip));
     }
+
+    /** Mudança de negócio e trilha são atômicas; não registrar uma baixa desfeita. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void registrarNaTransacao(UUID operadorId, String acao, String detalhe, String ip) {
+        repository.save(new OperadorLog(operadorId, acao, detalhe, ip));
+    }
 }

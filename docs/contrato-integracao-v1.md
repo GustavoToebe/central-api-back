@@ -327,7 +327,7 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
 
 ```json
 [
-  { "codigo": "voluntarios", "nome": "Voluntários", "tipo": "LIMITE", "unidade": "pessoa", "aplicado": false },
+  { "codigo": "voluntarios", "nome": "Voluntários cadastrados", "tipo": "LIMITE", "unidade": "pessoa", "aplicado": true },
   { "codigo": "ESCALAS", "nome": "Escalas", "tipo": "FUNCIONALIDADE", "unidade": null, "aplicado": false }
 ]
 ```
@@ -478,3 +478,9 @@ Na Central, cada entrada de CENTRAL_PRODUTO_SERVIRE_CHAVES_ENTRADA aceita `id:se
 Formato legado `id:segredoBase64` está restrito a SERVIREA, conforme a finalidade original da variável. Para código de produto diferente, acrescentar o código explicitamente antes da publicação. Não existe wildcard. Identificadores duplicados, produto vazio ou formato inválido impedem inicialização. Cada chave tem somente um produto; rotação pode usar duas chaves do mesmo produto.
 
 Assinatura e nonce continuam obrigatórios. Métodos de direitos, erros e minha-conta exigem também o produto vinculado à chave, comparado sem diferenciar maiúsculas. Assinatura válida para outro produto retorna 403 antes de executar o serviço. Saúde comum continua acessível com HMAC válido, sem fichas comerciais. Operador/JWT não ganha acesso à integração. Sem mudança de payload, schema ou assinatura.
+
+### Cotas locais implementadas no Servirea (01/10/2026)
+
+`pessoas`, `voluntarios`, `usuarios` são limites aplicados, inteiros não negativos e códigos com esta caixa. Pessoas incluem responsáveis/voluntários/inativos; voluntários incluem cadastros inativos; usuários incluem vínculos ATIVO e convites (desativar vínculo libera vaga). Zero bloqueia crescimento; omissão mantém compatibilidade sem cota configurada. Plano reduzido preserva dados e edições sem crescimento. Registro acima do limite retorna 409 COTA_EXCEDIDA; configuração inválida 503 COTAS_INVALIDAS. Aplicação de direitos e operações de crescimento serializam pela paróquia.
+
+GET /minha-conta/consumo é consulta **local do aplicativo**, com PERM_PAROQUIA, sem HMAC ou dados pessoais; não altera as rotas deste contrato. Armazenamento, documentos, envios e funcionalidades ainda não estão aplicados; não anunciar consumo comercial implementado para estes. Detalhe operacional em servirea-api-back/docs/cotas-plano.md.

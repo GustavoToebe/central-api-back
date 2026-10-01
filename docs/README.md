@@ -28,3 +28,5 @@
 - [Limites de login](login-limites.md): tentativas, saturação e limites por instância.
 
 - [MFA dos operadores](mfa-operadores.md): segundo fator, recuperação, cifra e encerramento de sessões.
+
+- [Financeiro operacional](financeiro-operacional.md): comportamento, contratos e limitações.
