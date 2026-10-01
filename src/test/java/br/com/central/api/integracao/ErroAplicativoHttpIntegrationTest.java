@@ -4,6 +4,7 @@ import br.com.central.api.AbstractIntegrationTest;
 import br.com.central.api.Documentos;
 import br.com.central.api.comercial.CatalogoService;
 import br.com.central.api.comercial.ClienteService;
+import br.com.central.api.comercial.ComercialConfiguration;
 import br.com.central.api.comercial.Contratacao;
 import br.com.central.api.comercial.ContratacaoRepository;
 import br.com.central.api.comercial.ContratacaoService;
@@ -97,7 +98,7 @@ class ErroAplicativoHttpIntegrationTest extends AbstractIntegrationTest {
         produtoId = catalogoService.criarProduto(new SalvarProdutoRequest(codigo, "Produto", "http://app.test", true)).id();
         UUID planoId = catalogoService.criarPlano(new SalvarPlanoRequest(produtoId, "PL" + sufixo, "Plano", true, List.of())).id();
         contratacaoId = contratacaoService.criar(new CriarContratacaoRequest(
-                clienteId, produtoId, planoId, Periodicidade.MENSAL, new BigDecimal("10.00"), 10, LocalDate.now(),
+                clienteId, produtoId, planoId, Periodicidade.MENSAL, new BigDecimal("10.00"), 10, LocalDate.now(ComercialConfiguration.FUSO),
                 SituacaoComercial.ATIVA, "Instancia " + sufixo, "log-" + sufixo, "Admin", sufixo + "@teste.com",
                 null, null)).id();
         tenant = UUID.randomUUID();
@@ -131,7 +132,7 @@ class ErroAplicativoHttpIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON).content(lote))
                 .andExpect(status().isUnauthorized());
 
-        String hoje = LocalDate.now().toString();
+        String hoje = LocalDate.now(ComercialConfiguration.FUSO).toString();
         mockMvc.perform(get("/erros").param("busca", "storage").param("de", hoje).param("ate", hoje)
                         .param("produtoId", produtoId.toString())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -148,7 +149,7 @@ class ErroAplicativoHttpIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/erros").param("produtoId", produtoId.toString())
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(jsonPath("$.length()").value(2));
-        String amanha = LocalDate.now().plusDays(1).toString();
+        String amanha = LocalDate.now(ComercialConfiguration.FUSO).plusDays(1).toString();
         mockMvc.perform(get("/erros").param("produtoId", produtoId.toString()).param("de", amanha)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
                 .andExpect(jsonPath("$.length()").value(0));

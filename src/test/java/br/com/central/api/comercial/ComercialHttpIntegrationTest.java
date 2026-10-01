@@ -153,7 +153,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
     void operadorUsaCadastrosContratacaoEFinanceiro() throws Exception {
         String token = token();
         String sufixo = UUID.randomUUID().toString().substring(0, 8);
-        String hoje = LocalDate.now().toString();
+        String hoje = LocalDate.now(ComercialConfiguration.FUSO).toString();
 
         String cpf = Documentos.cpf();
         String clienteId = id(autorizado(token, post("/clientes"),
@@ -240,7 +240,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
                 "{\"motivo\":\"cortesia\"}", 200);
         autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/adiantadas"),
                 "{\"ate\":\"" + hoje.substring(0, 7) + "\"}", 200);
-        String daquiADoisMeses = LocalDate.now().plusMonths(2).toString().substring(0, 7);
+        String daquiADoisMeses = LocalDate.now(ComercialConfiguration.FUSO).plusMonths(2).toString().substring(0, 7);
         autorizado(token, post("/contratacoes/" + contratacaoId + "/cobrancas/adiantadas"),
                 "{\"de\":\"" + daquiADoisMeses + "\",\"ate\":\"" + daquiADoisMeses + "\"}", 200);
 
