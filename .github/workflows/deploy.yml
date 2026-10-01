@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths-ignore:
       - '**/*.md'
+      - 'docs/estado-projeto.json'
+      - 'scripts/verificar-docs.py'
+      - '.github/workflows/docs.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:

@@ -94,3 +94,9 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - docs/mercadopago.md: checkout por cobrança, sem débito recorrente automático. Valor vem do servidor.
 - Webhook POST /webhooks/mercadopago valida assinatura e persiste caixa antes de 200. Nunca confiar no body/retorno do navegador para dar baixa.
 - Conciliador HTTP fora de transação, fonte oficial, valor/moeda/coletor/ambiente, posse e revisão. Refund/chargeback exige revisão; nunca apaga baixa automaticamente.
+
+## Fontes e estado verificável
+
+- [Estado local](docs/estado-projeto.json) e [índice](docs/README.md). Histórico/plano não define a versão implantada.
+- Executar `python scripts/verificar-docs.py` ao mudar docs, schema ou migrations; atualizar o estado junto.
+- Nesta tarefa, usar `melhoria/ecossistema-sem-ia`, conforme pedido do usuário. Publicação depende do fluxo e autorização vigentes.

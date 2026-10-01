@@ -19,3 +19,8 @@
 - [outbox.md](outbox.md): reserva, transações curtas, concorrência e retomada após crash.
 
 - [Mercado Pago](mercadopago.md): configuração, checkout, notificações e limites da conciliação.
+
+## Entrada rápida
+
+- [estado-projeto.json](estado-projeto.json): componente, comandos e migration local quando houver. Não confirma publicação.
+- Histórico explica decisões antigas; contrato e código atuais definem o comportamento vigente.

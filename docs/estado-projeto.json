@@ -1,0 +1,19 @@
+{
+  "produto": "Central",
+  "componente": "backend",
+  "repositorio": "central-api-back",
+  "fontes": {
+    "instrucoes": "AGENTS.md",
+    "indice": "docs/README.md",
+    "execucao": "README.md"
+  },
+  "publicacao": "Verificar release implantada; este arquivo descreve somente o checkout local.",
+  "comandos": [
+    "mvn clean verify",
+    "python scripts/verificar-docs.py"
+  ],
+  "migrations": {
+    "ultima": "V012__checkout_mercadopago.sql",
+    "quantidade": 12
+  }
+}
