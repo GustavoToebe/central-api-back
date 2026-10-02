@@ -15,7 +15,7 @@ Arquivo de instruções compartilhado entre ferramentas de IA; o `CLAUDE.md`
 só importa este (`@AGENTS.md`). Edite **só aqui**. Mudança que invalida algo
 daqui atualiza este arquivo junto com a funcionalidade. Manter curto.
 
-Commits vão direto na `main` (decisão de 25/09/2026).
+Nesta tarefa, commits usam `melhoria/ecossistema-sem-ia`, conforme solicitação do usuário.
 
 ## Regras que não podem ser quebradas
 - A Central **não é multi-tenant**: sem `@TenantId`/`TenantContext`. Só os
@@ -106,3 +106,5 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Financeiro do operador (V014): docs/financeiro-operacional.md. Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário.
 
 - Nova rodada de produto: docs/consumo-instancias.md: consulta de contratação sob demanda, HTTP fora da transação, sem dados pessoais/zero fictício.
+
+- [Fontes e retomada](docs/desenvolvimento/fontes-e-retomada.md): precedência, histórico e registro de evidências.

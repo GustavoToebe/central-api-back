@@ -1,5 +1,7 @@
 # Documentos da Central
 
+- [Fontes e retomada](desenvolvimento/fontes-e-retomada.md): precedência, estado atual e histórico.
+
 Índice. `AGENTS.md` fica na raiz. O texto longo continua em dois arquivos, e as pastas abaixo são o mapa por assunto.
 
 | Pasta ou arquivo | Assunto |
