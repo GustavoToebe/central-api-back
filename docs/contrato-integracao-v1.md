@@ -332,7 +332,7 @@ uma versão nova, os pendentes mais antigos da mesma contratação são descarta
 ```json
 [
   { "codigo": "voluntarios", "nome": "Voluntários cadastrados", "tipo": "LIMITE", "unidade": "pessoa", "aplicado": true },
-  { "codigo": "ESCALAS", "nome": "Escalas", "tipo": "FUNCIONALIDADE", "unidade": null, "aplicado": false }
+  { "codigo": "ESCALAS", "nome": "Escalas", "tipo": "FUNCIONALIDADE", "unidade": null, "aplicado": true }
 ]
 ```
 
@@ -506,4 +506,6 @@ Importações: uma unidade por lote CSV confirmado, até 100 pessoas/512 KiB. Pr
 
 GET aplicativo /integracao/v1/instancias/{tenantId}/consumo, HMAC/nonce normal e PERM_INTEGRACAO, devolve versaoContrato=1, tenantId, contratacaoId, consumo, funcionalidades. Especificação em [Consumo](consumo-instancias.md). Central verifica versão/identidade e expõe somente agregados para operador. Ausência do contrato não vira zero; endpoint legado de instância não fornece medição de armazenamento.
 
-ESCALAS, INSCRICAO_PUBLICA, EVENTOS, FINANCEIRO, COMUNICACAO, IMPORTACAO_PESSOAS, MURAL, TAREFAS são recursos funcionais aplicados. Sem código explícito nos direitos, app bloqueia mutações, preservando leituras/permissões. Instâncias antigas não recebem liberação automática; configure planos antes de implantação.
+ESCALAS, INSCRICAO_PUBLICA, EVENTOS, FINANCEIRO, COMUNICACAO, IMPORTACAO_PESSOAS, MURAL, TAREFAS, PASTORAIS, PORTAL_VOLUNTARIO, CALENDARIO são recursos funcionais aplicados. Sem código explícito nos direitos, app bloqueia mutações, preservando leituras/permissões. Instâncias antigas não recebem liberação automática; configure planos antes de implantação.
+
+Portal pessoal requer PORTAL_VOLUNTARIO até na consulta; feed pessoal requer também CALENDARIO. Revogação de assinatura continua possível após downgrade com permissão. Pastorais preservam consulta histórica e exigem PASTORAIS para escrita. O catálogo dinâmico do app já fornece os três códigos; operador precisa incluí-los explicitamente nos planos e reenviar direitos. Central não recebe participantes, vínculos pessoais ou tokens do calendário.
