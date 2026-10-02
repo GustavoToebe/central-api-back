@@ -53,7 +53,7 @@ class ComercialHttpIntegrationTest extends AbstractIntegrationTest {
         return Stream.of(
                 "/clientes", "/clientes/" + id,
                 "/produtos", "/recursos", "/planos", "/adicionais",
-                "/contratacoes", "/contratacoes/" + id, "/contratacoes/" + id + "/financeiro",
+                "/contratacoes", "/contratacoes/" + id, "/contratacoes/" + id + "/financeiro", "/contratacoes/" + id + "/consumo",
                 "/cobrancas", "/cobrancas/" + id, "/produtos/" + id + "/recursos-do-app", "/erros");
     }
 

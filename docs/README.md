@@ -30,3 +30,7 @@
 - [MFA dos operadores](mfa-operadores.md): segundo fator, recuperação, cifra e encerramento de sessões.
 
 - [Financeiro operacional](financeiro-operacional.md): comportamento, contratos e limitações.
+
+## Quatro entregas de produto — 01/10/2026
+
+- [Consumo de instâncias](consumo-instancias.md).

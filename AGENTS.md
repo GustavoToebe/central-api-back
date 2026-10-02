@@ -104,3 +104,5 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Nesta tarefa, usar `melhoria/ecossistema-sem-ia`, conforme pedido do usuário. Publicação depende do fluxo e autorização vigentes.
 
 - Financeiro do operador (V014): docs/financeiro-operacional.md. Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário.
+
+- Nova rodada de produto: docs/consumo-instancias.md: consulta de contratação sob demanda, HTTP fora da transação, sem dados pessoais/zero fictício.

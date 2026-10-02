@@ -501,3 +501,9 @@ GET /minha-conta/consumo é consulta **local do aplicativo**, com PERM_PAROQUIA,
 Emails/WhatsApp: unidade por mensagem lógica na primeira reserva para envio da fila, incluindo confirmações/lembretes. Falhas consomem, reenvio/crash da mesma mensagem não duplica nem muda o mês. Cota esgotada mantém PENDENTE e reavalia após cinco minutos. E-mails de acesso/convite/recuperação e teste técnico de WhatsApp ficam fora. Não representa custo real/tentativas do provedor.
 
 Importações: uma unidade por lote CSV confirmado, até 100 pessoas/512 KiB. Prévia/repetição de confirmação não gastam; chave idempotente por paróquia. Confirmação revalida arquivo/duplicidades/cotas e é atômica. Não cobre XLSX, importação de documentos gerais ou armazenamento. Detalhes operacionais em servirea-api-back/docs/cotas-envios-importacao.md. Agregação comercial de consumo na Central permanece pendente.
+
+## Consumo sob demanda — complemento 01/10/2026
+
+GET aplicativo /integracao/v1/instancias/{tenantId}/consumo, HMAC/nonce normal e PERM_INTEGRACAO, devolve versaoContrato=1, tenantId, contratacaoId, consumo, funcionalidades. Especificação em [Consumo](consumo-instancias.md). Central verifica versão/identidade e expõe somente agregados para operador. Ausência do contrato não vira zero; endpoint legado de instância não fornece medição de armazenamento.
+
+ESCALAS, INSCRICAO_PUBLICA, EVENTOS, FINANCEIRO, COMUNICACAO, IMPORTACAO_PESSOAS, MURAL, TAREFAS são recursos funcionais aplicados. Sem código explícito nos direitos, app bloqueia mutações, preservando leituras/permissões. Instâncias antigas não recebem liberação automática; configure planos antes de implantação.

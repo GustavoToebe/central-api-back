@@ -56,6 +56,17 @@ class AplicativoHttpTest {
         servidor.verify();
     }
 
+    @Test
+    void respostaMaiorQueUmMiBInterrompeLeitura() {
+        AplicativoHttp http=cliente(1790000300L,"nonce-limite");
+        MockRestServiceServer servidor=servidorDe(http);
+        servidor.expect(requestTo("http://app.test/integracao/v1/recursos"))
+           .andRespond(withSuccess("x".repeat(1048577),MediaType.APPLICATION_JSON));
+        org.assertj.core.api.Assertions.assertThatThrownBy(()->http.enviar("http://app.test","GET","/integracao/v1/recursos",null,null))
+           .isInstanceOf(IllegalStateException.class);
+        servidor.verify();
+    }
+
     private final MockRestServiceServer[] ultimo = new MockRestServiceServer[1];
 
     private AplicativoHttp cliente(long epoch, String nonce) {

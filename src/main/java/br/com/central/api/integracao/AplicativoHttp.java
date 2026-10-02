@@ -74,7 +74,9 @@ public class AplicativoHttp {
             return new byte[0];
         }
         try {
-            return corpo.readAllBytes();
+            byte[] bytes = corpo.readNBytes(1048577);
+            if (bytes.length > 1048576) throw new IllegalStateException("Resposta do aplicativo excede 1 MiB.");
+            return bytes;
         } catch (java.io.IOException e) {
             throw new UncheckedIOException(e);
         }
