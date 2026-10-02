@@ -45,3 +45,5 @@
 
 - [monitoramento ](monitoramento.md).
 - [concorrencia-comercial ](concorrencia-comercial.md).
+
+- [Ambiente local atual](ambiente-local-atual.md): bases novas e portas 8070/8071/4210/4211.

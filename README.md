@@ -152,3 +152,5 @@ roteiro em `deploy/README.md`).
 Java 21 · Spring Boot 4.1.1 · Hibernate 7 · PostgreSQL 17 (Supabase) · Flyway ·
 Testcontainers · Maven — a mesma do `servire-api-back`, para reaproveitar
 código e convenções.
+
+- [Ambiente local atual](docs/ambiente-local-atual.md): bases novas e portas 8070/8071/4210/4211.

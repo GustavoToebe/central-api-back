@@ -15,5 +15,9 @@
   "migrations": {
     "ultima": "V015__historico_consumo.sql",
     "quantidade": 15
+  },
+  "ambiente_local_atual": {
+    "manual": "docs/ambiente-local-atual.md",
+    "bases_novas": true
   }
 }

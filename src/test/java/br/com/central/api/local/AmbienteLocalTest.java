@@ -8,6 +8,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AmbienteLocalTest {
 
     @Test
+    void snapshotDoSeedPodeSerLidoPelaIntegracaoSemPerderAcesso() {
+        var json = tools.jackson.databind.json.JsonMapper.builder().build();
+        var cliente = java.util.UUID.randomUUID();
+        var serializado = json.writeValueAsString(AmbienteLocal.direitosDeExemplo(cliente));
+        var direitos = json.readValue(serializado, br.com.central.api.comercial.dto.DireitosInstancia.class);
+        assertThat(direitos.versao()).isEqualTo(1);
+        assertThat(direitos.acessoLiberado()).isTrue();
+        assertThat(direitos.clienteId()).isEqualTo(cliente);
+        assertThat(direitos.tenantId()).isEqualTo(AmbienteLocal.TENANT_ID);
+        assertThat(direitos.contratacaoId()).isEqualTo(AmbienteLocal.CONTRATACAO_ID);
+        assertThat(direitos.limites()).isEmpty();
+        assertThat(direitos.funcionalidades()).contains("ESCALAS","IMPORTACAO_PESSOAS","PORTAL_VOLUNTARIO").doesNotHaveDuplicates();
+    }
+
+    @Test
     void aceitaSoOsHostsDaPropriaMaquina() {
         assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://localhost:5433/servirea_dev")).isTrue();
         assertThat(AmbienteLocal.bancoNestaMaquina("jdbc:postgresql://LOCALHOST/db")).isTrue();

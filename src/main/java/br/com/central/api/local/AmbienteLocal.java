@@ -25,6 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import tools.jackson.databind.json.JsonMapper;
+import br.com.central.api.comercial.dto.DireitosInstancia;
 import java.util.UUID;
 
 /**
@@ -43,8 +48,8 @@ public class AmbienteLocal implements ApplicationRunner {
     public static final String EMAIL_OPERADOR = "gustavo2@teste.local";
     public static final String SENHA = "12345678";
 
+    static final List<String> FUNCIONALIDADES_EXEMPLO=List.of("ESCALAS","INSCRICAO_PUBLICA","EVENTOS","FINANCEIRO","COMUNICACAO","IMPORTACAO_PESSOAS","MURAL","TAREFAS","PASTORAIS","PORTAL_VOLUNTARIO","CALENDARIO","LITURGIA","ESTOQUE");
     private static final Logger log = LoggerFactory.getLogger(AmbienteLocal.class);
-    private static final String DIREITOS = "{\"plano\":{\"codigo\":\"PAROQUIA\",\"nome\":\"Paróquia\"}}";
 
     private final OperadorRepository operadores;
     private final ProdutoRepository produtos;
@@ -54,10 +59,13 @@ public class AmbienteLocal implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbc;
     private final String url;
+    private final String servireaUrl;
+    private final JsonMapper json;
 
     public AmbienteLocal(OperadorRepository operadores, ProdutoRepository produtos, PlanoRepository planos,
                          PrecoPlanoRepository precos, ClienteRepository clientes, PasswordEncoder passwordEncoder,
-                         JdbcTemplate jdbc, @Value("${spring.datasource.url:}") String url) {
+                         JdbcTemplate jdbc, @Value("${spring.datasource.url:}") String url,
+                         @Value("${central.local.servirea-url:http://localhost:8080}") String servireaUrl, JsonMapper json) {
         this.operadores = operadores;
         this.produtos = produtos;
         this.planos = planos;
@@ -66,6 +74,8 @@ public class AmbienteLocal implements ApplicationRunner {
         this.passwordEncoder = passwordEncoder;
         this.jdbc = jdbc;
         this.url = url;
+        this.servireaUrl = servireaUrl;
+        this.json = json;
     }
 
     @Override
@@ -82,16 +92,20 @@ public class AmbienteLocal implements ApplicationRunner {
         }
         Produto produto = produtos.findByCodigoIgnoreCase("SERVIREA").orElseGet(() -> {
             Produto novo = new Produto("SERVIREA", "Servirea");
-            novo.setUrlBaseIntegracao("http://localhost:8080");
+            novo.setUrlBaseIntegracao(servireaUrl);
             return produtos.saveAndFlush(novo);
         });
         if (produto.getUrlBaseIntegracao() == null || produto.getUrlBaseIntegracao().isBlank()) {
-            produto.setUrlBaseIntegracao("http://localhost:8080");
+            produto.setUrlBaseIntegracao(servireaUrl);
         }
         Plano plano = planos.findByProduto_IdOrderByNomeAsc(produto.getId()).stream()
                 .filter(p -> "PAROQUIA".equals(p.getCodigo()))
                 .findFirst()
                 .orElseGet(() -> planos.saveAndFlush(new Plano(produto, "PAROQUIA", "Paróquia")));
+        for(String codigo:FUNCIONALIDADES_EXEMPLO) {
+            jdbc.update("INSERT INTO recurso(produto_id,codigo,nome,tipo) VALUES (?,?,?,'FUNCIONALIDADE') ON CONFLICT (produto_id,codigo) DO NOTHING",produto.getId(),codigo,codigo);
+            jdbc.update("INSERT INTO plano_recurso(plano_id,recurso_id,valor) SELECT ?,id,1 FROM recurso WHERE produto_id=? AND codigo=? ON CONFLICT (plano_id,recurso_id) DO NOTHING",plano.getId(),produto.getId(),codigo);
+        }
         Integer precosDoPlano = jdbc.queryForObject(
                 "SELECT count(*) FROM preco_plano WHERE plano_id = ?", Integer.class, plano.getId());
         if (precosDoPlano == null || precosDoPlano == 0) {
@@ -111,7 +125,7 @@ public class AmbienteLocal implements ApplicationRunner {
                     'Paróquia de Teste', ?, 'Administrador da paróquia', 'paroquia@teste.local', 1, ?::jsonb,
                     201)
                 """, CONTRATACAO_ID, cliente.getId(), produto.getId(), plano.getId(),
-                CONTRATACAO_ID, TENANT_ID, SLUG, DIREITOS);
+                CONTRATACAO_ID, TENANT_ID, SLUG, json.writeValueAsString(direitosDeExemplo(cliente.getId())));
         jdbc.update("""
                 INSERT INTO cobranca (contratacao_id, competencia_inicio, competencia_fim, vencimento, valor, status)
                 VALUES (?, date_trunc('month', CURRENT_DATE)::date,
@@ -121,6 +135,12 @@ public class AmbienteLocal implements ApplicationRunner {
                 """, CONTRATACAO_ID);
         log.info("Ambiente local da Central: operador {} / {}. Cliente Paróquia de Teste, contratação {}",
                 EMAIL_OPERADOR, SENHA, SLUG);
+    }
+
+    static DireitosInstancia direitosDeExemplo(UUID clienteId) {
+        return new DireitosInstancia(CONTRATACAO_ID, clienteId, "SERVIREA", TENANT_ID,
+                1, "ATIVA", true, null, null,
+                new DireitosInstancia.PlanoResumo("PAROQUIA", "Paróquia"), Map.of(), FUNCIONALIDADES_EXEMPLO, Instant.now());
     }
 
     private void garantirOperador() {
