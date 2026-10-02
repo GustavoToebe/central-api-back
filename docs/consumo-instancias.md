@@ -11,3 +11,7 @@ Consumo inclui planoNome, versaoDireitos, direitosConfirmadosEm, consultadoEm e 
 Recursos: pessoas, voluntarios, usuarios, armazenamento_mb, emails_mes, whatsapp_mes, importacoes_mes. Armazenamento está em bytes no contrato e é convertido para MB (1.048.576) na tela. Inclui somente arquivos vinculados/anexos retidos, não ocupação física do bucket. Fotos com tamanho desconhecido têm pendentes e disponível=null; o painel mostra inventário pendente. E-mail/WhatsApp contam primeira reserva de mensagem na fila, não cada tentativa ou entrega; importações contam lotes CSV confirmados. Competência mensal de Brasília. Sem limite configurado não equivale a consumo zero.
 
 O endpoint legado GET /integracao/v1/instancias/{id} mantém uso.armazenamento_mb=0 como placeholder histórico; não é usado pelo painel novo e não serve para medição/faturamento. Integrações novas devem usar o endpoint de consumo. Histórico centralizado, alertas programados, varredura de várias instâncias, filas de consulta e métricas de infraestrutura permanecem pendentes em F06.
+
+## Histórico de 02/10/2026
+
+[Histórico de consumo](historico-consumo.md): diário sob demanda, 90 dias, ausência não significa zero.

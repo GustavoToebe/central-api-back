@@ -36,3 +36,7 @@
 ## Quatro entregas de produto — 01/10/2026
 
 - [Consumo de instâncias](consumo-instancias.md).
+
+## Rodada 6–10 — 02/10/2026
+
+- [historico consumo ](historico-consumo.md): contrato, limites e homologação.

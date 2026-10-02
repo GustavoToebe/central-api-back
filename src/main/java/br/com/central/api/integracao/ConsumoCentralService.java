@@ -8,8 +8,8 @@ import java.time.Instant;
 /** Consulta sob demanda, sem cache nem fan-out; falha nunca se transforma em consumo zero. */
 @Service
 public class ConsumoCentralService {
- private final ConsumoDestinoService destinos;private final AplicativoHttp http;private final JsonMapper json;
- public ConsumoCentralService(ConsumoDestinoService destinos,AplicativoHttp http,JsonMapper json) {this.destinos=destinos;this.http=http;this.json=json;}
+ private final ConsumoDestinoService destinos;private final AplicativoHttp http;private final JsonMapper json;private final ConsumoHistoricoService historico;
+ public ConsumoCentralService(ConsumoDestinoService destinos,AplicativoHttp http,JsonMapper json,ConsumoHistoricoService historico) {this.destinos=destinos;this.http=http;this.json=json;this.historico=historico;}
  public Resposta consultar(UUID id) {
   var d=destinos.carregar(id);
   try {
@@ -22,7 +22,7 @@ public class ConsumoCentralService {
    for(var item:consumo.itens()) if(item.usado()<0||item.pendentes()<0||item.limite()!=null&&item.limite()<0) throw new IllegalStateException();
    List<String> funcionalidades=new ArrayList<>();
    for(var f:n.path("funcionalidades")) if(f.isString()&&f.asString().matches("[A-Z_]{1,64}")) funcionalidades.add(f.asString());
-   return new Resposta(id,consumo,List.copyOf(funcionalidades));
+   historico.registrar(id,consumo);return new Resposta(id,consumo,List.copyOf(funcionalidades));
   } catch(RuntimeException e) {throw new ConsumoIndisponivel();}
  }
  public static class ConsumoIndisponivel extends ApiException { public ConsumoIndisponivel(){super(HttpStatus.BAD_GATEWAY,"Não foi possível consultar o consumo do aplicativo. Tente novamente.","CONSUMO_INDISPONIVEL");} }
