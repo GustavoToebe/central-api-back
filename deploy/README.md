@@ -203,3 +203,7 @@ O Caddy limita corpos recebidos pelas quatro entradas de API a 6 MiB, preservand
 ## Monitoramento preparado
 
 Ver [métricas privadas](../docs/monitoramento.md) e arquivos em monitoramento/. Caddy nega coleta pela internet; Prometheus exige segredos próprios e rede interna. Nenhum coletor foi iniciado nesta entrega.
+
+## 9. Release por commit e rollback (T01)
+
+`atualizar.sh` registra o manifesto de cada release em `/opt/ecossistema/releases/` e etiqueta as imagens das APIs com o commit. `rollback.sh` volta ao release anterior (`--simular` para ensaiar; recusa se a release atual trouxe migration nova, a menos que `--aceitar-migrations`). Contrato, limites e teste: [release e rollback](../docs/release-rollback.md).

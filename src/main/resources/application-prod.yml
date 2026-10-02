@@ -3,6 +3,12 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+  # T16: o Flyway pode usar credenciais próprias (papel dono do schema), separadas das da API (papel só de dados).
+  # Sem as variáveis MIGRATION_DB_*, vale o usuário da API, como sempre foi. Ver docs/papeis-banco.md.
+  flyway:
+    url: ${MIGRATION_DB_URL:${DB_URL}}
+    user: ${MIGRATION_DB_USER:${DB_USER}}
+    password: ${MIGRATION_DB_PASSWORD:${DB_PASSWORD}}
 
 central:
   security:

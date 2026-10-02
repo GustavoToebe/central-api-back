@@ -32,6 +32,8 @@ jobs:
           cache: maven
       - name: Testes (o Testcontainers sobe o Postgres)
         run: mvn -B -q verify
+      - name: Scripts de release e rollback (sandbox, sem Docker nem VPS)
+        run: bash deploy/testes/release.test.sh
 
   publicar:
     needs: testar

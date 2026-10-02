@@ -1,0 +1,1209 @@
+{
+  "produto" : "Central",
+  "rotas" : [ {
+    "metodo" : "GET",
+    "caminho" : "/adicionais",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.CatalogoDtos.AdicionalResponse[]",
+    "controlador" : "CatalogoController#listarAdicionais"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/adicionais",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarAdicionalRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.AdicionalResponse",
+    "controlador" : "CatalogoController#criarAdicional"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/adicionais/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarAdicionalRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.AdicionalResponse",
+    "controlador" : "CatalogoController#atualizarAdicional"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/auth/login",
+    "autorizacao" : null,
+    "corpo" : "operador.dto.LoginRequest",
+    "resposta" : "operador.dto.LoginResponse",
+    "controlador" : "AuthController#login"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/auth/logout",
+    "autorizacao" : null,
+    "corpo" : null,
+    "resposta" : null,
+    "controlador" : "AuthController#logout"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/auth/refresh",
+    "autorizacao" : null,
+    "corpo" : null,
+    "resposta" : "operador.dto.LoginResponse",
+    "controlador" : "AuthController#refresh"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/clientes",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.ClienteDtos.ClienteResponse[]",
+    "controlador" : "ClienteController#listar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/clientes",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ClienteDtos.SalvarClienteRequest",
+    "resposta" : "comercial.dto.ClienteDtos.ClienteResponse",
+    "controlador" : "ClienteController#criar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/clientes/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.ClienteDtos.ClienteResponse",
+    "controlador" : "ClienteController#buscar"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/clientes/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ClienteDtos.SalvarClienteRequest",
+    "resposta" : "comercial.dto.ClienteDtos.ClienteResponse",
+    "controlador" : "ClienteController#atualizar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/cobrancas",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.CobrancaLinha[]",
+    "controlador" : "CobrancaController#listar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/cobrancas/pagamentos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.FinanceiroDtos.RegistrarPagamentoRequest",
+    "resposta" : null,
+    "controlador" : "CobrancaController#registrarPagamentos"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/cobrancas/pagamentos-online/{id}/reconciliar",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : null,
+    "controlador" : "MercadoPagoController#reconciliar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/cobrancas/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.CobrancaDetalhe",
+    "controlador" : "CobrancaController#detalhe"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/cobrancas/{id}/checkout",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "pagamento.CheckoutMercadoPagoService.Link",
+    "controlador" : "MercadoPagoController#criar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/cobrancas/{id}/pagamentos-online",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "pagamento.MercadoPagoController.PagamentoLinha[]",
+    "controlador" : "MercadoPagoController#pagamentos"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/contratacoes",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResumo[]",
+    "controlador" : "ContratacaoController#listar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.CriarContratacaoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#criar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/contratacoes/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#buscar"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/contratacoes/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.AtualizarProvisionamentoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#atualizarProvisionamento"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/contratacoes/{id}/adicionais",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.SubstituirAdicionaisRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#substituirAdicionais"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/bloquear",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.MotivoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#bloquear"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/cancelar",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.MotivoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#cancelar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/cobrancas/adiantadas",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.FinanceiroDtos.GerarCobrancasRequest",
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#gerarAdiantadas"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/cobrancas/{cobrancaId}/estornar",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#estornar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/cobrancas/{cobrancaId}/isentar",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.FinanceiroDtos.IsentarCobrancaRequest",
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#isentar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/cobrancas/{cobrancaId}/reemitir",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#reemitir"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/contratacoes/{id}/consumo",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.ConsumoCentralService.Resposta",
+    "controlador" : "ConsumoCentralController#consultar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/contratacoes/{id}/consumo/historico",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.ConsumoHistoricoService.Ponto[]",
+    "controlador" : "ConsumoCentralController#historico"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/desbloquear",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.MotivoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#desbloquear"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/contratacoes/{id}/financeiro",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#financeiro"
+  }, {
+    "metodo" : "DELETE",
+    "caminho" : "/contratacoes/{id}/isencao",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#encerrarIsencao"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/isencao",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.FinanceiroDtos.IsentarContratacaoRequest",
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#isentarContratacao"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/pagamentos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.FinanceiroDtos.RegistrarPagamentoRequest",
+    "resposta" : "comercial.dto.FinanceiroDtos.FinanceiroResponse",
+    "controlador" : "ContratacaoController#registrarPagamento"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/contratacoes/{id}/plano",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.AlterarPlanoRequest",
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoController#alterarPlano"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/suporte",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.ContratacaoDtos.MotivoRequest",
+    "resposta" : "integracao.IntegracaoDtos.SuporteResponse",
+    "controlador" : "ContratacaoIntegracaoController#suporte"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/contratacoes/{id}/tentar-provisionamento",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.ContratacaoDtos.ContratacaoResponse",
+    "controlador" : "ContratacaoIntegracaoController#tentarProvisionamento"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/erros",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.IntegracaoDtos.ErroLinha[]",
+    "controlador" : "ErroAplicativoController#listar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/categorias",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.FinanceiroDtos.CategoriaResponse[]",
+    "controlador" : "FinanceiroController#categorias"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/categorias",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.CategoriaRequest",
+    "resposta" : "financeiro.FinanceiroDtos.CategoriaResponse",
+    "controlador" : "FinanceiroController#criarCategoria"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/financeiro/categorias/{id}",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.CategoriaRequest",
+    "resposta" : "financeiro.FinanceiroDtos.CategoriaResponse",
+    "controlador" : "FinanceiroController#alterarCategoria"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/contas",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.FinanceiroDtos.ContaResponse[]",
+    "controlador" : "FinanceiroController#contas"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/contas",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.ContaRequest",
+    "resposta" : "financeiro.FinanceiroDtos.ContaResponse",
+    "controlador" : "FinanceiroController#criarConta"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/financeiro/contas/{id}",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.ContaRequest",
+    "resposta" : "financeiro.FinanceiroDtos.ContaResponse",
+    "controlador" : "FinanceiroController#alterarConta"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/movimentos",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.FinanceiroDtos.Pagina",
+    "controlador" : "FinanceiroController#listar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/movimentos",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.MovimentoRequest",
+    "resposta" : "financeiro.FinanceiroDtos.MovimentoResponse",
+    "controlador" : "FinanceiroController#criar"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/financeiro/movimentos/{id}",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.MovimentoRequest",
+    "resposta" : "financeiro.FinanceiroDtos.MovimentoResponse",
+    "controlador" : "FinanceiroController#alterar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/movimentos/{id}/baixar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.BaixaRequest",
+    "resposta" : "financeiro.FinanceiroDtos.MovimentoResponse",
+    "controlador" : "FinanceiroController#baixar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/movimentos/{id}/cancelar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.VersaoRequest",
+    "resposta" : "financeiro.FinanceiroDtos.MovimentoResponse",
+    "controlador" : "FinanceiroController#cancelar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/financeiro/movimentos/{id}/estornar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "financeiro.FinanceiroDtos.VersaoRequest",
+    "resposta" : "financeiro.FinanceiroDtos.MovimentoResponse",
+    "controlador" : "FinanceiroController#estornar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/resumo",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.FinanceiroDtos.Resumo",
+    "controlador" : "FinanceiroController#resumo"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/instancias",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.InstanciasVisaoService.Pagina",
+    "controlador" : "InstanciasVisaoController#visao"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/instancias/atualizacao",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.InstanciasVisaoService.ResultadoVarredura",
+    "controlador" : "InstanciasVisaoController#atualizar"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/integracao/v1/produtos/{produto}/direitos",
+    "autorizacao" : "hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)",
+    "corpo" : null,
+    "resposta" : "integracao.IntegracaoDtos.PaginaDireitos",
+    "controlador" : "IntegracaoDireitosController#direitos"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/integracao/v1/produtos/{produto}/erros",
+    "autorizacao" : "hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)",
+    "corpo" : "integracao.IntegracaoDtos.LoteDeErros",
+    "resposta" : "integracao.IntegracaoDtos.ErrosRecebidos",
+    "controlador" : "IntegracaoDireitosController#erros"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/integracao/v1/produtos/{produto}/instancias/{idExterno}/minha-conta",
+    "autorizacao" : "hasAuthority('PERM_INTEGRACAO') and @escopoIntegracao.autorizado(authentication, #produto)",
+    "corpo" : null,
+    "resposta" : "integracao.MinhaContaDto",
+    "controlador" : "MinhaContaIntegracaoController#minhaConta"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/integracao/v1/saude",
+    "autorizacao" : "hasAuthority('PERM_INTEGRACAO')",
+    "corpo" : null,
+    "resposta" : null,
+    "controlador" : "IntegracaoSaudeController#saude"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/monitoramento/metrics",
+    "autorizacao" : "hasRole('MONITORAMENTO')",
+    "corpo" : null,
+    "resposta" : "string",
+    "controlador" : "MetricasController#metricas"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/operadores/eu",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "operador.dto.OperadorResumo",
+    "controlador" : "OperadorController#eu"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/operadores/eu/mfa",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "operador.MfaService.Status",
+    "controlador" : "MfaController#status"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/operadores/eu/mfa/ativar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "operador.MfaController.Confirmacao",
+    "resposta" : "operador.MfaService.Recuperacao",
+    "controlador" : "MfaController#ativar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/operadores/eu/mfa/desativar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "operador.MfaController.Confirmacao",
+    "resposta" : null,
+    "controlador" : "MfaController#desativar"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/operadores/eu/mfa/preparar",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : "operador.MfaController.Senha",
+    "resposta" : "operador.MfaService.Preparacao",
+    "controlador" : "MfaController#preparar"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/operadores/eu/senha",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "operador.dto.TrocaSenhaRequest",
+    "resposta" : null,
+    "controlador" : "OperadorController#trocarSenha"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/planos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.CatalogoDtos.PlanoResponse[]",
+    "controlador" : "CatalogoController#listarPlanos"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/planos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarPlanoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.PlanoResponse",
+    "controlador" : "CatalogoController#criarPlano"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/planos/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarPlanoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.PlanoResponse",
+    "controlador" : "CatalogoController#atualizarPlano"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/planos/{id}/precos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.NovoPrecoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.PlanoResponse",
+    "controlador" : "CatalogoController#adicionarPreco"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/produtos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.CatalogoDtos.ProdutoResponse[]",
+    "controlador" : "CatalogoController#listarProdutos"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/produtos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarProdutoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.ProdutoResponse",
+    "controlador" : "CatalogoController#criarProduto"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/produtos/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarProdutoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.ProdutoResponse",
+    "controlador" : "CatalogoController#atualizarProduto"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/produtos/{id}/recursos-do-app",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "integracao.IntegracaoDtos.RecursoDoAppResponse[]",
+    "controlador" : "ContratacaoIntegracaoController#recursosDoApp"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/recursos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : null,
+    "resposta" : "comercial.dto.CatalogoDtos.RecursoResponse[]",
+    "controlador" : "CatalogoController#listarRecursos"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/recursos",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarRecursoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.RecursoResponse",
+    "controlador" : "CatalogoController#criarRecurso"
+  }, {
+    "metodo" : "PUT",
+    "caminho" : "/recursos/{id}",
+    "autorizacao" : "hasAuthority('ROLE_OPERADOR')",
+    "corpo" : "comercial.dto.CatalogoDtos.SalvarRecursoRequest",
+    "resposta" : "comercial.dto.CatalogoDtos.RecursoResponse",
+    "controlador" : "CatalogoController#atualizarRecurso"
+  }, {
+    "metodo" : "POST",
+    "caminho" : "/webhooks/mercadopago",
+    "autorizacao" : null,
+    "corpo" : null,
+    "resposta" : null,
+    "controlador" : "NotificacaoMercadoPagoController#receber"
+  } ],
+  "esquemas" : {
+    "comercial.Cobranca.Status" : {
+      "enum" : [ "ABERTA", "PAGA", "CANCELADA", "ISENTA" ]
+    },
+    "comercial.CobrancaItem.Tipo" : {
+      "enum" : [ "PLANO", "ADICIONAL" ]
+    },
+    "comercial.FormaPagamento" : {
+      "enum" : [ "PIX", "CARTAO_CREDITO", "CARTAO_DEBITO", "DINHEIRO", "TRANSFERENCIA", "BOLETO", "OUTRO" ]
+    },
+    "comercial.Periodicidade" : {
+      "enum" : [ "MENSAL", "TRIMESTRAL", "SEMESTRAL", "ANUAL" ]
+    },
+    "comercial.SituacaoComercial" : {
+      "enum" : [ "TRIAL", "ATIVA", "INADIMPLENTE", "BLOQUEADA", "CANCELADA" ]
+    },
+    "comercial.SituacaoProvisionamento" : {
+      "enum" : [ "PENDENTE", "PROCESSANDO", "ATIVA", "ERRO" ]
+    },
+    "comercial.TipoCliente" : {
+      "enum" : [ "PF", "PJ" ]
+    },
+    "comercial.TipoRecurso" : {
+      "enum" : [ "LIMITE", "FUNCIONALIDADE" ]
+    },
+    "comercial.dto.CatalogoDtos.AdicionalResponse" : {
+      "ativo" : "boolean",
+      "codigo" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "preco" : "number?",
+      "produtoId" : "string?",
+      "quantidade" : "number?",
+      "recursoCodigo" : "string?",
+      "recursoId" : "string?",
+      "sequencial" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.NovoPrecoRequest" : {
+      "periodicidade" : "comercial.Periodicidade?",
+      "valor" : "number?",
+      "vigenteDesde" : "string?"
+    },
+    "comercial.dto.CatalogoDtos.PlanoResponse" : {
+      "ativo" : "boolean",
+      "codigo" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "precos" : "comercial.dto.CatalogoDtos.PrecoResponse[]?",
+      "precosVigentes" : "comercial.dto.CatalogoDtos.PrecoVigenteResponse[]?",
+      "produtoId" : "string?",
+      "recursos" : "comercial.dto.CatalogoDtos.RecursoDoPlanoResponse[]?",
+      "sequencial" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.PrecoDoPlanoRequest" : {
+      "periodicidade" : "comercial.Periodicidade?",
+      "valor" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.PrecoResponse" : {
+      "id" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "valor" : "number?",
+      "vigenteDesde" : "string?"
+    },
+    "comercial.dto.CatalogoDtos.PrecoVigenteResponse" : {
+      "periodicidade" : "comercial.Periodicidade?",
+      "valor" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.ProdutoResponse" : {
+      "ativo" : "boolean",
+      "codigo" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "sequencial" : "number?",
+      "urlBaseIntegracao" : "string?"
+    },
+    "comercial.dto.CatalogoDtos.RecursoDoPlanoRequest" : {
+      "recursoId" : "string?",
+      "valor" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.RecursoDoPlanoResponse" : {
+      "codigo" : "string?",
+      "recursoId" : "string?",
+      "tipo" : "comercial.TipoRecurso?",
+      "valor" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.RecursoResponse" : {
+      "codigo" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "produtoId" : "string?",
+      "sequencial" : "number?",
+      "tipo" : "comercial.TipoRecurso?",
+      "unidade" : "string?",
+      "valorPadrao" : "number?"
+    },
+    "comercial.dto.CatalogoDtos.SalvarAdicionalRequest" : {
+      "ativo" : "boolean?",
+      "codigo" : "string?",
+      "nome" : "string?",
+      "preco" : "number?",
+      "produtoId" : "string?",
+      "quantidade" : "number?",
+      "recursoId" : "string?"
+    },
+    "comercial.dto.CatalogoDtos.SalvarPlanoRequest" : {
+      "ativo" : "boolean?",
+      "codigo" : "string?",
+      "nome" : "string?",
+      "precos" : "comercial.dto.CatalogoDtos.PrecoDoPlanoRequest[]?",
+      "produtoId" : "string?",
+      "recursos" : "comercial.dto.CatalogoDtos.RecursoDoPlanoRequest[]?"
+    },
+    "comercial.dto.CatalogoDtos.SalvarProdutoRequest" : {
+      "ativo" : "boolean?",
+      "codigo" : "string?",
+      "nome" : "string?",
+      "urlBaseIntegracao" : "string?"
+    },
+    "comercial.dto.CatalogoDtos.SalvarRecursoRequest" : {
+      "codigo" : "string?",
+      "nome" : "string?",
+      "produtoId" : "string?",
+      "tipo" : "comercial.TipoRecurso?",
+      "unidade" : "string?",
+      "valorPadrao" : "number?"
+    },
+    "comercial.dto.ClienteDtos.ClienteResponse" : {
+      "bairro" : "string?",
+      "cep" : "string?",
+      "cidade" : "string?",
+      "complemento" : "string?",
+      "contatos" : "comercial.dto.ClienteDtos.ContatoResponse[]?",
+      "documento" : "string?",
+      "id" : "string?",
+      "logradouro" : "string?",
+      "nome" : "string?",
+      "numero" : "string?",
+      "sequencial" : "number?",
+      "tipo" : "comercial.TipoCliente?",
+      "uf" : "string?"
+    },
+    "comercial.dto.ClienteDtos.ContatoRequest" : {
+      "email" : "string?",
+      "nome" : "string?",
+      "principal" : "boolean",
+      "telefone" : "string?"
+    },
+    "comercial.dto.ClienteDtos.ContatoResponse" : {
+      "email" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "principal" : "boolean",
+      "telefone" : "string?"
+    },
+    "comercial.dto.ClienteDtos.SalvarClienteRequest" : {
+      "bairro" : "string?",
+      "cep" : "string?",
+      "cidade" : "string?",
+      "complemento" : "string?",
+      "contatos" : "comercial.dto.ClienteDtos.ContatoRequest[]?",
+      "documento" : "string?",
+      "logradouro" : "string?",
+      "nome" : "string?",
+      "numero" : "string?",
+      "tipo" : "comercial.TipoCliente?",
+      "uf" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.AdicionalContratadoRequest" : {
+      "adicionalId" : "string?",
+      "quantidade" : "number?"
+    },
+    "comercial.dto.ContratacaoDtos.AdicionalContratadoResponse" : {
+      "adicionalId" : "string?",
+      "codigo" : "string?",
+      "quantidade" : "number?",
+      "quantidadeUnitaria" : "number?",
+      "recursoCodigo" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.AlterarPlanoRequest" : {
+      "aPartirDe" : "string?",
+      "diaVencimento" : "number?",
+      "motivo" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoId" : "string?",
+      "valor" : "number?"
+    },
+    "comercial.dto.ContratacaoDtos.AtualizarProvisionamentoRequest" : {
+      "adminEmail" : "string?",
+      "adminNome" : "string?",
+      "nomeInstancia" : "string?",
+      "slugInstancia" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.ContratacaoResponse" : {
+      "adicionais" : "comercial.dto.ContratacaoDtos.AdicionalContratadoResponse[]?",
+      "adminEmail" : "string?",
+      "adminNome" : "string?",
+      "clienteId" : "string?",
+      "diaVencimento" : "number",
+      "direitos" : "comercial.dto.DireitosInstancia?",
+      "historico" : "comercial.dto.ContratacaoDtos.HistoricoResponse[]?",
+      "id" : "string?",
+      "idExterno" : "string?",
+      "idempotencyKey" : "string?",
+      "inicio" : "string?",
+      "isencaoMotivo" : "string?",
+      "isenta" : "boolean",
+      "isentaAte" : "string?",
+      "nomeInstancia" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoCodigo" : "string?",
+      "planoId" : "string?",
+      "planoNome" : "string?",
+      "produtoCodigo" : "string?",
+      "produtoId" : "string?",
+      "provisionamentoEditavel" : "boolean",
+      "sequencial" : "number?",
+      "situacaoComercial" : "comercial.SituacaoComercial?",
+      "situacaoProvisionamento" : "comercial.SituacaoProvisionamento?",
+      "slugInstancia" : "string?",
+      "valor" : "number?",
+      "versaoDireitos" : "number",
+      "vigenteAte" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.ContratacaoResumo" : {
+      "acessoLiberado" : "boolean",
+      "clienteId" : "string?",
+      "clienteNome" : "string?",
+      "diaVencimento" : "number",
+      "id" : "string?",
+      "nomeInstancia" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoCodigo" : "string?",
+      "planoId" : "string?",
+      "produtoCodigo" : "string?",
+      "produtoId" : "string?",
+      "sequencial" : "number?",
+      "situacaoComercial" : "comercial.SituacaoComercial?",
+      "situacaoProvisionamento" : "comercial.SituacaoProvisionamento?",
+      "slugInstancia" : "string?",
+      "valor" : "number?",
+      "versaoDireitos" : "number",
+      "vigenteAte" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.CriarContratacaoRequest" : {
+      "adicionais" : "comercial.dto.ContratacaoDtos.AdicionalContratadoRequest[]?",
+      "adminEmail" : "string?",
+      "adminNome" : "string?",
+      "clienteId" : "string?",
+      "diaVencimento" : "number?",
+      "inicio" : "string?",
+      "nomeInstancia" : "string?",
+      "observacoes" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoId" : "string?",
+      "produtoId" : "string?",
+      "situacaoComercial" : "comercial.SituacaoComercial?",
+      "slugInstancia" : "string?",
+      "valor" : "number?"
+    },
+    "comercial.dto.ContratacaoDtos.HistoricoResponse" : {
+      "acao" : "string?",
+      "criadoEm" : "string?",
+      "id" : "string?",
+      "motivo" : "string?",
+      "operadorId" : "string?",
+      "versaoDireitos" : "number"
+    },
+    "comercial.dto.ContratacaoDtos.MotivoRequest" : {
+      "motivo" : "string?"
+    },
+    "comercial.dto.ContratacaoDtos.SubstituirAdicionaisRequest" : {
+      "adicionais" : "comercial.dto.ContratacaoDtos.AdicionalContratadoRequest[]?",
+      "motivo" : "string?"
+    },
+    "comercial.dto.DireitosInstancia" : {
+      "acessoLiberado" : "boolean",
+      "clienteId" : "string?",
+      "contratacaoId" : "string?",
+      "funcionalidades" : "string[]?",
+      "geradoEm" : "string?",
+      "limites" : "Record<string,number>?",
+      "motivoBloqueio" : "string?",
+      "plano" : "comercial.dto.DireitosInstancia.PlanoResumo?",
+      "produto" : "string?",
+      "situacao" : "string?",
+      "tenantId" : "string?",
+      "versao" : "number",
+      "vigenteAte" : "string?"
+    },
+    "comercial.dto.DireitosInstancia.PlanoResumo" : {
+      "codigo" : "string?",
+      "nome" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.CobrancaDetalhe" : {
+      "cobranca" : "comercial.dto.FinanceiroDtos.CobrancaLinha?",
+      "itens" : "comercial.dto.FinanceiroDtos.CobrancaItemResponse[]?",
+      "observacao" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.CobrancaItemResponse" : {
+      "descricao" : "string?",
+      "meses" : "number",
+      "quantidade" : "number?",
+      "tipo" : "comercial.CobrancaItem.Tipo?",
+      "valor" : "number?",
+      "valorUnitario" : "number?"
+    },
+    "comercial.dto.FinanceiroDtos.CobrancaLinha" : {
+      "clienteId" : "string?",
+      "clienteNome" : "string?",
+      "competenciaFim" : "string?",
+      "competenciaInicio" : "string?",
+      "contratacaoId" : "string?",
+      "formaPagamento" : "comercial.FormaPagamento?",
+      "id" : "string?",
+      "nomeInstancia" : "string?",
+      "pagoEm" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoNome" : "string?",
+      "produtoCodigo" : "string?",
+      "sequencial" : "number?",
+      "status" : "comercial.Cobranca.Status?",
+      "valor" : "number?",
+      "valorPago" : "number?",
+      "vencida" : "boolean",
+      "vencimento" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.CobrancaResponse" : {
+      "competenciaFim" : "string?",
+      "competenciaInicio" : "string?",
+      "contratacaoId" : "string?",
+      "formaPagamento" : "comercial.FormaPagamento?",
+      "id" : "string?",
+      "observacao" : "string?",
+      "pagoEm" : "string?",
+      "sequencial" : "number?",
+      "status" : "comercial.Cobranca.Status?",
+      "valor" : "number?",
+      "valorPago" : "number?",
+      "vencida" : "boolean",
+      "vencimento" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.FinanceiroResponse" : {
+      "cobrancas" : "comercial.dto.FinanceiroDtos.CobrancaResponse[]?",
+      "resumo" : "comercial.dto.FinanceiroDtos.Resumo?"
+    },
+    "comercial.dto.FinanceiroDtos.GerarCobrancasRequest" : {
+      "ate" : "string?",
+      "de" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.IsentarCobrancaRequest" : {
+      "motivo" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.IsentarContratacaoRequest" : {
+      "ate" : "string?",
+      "motivo" : "string?"
+    },
+    "comercial.dto.FinanceiroDtos.RegistrarPagamentoRequest" : {
+      "cobrancaIds" : "string[]?",
+      "formaPagamento" : "comercial.FormaPagamento?",
+      "observacao" : "string?",
+      "pagoEm" : "string?",
+      "valorPago" : "number?"
+    },
+    "comercial.dto.FinanceiroDtos.Resumo" : {
+      "diasAtraso" : "number",
+      "proximoVencimento" : "string?",
+      "totalPagoNoAno" : "number?",
+      "valorEmAtraso" : "number?",
+      "vencidas" : "number"
+    },
+    "financeiro.FinanceiroDtos.BaixaRequest" : {
+      "dataPagamento" : "string?",
+      "versao" : "number?"
+    },
+    "financeiro.FinanceiroDtos.CategoriaRequest" : {
+      "ativo" : "boolean",
+      "nome" : "string?"
+    },
+    "financeiro.FinanceiroDtos.CategoriaResponse" : {
+      "ativo" : "boolean",
+      "id" : "string?",
+      "nome" : "string?"
+    },
+    "financeiro.FinanceiroDtos.ContaRequest" : {
+      "ativo" : "boolean",
+      "dataSaldoInicial" : "string?",
+      "nome" : "string?",
+      "saldoInicial" : "number?"
+    },
+    "financeiro.FinanceiroDtos.ContaResponse" : {
+      "ativo" : "boolean",
+      "dataSaldoInicial" : "string?",
+      "id" : "string?",
+      "nome" : "string?",
+      "saldoInicial" : "number?"
+    },
+    "financeiro.FinanceiroDtos.MovimentoRequest" : {
+      "categoriaId" : "string?",
+      "contaId" : "string?",
+      "descricao" : "string?",
+      "observacoes" : "string?",
+      "tipo" : "financeiro.MovimentoFinanceiro.Tipo?",
+      "valor" : "number?",
+      "vencimento" : "string?",
+      "versao" : "number?"
+    },
+    "financeiro.FinanceiroDtos.MovimentoResponse" : {
+      "categoria" : "string?",
+      "categoriaId" : "string?",
+      "conta" : "string?",
+      "contaId" : "string?",
+      "dataPagamento" : "string?",
+      "descricao" : "string?",
+      "id" : "string?",
+      "observacoes" : "string?",
+      "situacao" : "financeiro.MovimentoFinanceiro.Situacao?",
+      "tipo" : "financeiro.MovimentoFinanceiro.Tipo?",
+      "valor" : "number?",
+      "vencimento" : "string?",
+      "versao" : "number"
+    },
+    "financeiro.FinanceiroDtos.Pagina" : {
+      "itens" : "financeiro.FinanceiroDtos.MovimentoResponse[]?",
+      "pagina" : "number",
+      "tamanho" : "number",
+      "total" : "number"
+    },
+    "financeiro.FinanceiroDtos.Resumo" : {
+      "ate" : "string?",
+      "contas" : "financeiro.FinanceiroDtos.SaldoConta[]?",
+      "de" : "string?",
+      "despesas" : "number?",
+      "pagarPrevisto" : "number?",
+      "receberPrevisto" : "number?",
+      "receitas" : "number?",
+      "receitasCobrancas" : "number?",
+      "receitasManuais" : "number?",
+      "resultado" : "number?",
+      "resultadoPrevisto" : "number?",
+      "saldoTotal" : "number?"
+    },
+    "financeiro.FinanceiroDtos.SaldoConta" : {
+      "id" : "string?",
+      "nome" : "string?",
+      "saldo" : "number?"
+    },
+    "financeiro.FinanceiroDtos.VersaoRequest" : {
+      "versao" : "number?"
+    },
+    "financeiro.MovimentoFinanceiro.Situacao" : {
+      "enum" : [ "PENDENTE", "PAGO", "CANCELADO" ]
+    },
+    "financeiro.MovimentoFinanceiro.Tipo" : {
+      "enum" : [ "RECEITA", "DESPESA" ]
+    },
+    "integracao.ConsumoCentralService.Consumo" : {
+      "consultadoEm" : "string?",
+      "direitosConfirmadosEm" : "string?",
+      "itens" : "integracao.ConsumoCentralService.Item[]?",
+      "planoNome" : "string?",
+      "versaoDireitos" : "number?"
+    },
+    "integracao.ConsumoCentralService.Item" : {
+      "codigo" : "string?",
+      "competencia" : "string?",
+      "disponivel" : "number?",
+      "estado" : "string?",
+      "limite" : "number?",
+      "nome" : "string?",
+      "pendentes" : "number",
+      "unidade" : "string?",
+      "usado" : "number"
+    },
+    "integracao.ConsumoCentralService.Resposta" : {
+      "consumo" : "integracao.ConsumoCentralService.Consumo?",
+      "contratacaoId" : "string?",
+      "funcionalidades" : "string[]?"
+    },
+    "integracao.ConsumoHistoricoService.Ponto" : {
+      "consumo" : "integracao.ConsumoCentralService.Consumo?",
+      "dia" : "string?"
+    },
+    "integracao.InstanciasVisaoService.Alerta" : {
+      "codigo" : "string?",
+      "estado" : "string?",
+      "limite" : "number?",
+      "nome" : "string?",
+      "usado" : "number?"
+    },
+    "integracao.InstanciasVisaoService.Instancia" : {
+      "alertas" : "integracao.InstanciasVisaoService.Alerta[]?",
+      "cliente" : "string?",
+      "consultadoEm" : "string?",
+      "contratacaoId" : "string?",
+      "defasado" : "boolean",
+      "instancia" : "string?",
+      "nivel" : "integracao.InstanciasVisaoService.Nivel?",
+      "plano" : "string?",
+      "sequencial" : "number?",
+      "situacaoComercial" : "comercial.SituacaoComercial?"
+    },
+    "integracao.InstanciasVisaoService.Nivel" : {
+      "enum" : [ "CRITICO", "ATENCAO", "OK", "SEM_DADOS" ]
+    },
+    "integracao.InstanciasVisaoService.Pagina" : {
+      "defasadas" : "number",
+      "itens" : "integracao.InstanciasVisaoService.Instancia[]?",
+      "pagina" : "number",
+      "porNivel" : "Record<string,number>?",
+      "tamanho" : "number",
+      "total" : "number"
+    },
+    "integracao.InstanciasVisaoService.ResultadoVarredura" : {
+      "consultadas" : "number",
+      "falhas" : "number",
+      "restantesSemDadosOuDefasadas" : "number"
+    },
+    "integracao.IntegracaoDtos.ErroLinha" : {
+      "clienteNome" : "string?",
+      "codigo" : "string?",
+      "contratacaoId" : "string?",
+      "id" : "string?",
+      "mensagem" : "string?",
+      "metodo" : "string?",
+      "nomeInstancia" : "string?",
+      "ocorridoEm" : "string?",
+      "produtoCodigo" : "string?",
+      "requestId" : "string?",
+      "rota" : "string?",
+      "status" : "number",
+      "tenantId" : "string?",
+      "usuarioId" : "string?"
+    },
+    "integracao.IntegracaoDtos.ErroRecebido" : {
+      "codigo" : "string?",
+      "id" : "string?",
+      "mensagem" : "string?",
+      "metodo" : "string?",
+      "ocorridoEm" : "string?",
+      "requestId" : "string?",
+      "rota" : "string?",
+      "status" : "number?",
+      "tenantId" : "string?",
+      "usuarioId" : "string?"
+    },
+    "integracao.IntegracaoDtos.ErrosRecebidos" : {
+      "gravados" : "number",
+      "recebidos" : "number"
+    },
+    "integracao.IntegracaoDtos.LoteDeErros" : {
+      "erros" : "integracao.IntegracaoDtos.ErroRecebido[]?"
+    },
+    "integracao.IntegracaoDtos.PaginaDireitos" : {
+      "geradoEm" : "string?",
+      "itens" : "comercial.dto.DireitosInstancia[]?",
+      "pagina" : "number",
+      "tamanho" : "number",
+      "total" : "number"
+    },
+    "integracao.IntegracaoDtos.RecursoDoAppResponse" : {
+      "aplicado" : "boolean",
+      "cadastrado" : "boolean",
+      "codigo" : "string?",
+      "nome" : "string?",
+      "tipo" : "comercial.TipoRecurso?",
+      "unidade" : "string?"
+    },
+    "integracao.IntegracaoDtos.SuporteResponse" : {
+      "codigo" : "string?",
+      "expiraEm" : "string?",
+      "urlAcesso" : "string?"
+    },
+    "integracao.MinhaContaDto" : {
+      "cliente" : "integracao.MinhaContaDto.ClienteDto?",
+      "cobrancas" : "integracao.MinhaContaDto.CobrancaDto[]?",
+      "contratacao" : "integracao.MinhaContaDto.ContratacaoDto?"
+    },
+    "integracao.MinhaContaDto.AdicionalDto" : {
+      "nome" : "string?",
+      "quantidade" : "number?"
+    },
+    "integracao.MinhaContaDto.ClienteDto" : {
+      "contatos" : "integracao.MinhaContaDto.ContatoDto[]?",
+      "documento" : "string?",
+      "endereco" : "integracao.MinhaContaDto.EnderecoDto?",
+      "nome" : "string?"
+    },
+    "integracao.MinhaContaDto.CobrancaDto" : {
+      "competenciaFim" : "string?",
+      "competenciaInicio" : "string?",
+      "id" : "string?",
+      "pagoEm" : "string?",
+      "situacao" : "string?",
+      "valor" : "number?",
+      "vencida" : "boolean",
+      "vencimento" : "string?"
+    },
+    "integracao.MinhaContaDto.ContatoDto" : {
+      "email" : "string?",
+      "nome" : "string?",
+      "principal" : "boolean",
+      "telefone" : "string?"
+    },
+    "integracao.MinhaContaDto.ContratacaoDto" : {
+      "adicionais" : "integracao.MinhaContaDto.AdicionalDto[]?",
+      "diaVencimento" : "number",
+      "inicio" : "string?",
+      "nomeInstancia" : "string?",
+      "periodicidade" : "comercial.Periodicidade?",
+      "planoNome" : "string?",
+      "situacaoComercial" : "comercial.SituacaoComercial?",
+      "valor" : "number?",
+      "vigenteAte" : "string?"
+    },
+    "integracao.MinhaContaDto.EnderecoDto" : {
+      "bairro" : "string?",
+      "cep" : "string?",
+      "cidade" : "string?",
+      "complemento" : "string?",
+      "logradouro" : "string?",
+      "numero" : "string?",
+      "uf" : "string?"
+    },
+    "operador.MfaController.Confirmacao" : {
+      "codigo" : "string?",
+      "senha" : "string?"
+    },
+    "operador.MfaController.Senha" : {
+      "senha" : "string?"
+    },
+    "operador.MfaService.Preparacao" : {
+      "expiraEm" : "string?",
+      "segredo" : "string?"
+    },
+    "operador.MfaService.Recuperacao" : {
+      "codigos" : "string[]?"
+    },
+    "operador.MfaService.Status" : {
+      "ativo" : "boolean",
+      "codigosRestantes" : "number",
+      "configurado" : "boolean"
+    },
+    "operador.dto.LoginRequest" : {
+      "codigoMfa" : "string?",
+      "email" : "string?",
+      "senha" : "string?"
+    },
+    "operador.dto.LoginResponse" : {
+      "accessToken" : "string?",
+      "expiresInSeconds" : "number",
+      "operador" : "operador.dto.OperadorResumo?"
+    },
+    "operador.dto.OperadorResumo" : {
+      "email" : "string?",
+      "id" : "string?",
+      "nome" : "string?"
+    },
+    "operador.dto.TrocaSenhaRequest" : {
+      "novaSenha" : "string?",
+      "senhaAtual" : "string?"
+    },
+    "pagamento.CheckoutMercadoPagoService.Link" : {
+      "situacao" : "string?",
+      "tentativaId" : "string?",
+      "url" : "string?"
+    },
+    "pagamento.MercadoPagoController.PagamentoLinha" : {
+      "aplicado" : "boolean",
+      "pagamentoId" : "string?",
+      "situacao" : "string?",
+      "statusProvedor" : "string?"
+    }
+  }
+}

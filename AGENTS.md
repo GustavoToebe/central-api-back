@@ -115,3 +115,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - Métricas: docs/monitoramento.md; credencial exclusiva e opcional, sem dados pessoais ou acesso de negócio. Endpoint bloqueado no proxy público; não ativar operação externa como efeito da implementação.
 
 - F06/F26/T14: docs/painel-instancias.md. /instancias lê só resumos guardados (SEM_DADOS nunca é zero); atualização manual em série, máx. 5 por chamada, HTTP fora de transação; métricas agregadas por nível para alertas externos.
+
+- T16: docs/papeis-banco.md. MIGRATION_DB_* separa as credenciais do Flyway; app só dados com BYPASSRLS; scripts/roles-banco.sql e adotar-papeis-banco.sql, ensaiar em staging.
+- T17: docs/contrato-api.md. Mudou rota, permissão ou DTO: atualizar docs/contrato-api.json com `mvn test -Dtest=ContratoApiTest -Dcontrato.atualizar=true`; rota nova exige @PreAuthorize.
+- T01: docs/release-rollback.md. atualizar.sh etiqueta imagens pelo commit e grava releases/*.json; rollback.sh recusa voltar se a migration avançou; testar com deploy/testes/release.test.sh.

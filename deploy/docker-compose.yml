@@ -9,6 +9,8 @@ name: ecossistema
 services:
   servirea-api:
     build: ../../servirea-api-back
+    # Tag imutável = commit (atualizar.sh). O rollback.sh sobe a imagem da release anterior sem reconstruir.
+    image: servirea-api:${SERVIREA_API_TAG:-atual}
     env_file: ../../servirea.env
     environment:
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
@@ -30,6 +32,7 @@ services:
 
   central-api:
     build: ..
+    image: central-api:${CENTRAL_API_TAG:-atual}
     env_file: ../../central.env
     environment:
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75

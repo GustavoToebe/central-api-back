@@ -49,3 +49,7 @@
 - [Ambiente local atual](ambiente-local-atual.md): bases novas e portas 8070/8071/4210/4211.
 
 - [Painel de instâncias](painel-instancias.md): F06/F26, último resumo guardado, nível por gravidade, atualização manual limitada e métricas para alertas externos.
+
+- [Papéis do banco](papeis-banco.md): T16, migrador separado da API, com roteiro e teste.
+- [Contrato da API](contrato-api.md): T17, contrato versionado gerado dos controllers e conferência do front.
+- [Release e rollback](release-rollback.md): T01, tags por commit, manifesto e rollback verificado em sandbox.
