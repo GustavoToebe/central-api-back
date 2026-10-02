@@ -509,3 +509,7 @@ GET aplicativo /integracao/v1/instancias/{tenantId}/consumo, HMAC/nonce normal e
 ESCALAS, INSCRICAO_PUBLICA, EVENTOS, FINANCEIRO, COMUNICACAO, IMPORTACAO_PESSOAS, MURAL, TAREFAS, PASTORAIS, PORTAL_VOLUNTARIO, CALENDARIO são recursos funcionais aplicados. Sem código explícito nos direitos, app bloqueia mutações, preservando leituras/permissões. Instâncias antigas não recebem liberação automática; configure planos antes de implantação.
 
 Portal pessoal requer PORTAL_VOLUNTARIO até na consulta; feed pessoal requer também CALENDARIO. Revogação de assinatura continua possível após downgrade com permissão. Pastorais preservam consulta histórica e exigem PASTORAIS para escrita. O catálogo dinâmico do app já fornece os três códigos; operador precisa incluí-los explicitamente nos planos e reenviar direitos. Central não recebe participantes, vínculos pessoais ou tokens do calendário.
+
+### Recursos da rodada 11–17
+
+Servirea anuncia LITURGIA e ESTOQUE como funcionalidades aplicadas para mutações; leituras históricas continuam autorizadas por perfil. Indicadores privados usam permissão INDICADORES + ESCALA, sem ranking e sem adicional comercial separado. Estrutura v1 não mudou. Nenhum plano real foi atualizado automaticamente.

@@ -65,18 +65,21 @@ public class BillingService {
     private final ContratacaoAdicionalRepository contratacaoAdicionalRepository;
     private final DireitosDaContratacao direitos;
     private final Clock clock;
+    private final org.springframework.transaction.support.TransactionTemplate geracaoTx;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     public BillingService(CobrancaRepository cobrancaRepository, ContratacaoRepository contratacaoRepository,
                           ContratacaoAdicionalRepository contratacaoAdicionalRepository,
-                          DireitosDaContratacao direitos, Clock clock) {
+                          DireitosDaContratacao direitos, Clock clock, org.springframework.transaction.PlatformTransactionManager transactionManager) {
         this.cobrancaRepository = cobrancaRepository;
         this.contratacaoRepository = contratacaoRepository;
         this.contratacaoAdicionalRepository = contratacaoAdicionalRepository;
         this.direitos = direitos;
         this.clock = clock;
+        this.geracaoTx = new org.springframework.transaction.support.TransactionTemplate(transactionManager);
+        this.geracaoTx.setPropagationBehavior(org.springframework.transaction.TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     public LocalDate hoje() {
@@ -272,31 +275,34 @@ public class BillingService {
      * Gera as cobranças que faltam e, se houver vencida em aberto, marca
      * INADIMPLENTE. Não bloqueia.
      */
-    @Transactional
+    /** Cada contrato usa transação curta; nenhum domínio é carregado antes da trava raiz. */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
     public int gerarCobrancasDeTodas() {
-        LocalDate ate = hoje().plusMonths(MESES_ANTECEDENCIA);
-        int total = 0;
-        List<Contratacao> ativas = contratacaoRepository.findBySituacaoComercialIn(List.of(
-                SituacaoComercial.TRIAL, SituacaoComercial.ATIVA, SituacaoComercial.INADIMPLENTE,
-                SituacaoComercial.BLOQUEADA));
-        for (Contratacao contratacao : ativas) {
-            total += gerarCobrancas(contratacao, ate);
-        }
-        entityManager.flush();
-        for (Contratacao contratacao : contratacaoRepository.findBySituacaoComercialIn(List.of(
-                SituacaoComercial.TRIAL, SituacaoComercial.ATIVA))) {
-            if (cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(
-                    contratacao.getId(), Cobranca.Status.ABERTA, hoje())) {
-                contratacao.setSituacaoComercial(SituacaoComercial.INADIMPLENTE);
-                direitos.publicar(contratacao, "INADIMPLENTE", "Cobrança vencida");
+        int total = 0; UUID cursor = null;
+        while (true) {
+            String filtro = cursor == null ? "" : " where c.id > :cursor";
+            var consulta = entityManager.createQuery("select c.id from Contratacao c" + filtro + " order by c.id", UUID.class);
+            if (cursor != null) consulta.setParameter("cursor", cursor);
+            var ids = consulta.setMaxResults(100).getResultList();
+            if (ids.isEmpty()) break;
+            for (UUID id : ids) {
+                total += geracaoTx.execute(tx -> {
+                    Contratacao c = carregar(id);
+                    if (c.getSituacaoComercial() == SituacaoComercial.CANCELADA) return 0;
+                    int geradas = gerarCobrancas(c, hoje().plusMonths(MESES_ANTECEDENCIA));
+                    entityManager.flush();
+                    if ((c.getSituacaoComercial() == SituacaoComercial.TRIAL || c.getSituacaoComercial() == SituacaoComercial.ATIVA)
+                            && cobrancaRepository.existsByContratacaoIdAndStatusAndVencimentoBefore(c.getId(), Cobranca.Status.ABERTA, hoje())) {
+                        c.setSituacaoComercial(SituacaoComercial.INADIMPLENTE);
+                        direitos.publicar(c, "INADIMPLENTE", "Cobrança vencida");
+                    } else if (c.getSituacaoComercial() == SituacaoComercial.INADIMPLENTE && regularizar(c)) {
+                        direitos.publicar(c, "REGULARIZADA", "Sem cobrança vencida");
+                    }
+                    return geradas;
+                });
             }
-        }
-        // Quem ficou sem vencida (isenção, valor zero virado isento pela V010) volta a ativa.
-        for (Contratacao contratacao : contratacaoRepository.findBySituacaoComercialIn(
-                List.of(SituacaoComercial.INADIMPLENTE))) {
-            if (regularizar(contratacao)) {
-                direitos.publicar(contratacao, "REGULARIZADA", "Sem cobrança vencida");
-            }
+            cursor = ids.getLast();
+            if (ids.size() < 100) break;
         }
         return total;
     }
@@ -421,6 +427,9 @@ public class BillingService {
      */
     @Transactional
     public int gerarCobrancas(Contratacao contratacao, LocalDate de, LocalDate ate) {
+        if (!entityManager.contains(contratacao)) contratacao = carregar(contratacao.getId());
+        else entityManager.lock(contratacao, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) return 0;
         Set<LocalDate> existentes = new HashSet<>();
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacao.getId())) {
             existentes.add(cobranca.getCompetenciaInicio());
@@ -458,6 +467,9 @@ public class BillingService {
      */
     @Transactional
     public void recalcularAbertasNaoVencidas(Contratacao contratacao) {
+        if (!entityManager.contains(contratacao)) contratacao = carregar(contratacao.getId());
+        else entityManager.lock(contratacao, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        if (contratacao.getSituacaoComercial() == SituacaoComercial.CANCELADA) return;
         LocalDate hoje = hoje();
         List<ContratacaoAdicional> adicionais = contratacaoAdicionalRepository.listarDaContratacao(contratacao.getId());
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacao.getId())) {
@@ -471,6 +483,7 @@ public class BillingService {
 
     @Transactional
     public void removerAbertasAPartirDe(UUID contratacaoId, LocalDate data) {
+        carregar(contratacaoId);
         List<Cobranca> apagar = new ArrayList<>();
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacaoId)) {
             if (cobranca.getStatus() == Cobranca.Status.ABERTA && !cobranca.getCompetenciaInicio().isBefore(data)) {
@@ -486,6 +499,7 @@ public class BillingService {
 
     @Transactional
     public void cancelarAbertasAPartirDe(UUID contratacaoId, LocalDate data, String motivo) {
+        carregar(contratacaoId);
         for (Cobranca cobranca : cobrancaRepository.findByContratacaoId(contratacaoId)) {
             if (cobranca.getStatus() == Cobranca.Status.ABERTA && !cobranca.getCompetenciaInicio().isBefore(data)) {
                 cobranca.cancelar(motivo);

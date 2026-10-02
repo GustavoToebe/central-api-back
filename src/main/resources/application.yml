@@ -44,7 +44,15 @@ server:
   forward-headers-strategy: none
 
 management:
+  metrics:
+    web:
+      server:
+        max-uri-tags: 256
   endpoints:
     web:
       exposure:
         include: health,info
+
+# Desabilitado sem credencial exclusiva válida; nunca usa JWT de operador.
+monitoramento:
+  token: ${MONITORAMENTO_TOKEN:}

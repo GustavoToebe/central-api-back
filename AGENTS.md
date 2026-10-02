@@ -64,7 +64,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
   Número curto para o operador: coluna `sequencial` (identity, V007) em cliente, contratação, cobrança,
   produto, plano, adicional e recurso; `@Generated` na entidade. Não é `numero` (cliente já tem, do endereço). Provisionar espera 1 min, 5 min, 15 min e 1 h e
   então fica `ERRO`; cancelada antes de chegar ao app não é provisionada (evento `DESCARTADO`). O webhook de direitos espera até 72 h e então fica `FALHOU`.
-- Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado.
+- Fora de `/auth/**` e `/integracao/**`, a rota exige operador autenticado. Exceção operacional: `GET /monitoramento/metrics` aceita apenas a credencial exclusiva de coleta, sem acesso comercial.
 - Profile `dev` importa `application-dev-local.yml` (gitignorado). Segredos sem valor padrão.
 - CSRF: domínio do `CENTRAL-XSRF-TOKEN` (nome próprio: o Servirea usa `XSRF-TOKEN` no mesmo domínio pai) em `CENTRAL_CSRF_COOKIE_DOMAIN` (painel e API em subdomínios =
   domínio pai; obrigatória em produção). Variáveis de produção sem valor padrão, conferidas por
@@ -110,3 +110,6 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - [Fontes e retomada](docs/desenvolvimento/fontes-e-retomada.md): precedência, histórico e registro de evidências.
 
 - Rodada 6–10: Histórico de consumo sob demanda: docs/historico-consumo.md; não gerar zeros para consultas ausentes nem gravar dados pessoais.
+
+- Rodada 11–17: docs/concorrencia-comercial.md: job por contratação, raiz antes de cobranças.
+- Métricas: docs/monitoramento.md; credencial exclusiva e opcional, sem dados pessoais ou acesso de negócio. Endpoint bloqueado no proxy público; não ativar operação externa como efeito da implementação.

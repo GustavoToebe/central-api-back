@@ -29,7 +29,7 @@ public class RequestIdFilter extends GenericFilterBean {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         String requestId = httpRequest.getHeader(REQUEST_ID_HEADER);
-        if (requestId == null || requestId.isBlank()) {
+        if (requestId == null || !requestId.matches("[A-Za-z0-9_-]{1,64}")) {
             requestId = UUID.randomUUID().toString();
         }
 

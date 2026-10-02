@@ -17,3 +17,5 @@ Para retomar, verificar branch/status e permissões da sessão atual. Neste trab
 O backlog geral e os resultados desta tarefa estão nos documentos outputs da conversa Codex; os manuais deste repositório definem os contratos locais. Não copiar a lista geral para cada projeto.
 
 Registro mínimo de entrega: escopo solicitado; arquivos/contratos alterados; comandos realmente executados; resultados/falhas/ignorados; migration e commits, se existentes; pendências concretas. Separar implementado, testado localmente, enviado ao remoto e implantado. Nunca relatar teste planejado como aprovado. Validar com python scripts/verificar-docs.py.
+
+Rodada 11–17 documentada no índice. Validar estado, testes e commits atuais antes de retomar; não reexecutar geradores locais cegamente.

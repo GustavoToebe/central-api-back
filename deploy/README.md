@@ -199,3 +199,7 @@ Sem os quatro, o job `publicar` falha e a produção não muda. Migration nova r
 As duas APIs passam a ter healthcheck interno a cada 30 segundos. O script aguarda saúde com `docker compose up --wait`, até 180 segundos, e termina com erro se os serviços não ficarem saudáveis. Isso verifica a API/banco; não substitui ensaio de restauração ou smoke test dos fluxos de negócio. Rollback de release continua uma tarefa separada.
 
 O Caddy limita corpos recebidos pelas quatro entradas de API a 6 MiB, preservando o limite multipart atual. Cada receptor HMAC limita adicionalmente a integração a 1 MiB. Consultar a [diretiva request_body](https://caddyserver.com/docs/caddyfile/directives/request_body). Antes de publicar: validar Caddy/Compose e confirmar saúde em staging. Estas configurações ainda não foram implantadas na VPS.
+
+## Monitoramento preparado
+
+Ver [métricas privadas](../docs/monitoramento.md) e arquivos em monitoramento/. Caddy nega coleta pela internet; Prometheus exige segredos próprios e rede interna. Nenhum coletor foi iniciado nesta entrega.

@@ -830,4 +830,30 @@ class BillingServiceIntegrationTest extends AbstractIntegrationTest {
         }
         org.mockito.Mockito.verify(http,org.mockito.Mockito.times(1)).criarCheckout(org.mockito.ArgumentMatchers.eq(tentativa),org.mockito.ArgumentMatchers.any());
     }
+
+    private void simultaneos(Runnable a,Runnable b)throws Exception {
+        var auth=SecurityContextHolder.getContext().getAuthentication();var inicio=new java.util.concurrent.CountDownLatch(1);
+        try(var exec=java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()){
+            var futuros=new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for(var acao:List.of(a,b))futuros.add(exec.submit(()->{try{inicio.await();SecurityContextHolder.getContext().setAuthentication(auth);acao.run();}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IllegalStateException(e);}finally{SecurityContextHolder.clearContext();}}));
+            inicio.countDown();for(var futuro:futuros)futuro.get(30,java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+    @Test void doisJobsSimultaneosNaoDuplicamCompetencia()throws Exception {
+        var c=contratar(Periodicidade.MENSAL,CEM,10,hoje.withDayOfMonth(1));
+        mpJdbc.update("delete from cobranca_item where cobranca_id in (select id from cobranca where contratacao_id=?)",c.id());mpJdbc.update("delete from cobranca where contratacao_id=?",c.id());
+        simultaneos(billingService::gerarCobrancasDeTodas,billingService::gerarCobrancasDeTodas);
+        var rows=financeiro(c).cobrancas();assertThat(rows).hasSize(2);assertThat(rows.stream().map(CobrancaResponse::competenciaInicio).distinct().count()).isEqualTo(2);
+    }
+    @Test void geracaoConcorrenteComIsencaoNaoDeixaAbertaIsentavel()throws Exception {
+        var c=contratar(Periodicidade.MENSAL,CEM,10,hoje.withDayOfMonth(1));
+        mpJdbc.update("delete from cobranca_item where cobranca_id in (select id from cobranca where contratacao_id=?)",c.id());mpJdbc.update("delete from cobranca where contratacao_id=?",c.id());
+        simultaneos(billingService::gerarCobrancasDeTodas,()->billingService.isentarContratacao(c.id(),"Isenção autorizada",null));
+        assertThat(financeiro(c).cobrancas()).hasSize(2).allMatch(x->x.status()==Cobranca.Status.ISENTA);
+    }
+    @Test void geracaoConcorrenteComBaixaPreservaPagamento()throws Exception {
+        var c=contratar(Periodicidade.MENSAL,CEM,10,hoje.withDayOfMonth(1));var cobrança=maisAntiga(financeiro(c));
+        simultaneos(billingService::gerarCobrancasDeTodas,()->billingService.registrarPagamento(c.id(),new RegistrarPagamentoRequest(List.of(cobrança.id()),hoje,FormaPagamento.PIX,CEM,"Baixa conferida")));
+        assertThat(financeiro(c).cobrancas().stream().filter(x->x.id().equals(cobrança.id())).findFirst().orElseThrow().status()).isEqualTo(Cobranca.Status.PAGA);
+    }
 }

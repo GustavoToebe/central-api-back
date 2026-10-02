@@ -7,6 +7,8 @@
 }
 
 (seguranca) {
+	@metricasPrivadas path /monitoramento/* /api/monitoramento/*
+	respond @metricasPrivadas 404
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options nosniff

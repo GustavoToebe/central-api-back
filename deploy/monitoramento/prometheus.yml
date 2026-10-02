@@ -1,0 +1,22 @@
+# Preparação apenas: montar segredos e conectar à rede interna antes de usar.
+global:
+  scrape_interval: 30s
+rule_files:
+  - /etc/prometheus/alertas.yml
+scrape_configs:
+  - job_name: servirea
+    metrics_path: /monitoramento/metrics
+    follow_redirects: false
+    authorization:
+      type: Monitoring
+      credentials_file: /run/secrets/servirea_monitoramento
+    static_configs:
+      - targets: [servirea-api:8080]
+  - job_name: central
+    metrics_path: /monitoramento/metrics
+    follow_redirects: false
+    authorization:
+      type: Monitoring
+      credentials_file: /run/secrets/central_monitoramento
+    static_configs:
+      - targets: [central-api:8081]

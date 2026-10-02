@@ -1,0 +1,18 @@
+groups:
+  - name: ecossistema
+    rules:
+      - alert: ApiSemColeta
+        expr: up{job=~"servirea|central"} == 0
+        for: 3m
+        labels: {severity: warning}
+        annotations: {summary: "API sem coleta de métricas por 3 minutos"}
+      - alert: ApiErrosElevados
+        expr: sum by (job) (rate(ecossistema_http_servidor_duracao_seconds_count{status="5xx"}[5m])) / clamp_min(sum by (job) (rate(ecossistema_http_servidor_duracao_seconds_count[5m])), 0.01) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: "Mais de 5% de respostas 5xx"}
+      - alert: BancoComEspera
+        expr: ecossistema_banco_conexoes_pendentes > 0
+        for: 3m
+        labels: {severity: warning}
+        annotations: {summary: "Pool de conexões com espera persistente"}
