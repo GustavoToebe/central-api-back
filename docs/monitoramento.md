@@ -13,3 +13,5 @@ Métricas são agregados de processo, reiniciam com a API e não são extrato fi
 X-Request-Id recebido só é propagado se ASCII seguro de 1–64 caracteres; caso contrário a API gera UUID. MDC limpo ao final. Log lento do Servirea usa padrão de rota resolvido, evitando caminho bruto com tokens de calendário. Testes com HTTP real verificam coleta/instrumentação e ausência de labels sensíveis.
 
 Instrumentação interna limita tags de rota a 256 (a aplicação possui mais de 100 rotas); exportação continua agregada e sem URI. Ao somar rotas, conferir cobertura e avisos de limite em vez de liberar cardinalidade ilimitada.
+
+Instâncias (02/10/2026): `ecossistema_instancias_por_nivel{nivel}` e `ecossistema_instancias_defasadas` vêm do [painel de instâncias](painel-instancias.md). A fila de comunicados do Servirea exporta `ecossistema_fila_envios_total{canal,resultado}` e `ecossistema_fila_reservas_em_curso`; o mesmo endpoint privado e as mesmas regras de credencial se aplicam.

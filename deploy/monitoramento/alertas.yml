@@ -16,3 +16,23 @@ groups:
         for: 3m
         labels: {severity: warning}
         annotations: {summary: "Pool de conexões com espera persistente"}
+      - alert: InstanciaComLimiteAtingido
+        expr: ecossistema_instancias_por_nivel{nivel="CRITICO"} > 0
+        for: 15m
+        labels: {severity: warning}
+        annotations: {summary: "Há instância com limite atingido ou excedido no último resumo guardado"}
+      - alert: InstanciasSemResumoAtual
+        expr: ecossistema_instancias_defasadas > 0
+        for: 1h
+        labels: {severity: info}
+        annotations: {summary: "Há instância sem consulta de consumo nas últimas 48 horas (atualize o painel de instâncias)"}
+      - alert: FilaDeEnvioComFalhas
+        expr: sum by (job) (rate(ecossistema_fila_envios_total{resultado="falha_tentativa"}[15m])) / clamp_min(sum by (job) (rate(ecossistema_fila_envios_total{resultado=~"enviado|falha_tentativa"}[15m])), 0.001) > 0.3
+        for: 15m
+        labels: {severity: warning}
+        annotations: {summary: "Mais de 30% das tentativas de envio de comunicados falhando"}
+      - alert: FilaPausadaPorCota
+        expr: increase(ecossistema_fila_envios_total{resultado="aguardando_cota"}[1h]) > 20
+        for: 1h
+        labels: {severity: info}
+        annotations: {summary: "Envios aguardando cota mensal em volume persistente"}

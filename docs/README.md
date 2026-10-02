@@ -47,3 +47,5 @@
 - [concorrencia-comercial ](concorrencia-comercial.md).
 
 - [Ambiente local atual](ambiente-local-atual.md): bases novas e portas 8070/8071/4210/4211.
+
+- [Painel de instâncias](painel-instancias.md): F06/F26, último resumo guardado, nível por gravidade, atualização manual limitada e métricas para alertas externos.

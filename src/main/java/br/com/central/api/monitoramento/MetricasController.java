@@ -7,8 +7,10 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 /** Exportação restrita: agregados operacionais, sem URI, paróquia, usuário ou conteúdo. */ @RestController public class MetricasController {
     private final MeterRegistry registry;
-    public MetricasController(MeterRegistry registry) {
+    private final br.com.central.api.integracao.InstanciasVisaoService instancias;
+    public MetricasController(MeterRegistry registry,br.com.central.api.integracao.InstanciasVisaoService instancias) {
         this.registry=registry;
+        this.instancias=instancias;
     }
     @GetMapping(value="/monitoramento/metrics",produces="text/plain; version=0.0.4; charset=utf-8") @PreAuthorize("hasRole('MONITORAMENTO')")
     public ResponseEntity<String> metricas() {
@@ -22,7 +24,20 @@ import java.util.concurrent.TimeUnit;
             }
         }
         );
+        instanciasPorNivel(b);
         return ResponseEntity.ok().header("Cache-Control","no-store").body(b.toString());
+    }
+    /** Contagens agregadas por nível, sem cliente, instância ou contratação nos rótulos. Falha na leitura omite o grupo. */
+    private void instanciasPorNivel(StringBuilder b) {
+        try {
+            var resumo=instancias.resumoParaMetricas();
+            final char fim=(char)10;
+            b.append("# TYPE ecossistema_instancias_por_nivel gauge").append(fim);
+            resumo.porNivel().forEach((nivel,n)->b.append("ecossistema_instancias_por_nivel{nivel=\"").append(nivel.name()).append("\"} ").append(n).append(fim));
+            b.append("# TYPE ecossistema_instancias_defasadas gauge").append(fim).append("ecossistema_instancias_defasadas ").append(resumo.defasadas()).append(fim);
+        } catch (RuntimeException e) {
+            // Métricas de processo continuam disponíveis mesmo se o banco estiver lento.
+        }
     }
     private void timers(StringBuilder b,String origem,String nome) {
         var grupos=new TreeMap<String,double[]>();

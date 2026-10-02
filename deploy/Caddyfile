@@ -22,10 +22,20 @@
 	encode zstd gzip
 	try_files {path} /index.html
 	file_server
-	@hash path *.js *.css *.woff2
-	@resto not path *.js *.css *.woff2
+	# sw.js nunca fica em cache longo: o navegador precisa ver a versão nova do service worker.
+	@hash {
+		path *.js *.css *.woff2
+		not path /sw.js
+	}
+	@resto {
+		not path *.js *.css *.woff2
+	}
+	@sw path /sw.js
+	@manifest path /manifest.webmanifest
 	header @hash Cache-Control "public, max-age=31536000, immutable"
 	header @resto Cache-Control "no-cache"
+	header @sw Cache-Control "no-cache"
+	header @manifest Content-Type "application/manifest+json"
 }
 
 servirea.com.br, www.servirea.com.br {

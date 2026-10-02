@@ -113,3 +113,5 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 
 - Rodada 11–17: docs/concorrencia-comercial.md: job por contratação, raiz antes de cobranças.
 - Métricas: docs/monitoramento.md; credencial exclusiva e opcional, sem dados pessoais ou acesso de negócio. Endpoint bloqueado no proxy público; não ativar operação externa como efeito da implementação.
+
+- F06/F26/T14: docs/painel-instancias.md. /instancias lê só resumos guardados (SEM_DADOS nunca é zero); atualização manual em série, máx. 5 por chamada, HTTP fora de transação; métricas agregadas por nível para alertas externos.
