@@ -45,7 +45,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 - `operador/` — login, refresh, logout, `GET /operadores/eu`, `PUT /operadores/eu/senha` (confere a atual, derruba
   as outras sessões e devolve cookie de refresh novo). Seed só no profile `dev`, se `CENTRAL_OPERADOR_SEED_EMAIL` e
   `CENTRAL_OPERADOR_SEED_SENHA` existirem; em produção o primeiro operador entra pelo `psql` (`deploy/README.md`).
-- `integracao/` — `HmacAssinatura`, filtro de `/integracao/**` (não é `permitAll`),
+- `integracao/` — filtro de `/integracao/**` (não é `permitAll`),
   nonce com `INSERT ... ON CONFLICT`, cliente de saída (`AplicativoHttp`) e o job
   que entrega o `evento_saida`. `GET /integracao/v1/produtos/{produto}/direitos`
   lista só contratações já provisionadas. `GET /produtos/{id}/recursos-do-app` pergunta ao app os códigos
@@ -114,5 +114,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 | Backup e restauração | [backup-restauracao](docs/backup-restauracao.md) | Backup leva `public` e `private`, restaura em transação e recusa banco com dados; nada de backup só dentro da VPS; ensaiado só localmente |
 | Papéis do banco | [papeis-banco](docs/papeis-banco.md) | `MIGRATION_DB_*` separa o Flyway; ensaiar em staging |
 | Contrato da API | [contrato-api](docs/contrato-api.md) | Mudou rota, permissão ou DTO: regenerar `docs/contrato-api.json`; rota nova exige `@PreAuthorize` |
-| Cópias com o Servirea | [scripts/verificar-copias.py](scripts/verificar-copias.py) | HMAC da integração, TOTP, limite de login e filtro de monitoramento existem nos dois back e têm de ser idênticos; mudou um, mude o outro e rode `python scripts/verificar-copias.py` (vê o Servirea ao lado) |
+| Cópias com o Servirea | [scripts/verificar-copias.py](scripts/verificar-copias.py) | Limite de login e filtro de monitoramento existem nos dois back e têm de ser idênticos; mudou um, mude o outro e rode `python scripts/verificar-copias.py` (vê o Servirea ao lado) |
 | Release e rollback | [release-rollback](docs/release-rollback.md) | `atualizar.sh` etiqueta imagens pelo commit e grava `releases/*.json`; `rollback.sh` recusa voltar se a migration avançou; testar com `deploy/testes/release.test.sh` |
+
+- [Biblioteca comum](docs/biblioteca-comum.md): HMAC/TOTP vêm de versão Maven fixa; sem cópias locais.

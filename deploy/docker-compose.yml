@@ -8,7 +8,9 @@ name: ecossistema
 
 services:
   servirea-api:
-    build: ../../servirea-api-back
+    build:
+      context: ../../servirea-api-back
+      secrets: [gh_token]
     # Tag imutável = commit (atualizar.sh). O rollback.sh sobe a imagem da release anterior sem reconstruir.
     image: servirea-api:${SERVIREA_API_TAG:-atual}
     env_file: ../../servirea.env
@@ -31,7 +33,9 @@ services:
     restart: unless-stopped
 
   central-api:
-    build: ..
+    build:
+      context: ..
+      secrets: [gh_token]
     image: central-api:${CENTRAL_API_TAG:-atual}
     env_file: ../../central.env
     environment:
@@ -102,3 +106,8 @@ volumes:
   caddy_config:
   evolution_data:
   evolution_pg:
+
+# Apenas segredo de build; não é montado nas APIs em execução.
+secrets:
+  gh_token:
+    file: ./secrets/gh_token

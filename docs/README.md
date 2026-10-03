@@ -55,3 +55,5 @@
 - [Backup e restauração](backup-restauracao.md): T12, scripts, ensaio de 02/10/2026 com os defeitos que ele achou e o que ainda não foi provado.
 - [Release e rollback](release-rollback.md): T01, tags por commit, manifesto e rollback verificado em sandbox.
 - [Roteiro de homologação em staging](homologacao-staging.md): o que uma pessoa precisa conferir antes de ligar qualquer recurso das rodadas 1 a 21.
+
+- [Biblioteca Java comum](biblioteca-comum.md): versões fixas, consumo local, CI e BuildKit.

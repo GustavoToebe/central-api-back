@@ -512,6 +512,11 @@ Reaproveitamento entre apps: o módulo de acesso (usuários/perfis) e o
 Servirea e são **copiados** para o 2º app; biblioteca Maven só se, no 3º, as
 cópias continuarem iguais.
 
+Atualização de 03/10/2026: HMAC e TOTP já foram extraídos para a biblioteca
+Maven servirea-comum 0.1.0; os dois backends usam versão fixa. As outras
+cópias continuam verificadas por scripts/verificar-copias.py. Ver
+[biblioteca comum](biblioteca-comum.md).
+
 ## 12. Riscos
 
 1. **Bloqueio após 72h**: se a Central (ou o banco free dela) cair num fim de

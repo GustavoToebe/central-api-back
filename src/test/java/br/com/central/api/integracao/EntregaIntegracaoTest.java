@@ -1,5 +1,7 @@
 package br.com.central.api.integracao;
 
+import br.com.servirea.comum.seguranca.HmacAssinatura;
+
 import br.com.central.api.AbstractIntegrationTest;
 import br.com.central.api.Documentos;
 import br.com.central.api.comercial.CatalogoService;

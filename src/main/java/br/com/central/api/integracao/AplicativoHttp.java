@@ -1,5 +1,7 @@
 package br.com.central.api.integracao;
 
+import br.com.servirea.comum.seguranca.HmacAssinatura;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;

@@ -1,5 +1,7 @@
 package br.com.central.api.integracao;
 
+import br.com.servirea.comum.seguranca.HmacAssinatura;
+
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

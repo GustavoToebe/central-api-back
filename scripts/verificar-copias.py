@@ -3,8 +3,7 @@
 Uso (na pasta do back da Central):
     python scripts/verificar-copias.py
 
-Algumas classes existem nos dois repositórios porque os dois lados precisam se comportar igual: a assinatura HMAC da integração
-(um lado assina, o outro confere), o TOTP do MFA, o limite de login e o filtro de monitoramento. Corrigir só um lado quebra a
+Algumas classes existem nos dois repositórios porque os dois lados precisam se comportar igual: o limite de login e o filtro de monitoramento. Corrigir só um lado quebra a
 integração ou deixa uma falha aberta no outro. O script compara cada par depois de normalizar pacote e nome do produto e falha
 (código 1) se algum divergir, mostrando as linhas. Sem o outro repositório ao lado (CI só deste repo) avisa e sai com sucesso;
 aponte para ele com SERVIREA_API_BACK. Nome do arquivo igual nos dois lados, em qualquer pasta de src/.
@@ -23,10 +22,8 @@ outro = Path(os.environ.get('SERVIREA_API_BACK', raiz.parent.parent / 'servire' 
 
 # Cópias que precisam ser idênticas (nome do arquivo, sem pasta).
 COPIAS = [
-    # Contrato HMAC da integração: quem assina e quem confere.
-    'HmacAssinatura.java', 'HmacAssinaturaTest.java', 'IntegracaoNonceService.java',
-    # MFA por TOTP.
-    'Totp.java', 'TotpTest.java',
+    # HMAC/TOTP agora vêm de servirea-comum; permanece o nonce dependente do banco.
+    'IntegracaoNonceService.java',
     # Limite de login (contador no banco).
     'LimiteLogin.java', 'LimiteLoginException.java', 'LimiteLoginTest.java',
     'ContadorBanco.java', 'ContadorEmMemoria.java', 'ContadorJanelas.java', 'ContadorBancoIntegrationTest.java',

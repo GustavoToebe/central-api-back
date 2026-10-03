@@ -12,7 +12,7 @@ Atualização de 01/10/2026 na branch melhoria/ecossistema-sem-ia.
 
 Os emissores existentes usam UUID para nonce e payloads pequenos. Antes de integrar exportações volumosas, paginar as requisições e manter o limite nos dois lados.
 
-Testes: `mvn test -Dtest=IntegracaoFiltroTest,HmacAssinaturaTest`; os testes HTTP com banco continuam obrigatórios antes de publicar.
+Testes: `mvn test -Dtest=IntegracaoFiltroTest`; os testes HTTP com banco continuam obrigatórios antes de publicar.
 
 ## Testes no Windows dentro do Codex
 

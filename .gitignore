@@ -16,3 +16,6 @@ bin/
 .claude/
 openspec/
 .agents/
+
+# Credencial de leitura Maven, preparada manualmente na VPS
+deploy/secrets/

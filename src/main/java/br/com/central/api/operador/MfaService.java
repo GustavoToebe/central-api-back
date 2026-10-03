@@ -1,5 +1,7 @@
 package br.com.central.api.operador;
 
+import br.com.servirea.comum.seguranca.Totp;
+
 import br.com.central.api.security.OpaqueTokenGenerator;
 import br.com.central.api.web.ResourceNotFoundException;
 import br.com.central.api.web.UnauthorizedException;

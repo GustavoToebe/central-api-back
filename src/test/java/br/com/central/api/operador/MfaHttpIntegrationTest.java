@@ -44,7 +44,7 @@ class MfaHttpIntegrationTest extends AbstractIntegrationTest {
         login(null).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.codigo").value("MFA_NECESSARIO"))
                 .andExpect(result -> assertThat(result.getResponse().getCookie(AuthController.REFRESH_TOKEN_COOKIE)).isNull());
         // O passo usado para confirmar a ativação também já foi consumido.
-        login(Totp.codigo(segredo, Instant.now().getEpochSecond() / 30, 6)).andExpect(status().isUnauthorized());
+        login(CodigoTotpTeste.codigo(segredo, Instant.now().getEpochSecond() / 30, 6)).andExpect(status().isUnauthorized());
         MvcResult sessao = login(codigos.getFirst()).andExpect(status().isOk()).andReturn();
         access = JsonPath.read(sessao.getResponse().getContentAsString(), "$.accessToken");
         login(codigos.getFirst()).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.codigo").value("MFA_INVALIDO"));
@@ -59,7 +59,7 @@ class MfaHttpIntegrationTest extends AbstractIntegrationTest {
         acao("preparar", "errada", null).andExpect(status().isUnauthorized());
         String segredo = preparar();
         jdbc.update("update operador set mfa_pendente_ate = now() - interval '1 second' where id = ?", id);
-        acao("ativar", "senha-correta", Totp.codigo(segredo, Instant.now().getEpochSecond() / 30, 6))
+        acao("ativar", "senha-correta", CodigoTotpTeste.codigo(segredo, Instant.now().getEpochSecond() / 30, 6))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.codigo").value("MFA_PREPARACAO_EXPIRADA"));
         login(null).andExpect(status().isOk());
         mvc.perform(get("/operadores/eu/mfa")).andExpect(status().isUnauthorized());
@@ -80,7 +80,7 @@ class MfaHttpIntegrationTest extends AbstractIntegrationTest {
         mvc.perform(post("/auth/login").contentType("application/json")
                 .content("{\"email\":\"" + email + "\",\"senha\":\"errada\"}"))
                 .andExpect(status().isUnauthorized()).andExpect(jsonPath("$.codigo").doesNotExist());
-        String codigo = Totp.codigo(segredo, Instant.now().getEpochSecond() / 30 + 1, 6);
+        String codigo = CodigoTotpTeste.codigo(segredo, Instant.now().getEpochSecond() / 30 + 1, 6);
         login(codigo).andExpect(status().isOk());
         login(codigo).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.codigo").value("MFA_INVALIDO"));
     }
@@ -111,7 +111,7 @@ class MfaHttpIntegrationTest extends AbstractIntegrationTest {
                     try {Thread.sleep(50);} catch (InterruptedException ex) {Thread.currentThread().interrupt(); throw new IllegalStateException(ex);}
                 }
                 assertThat(esperando).as("refresh esperando trava do operador").isTrue();
-                mfa.ativar(id, "senha-correta", Totp.codigo(segredo, Instant.now().getEpochSecond() / 30, 6), "127.0.0.1");
+                mfa.ativar(id, "senha-correta", CodigoTotpTeste.codigo(segredo, Instant.now().getEpochSecond() / 30, 6), "127.0.0.1");
             });
             assertThatThrownBy(() -> futuro.get().get(15, java.util.concurrent.TimeUnit.SECONDS))
                     .hasCauseInstanceOf(br.com.central.api.web.UnauthorizedException.class);
@@ -123,7 +123,7 @@ class MfaHttpIntegrationTest extends AbstractIntegrationTest {
         return JsonPath.read(result.getResponse().getContentAsString(), "$.segredo");
     }
     private List<String> ativar(String segredo) throws Exception {
-        MvcResult result = acao("ativar", "senha-correta", Totp.codigo(segredo, Instant.now().getEpochSecond() / 30, 6)).andExpect(status().isOk()).andReturn();
+        MvcResult result = acao("ativar", "senha-correta", CodigoTotpTeste.codigo(segredo, Instant.now().getEpochSecond() / 30, 6)).andExpect(status().isOk()).andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.codigos");
     }
     private ResultActions acao(String acao, String senha, String codigo) throws Exception {
