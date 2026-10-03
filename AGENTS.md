@@ -110,7 +110,8 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 | Consumo e instâncias | [consumo-instancias](docs/consumo-instancias.md), [historico-consumo](docs/historico-consumo.md), [painel-instancias](docs/painel-instancias.md) | HTTP fora da transação; sem dado pessoal nem zero fictício; `/instancias` lê só resumos guardados e atualiza em série, no máximo 5 por chamada |
 | Concorrência comercial | [concorrencia-comercial](docs/concorrencia-comercial.md) | Job por contratação, raiz antes das cobranças |
 | Login | [login-limites](docs/login-limites.md) | Contador no banco (`login_tentativa`, V016) por IP e por conta |
-| Métricas | [monitoramento](docs/monitoramento.md) | Credencial exclusiva, sem dado de negócio; endpoint bloqueado no proxy; não ativar operação externa |
+| Métricas e alertas | [monitoramento](docs/monitoramento.md) | Credencial exclusiva, sem dado de negócio; endpoint bloqueado no proxy; alerta novo em `alertas.yml` exige caso em `alertas.teste.yml` (`deploy/testes/alertas.test.sh`) |
+| Backup e restauração | [backup-restauracao](docs/backup-restauracao.md) | Backup leva `public` e `private`, restaura em transação e recusa banco com dados; nada de backup só dentro da VPS; ensaiado só localmente |
 | Papéis do banco | [papeis-banco](docs/papeis-banco.md) | `MIGRATION_DB_*` separa o Flyway; ensaiar em staging |
 | Contrato da API | [contrato-api](docs/contrato-api.md) | Mudou rota, permissão ou DTO: regenerar `docs/contrato-api.json`; rota nova exige `@PreAuthorize` |
 | Cópias com o Servirea | [scripts/verificar-copias.py](scripts/verificar-copias.py) | HMAC da integração, TOTP, limite de login e filtro de monitoramento existem nos dois back e têm de ser idênticos; mudou um, mude o outro e rode `python scripts/verificar-copias.py` (vê o Servirea ao lado) |

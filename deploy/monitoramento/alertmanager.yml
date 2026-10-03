@@ -1,0 +1,35 @@
+# Alertmanager do ecossistema (T14). Canal: e-mail pelo SMTP do Resend, o mesmo provedor que o Servirea já usa.
+# ANTES de ligar, troque os dois marcadores COMPLETAR abaixo (remetente do domínio verificado no Resend e destinatário da equipe) e
+# crie o arquivo de segredo com a chave de API do Resend (ver docs/monitoramento.md). O Alertmanager não lê variável de ambiente
+# neste arquivo; por isso os endereços ficam aqui e a senha vem de arquivo.
+global:
+  smtp_smarthost: 'smtp.resend.com:465'   # porta 465 = TLS implícito
+  smtp_from: 'alertas@COMPLETAR-DOMINIO'
+  smtp_auth_username: 'resend'
+  smtp_auth_password_file: /run/secrets/alertmanager_smtp
+  resolve_timeout: 5m
+
+route:
+  receiver: equipe
+  group_by: [alertname, job]
+  group_wait: 30s        # junta alertas que disparam juntos em um só e-mail
+  group_interval: 5m
+  repeat_interval: 4h    # alerta que continua aberto é lembrado de 4 em 4 horas
+  routes:
+    - matchers: [severity="info"]
+      receiver: equipe
+      repeat_interval: 24h
+
+# API fora do ar já explica o resto: não manda também 5xx e pool daquela API.
+inhibit_rules:
+  - source_matchers: [alertname="ApiSemColeta"]
+    target_matchers: [severity=~"warning|info"]
+    equal: [job]
+
+receivers:
+  - name: equipe
+    email_configs:
+      - to: 'COMPLETAR@dominio'
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.job }})'

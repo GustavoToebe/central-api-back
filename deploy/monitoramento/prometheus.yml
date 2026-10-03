@@ -1,8 +1,13 @@
-# Preparação apenas: montar segredos e conectar à rede interna antes de usar.
+# Coletor do ecossistema (T14). Sobe com deploy/docker-compose.monitoramento.yml, que monta este arquivo, alertas.yml e os dois
+# segredos de coleta. Nada aqui é público: as APIs só aceitam a coleta com a credencial própria e o Caddy bloqueia /monitoramento/*.
 global:
   scrape_interval: 30s
 rule_files:
   - /etc/prometheus/alertas.yml
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [alertmanager:9093]
 scrape_configs:
   - job_name: servirea
     metrics_path: /monitoramento/metrics

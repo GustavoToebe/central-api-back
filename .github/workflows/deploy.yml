@@ -35,6 +35,17 @@ jobs:
       - name: Scripts de release e rollback (sandbox, sem Docker nem VPS)
         run: bash deploy/testes/release.test.sh
 
+  # Ensaios que usam Docker (Postgres, Prometheus e Alertmanager descartáveis). Ficam fora do `needs` do deploy: avisam, não bloqueiam.
+  ensaios-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backup e restauração do banco (T12)
+        run: bash deploy/testes/backup.test.sh
+      - name: Alertas, roteamento e entrega (T14)
+        run: bash deploy/testes/alertas.test.sh
+
   publicar:
     needs: testar
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

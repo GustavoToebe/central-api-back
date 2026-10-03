@@ -1,0 +1,68 @@
+# Monitoramento opcional (T14): Prometheus + Alertmanager na mesma rede das APIs, sem porta aberta para a internet.
+# Uso na VPS:  docker compose -f docker-compose.yml -f docker-compose.monitoramento.yml up -d prometheus alertmanager
+# Antes (uma vez), em /opt/ecossistema/segredos-monitoramento/ (pasta 700 e arquivos 644: os contêineres rodam como `nobody` e um
+# arquivo 600 do root não seria lido; fora do git), crie os três arquivos de um valor só:
+#   servirea_monitoramento   o MONITORAMENTO_TOKEN do servirea.env
+#   central_monitoramento    o MONITORAMENTO_TOKEN do central.env
+#   alertmanager_smtp        a chave de API do Resend (senha do SMTP)
+# E troque os marcadores COMPLETAR de monitoramento/alertmanager.yml. As portas ficam só em 127.0.0.1 da VPS: acesse por túnel SSH
+# (ssh -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 usuario@vps). Versões fixas; não use latest.
+name: ecossistema
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=1GB
+      - --web.enable-lifecycle=false
+    volumes:
+      - ./monitoramento/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoramento/alertas.yml:/etc/prometheus/alertas.yml:ro
+      - prometheus-dados:/prometheus
+    secrets:
+      - servirea_monitoramento
+      - central_monitoramento
+    ports:
+      - "127.0.0.1:9090:9090"
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./monitoramento/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-dados:/alertmanager
+    secrets:
+      - alertmanager_smtp
+    ports:
+      - "127.0.0.1:9093:9093"
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+secrets:
+  servirea_monitoramento:
+    file: ../../segredos-monitoramento/servirea_monitoramento
+  central_monitoramento:
+    file: ../../segredos-monitoramento/central_monitoramento
+  alertmanager_smtp:
+    file: ../../segredos-monitoramento/alertmanager_smtp
+
+volumes:
+  prometheus-dados:
+  alertmanager-dados:

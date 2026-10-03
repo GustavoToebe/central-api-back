@@ -1,0 +1,120 @@
+# Testes das regras de alertas.yml: `promtool test rules alertas.teste.yml` (rodado por deploy/testes/alertas.test.sh).
+# Cada alerta tem um caso que dispara e um caso saudável que não dispara; muda a regra, muda aqui.
+rule_files:
+  - alertas.yml
+evaluation_interval: 1m
+
+tests:
+  - name: API sem coleta dispara depois de 3 minutos e não antes
+    interval: 1m
+    input_series:
+      - series: 'up{job="central"}'
+        values: '0 0 0 0 0 0'
+      - series: 'up{job="servirea"}'
+        values: '1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: ApiSemColeta
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: ApiSemColeta
+        exp_alerts:
+          - exp_labels: {severity: warning, job: central}
+            exp_annotations: {summary: "API sem coleta de métricas por 3 minutos"}
+
+  - name: 5xx acima de 5% por 5 minutos dispara; abaixo não
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_http_servidor_duracao_seconds_count{job="central", status="5xx"}'
+        values: '0+10x15'
+      - series: 'ecossistema_http_servidor_duracao_seconds_count{job="central", status="2xx"}'
+        values: '0+100x15'
+      - series: 'ecossistema_http_servidor_duracao_seconds_count{job="servirea", status="5xx"}'
+        values: '0+1x15'
+      - series: 'ecossistema_http_servidor_duracao_seconds_count{job="servirea", status="2xx"}'
+        values: '0+100x15'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ApiErrosElevados
+        exp_alerts:
+          - exp_labels: {severity: warning, job: central}
+            exp_annotations: {summary: "Mais de 5% de respostas 5xx"}
+
+  - name: pool com espera persistente dispara
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_banco_conexoes_pendentes{job="central"}'
+        values: '0 1 1 1 1 1 1'
+      - series: 'ecossistema_banco_conexoes_pendentes{job="servirea"}'
+        values: '0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: BancoComEspera
+        exp_alerts:
+          - exp_labels: {severity: warning, job: central}
+            exp_annotations: {summary: "Pool de conexões com espera persistente"}
+
+  - name: instância crítica por 15 minutos dispara; sem crítica não
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_instancias_por_nivel{job="central", nivel="CRITICO"}'
+        values: '2x20'
+      - series: 'ecossistema_instancias_por_nivel{job="central", nivel="OK"}'
+        values: '5x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: InstanciaComLimiteAtingido
+        exp_alerts: []
+      - eval_time: 17m
+        alertname: InstanciaComLimiteAtingido
+        exp_alerts:
+          - exp_labels: {severity: warning, job: central, nivel: CRITICO}
+            exp_annotations: {summary: "Há instância com limite atingido ou excedido no último resumo guardado"}
+
+  - name: instância sem resumo atual por 1 hora dispara
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_instancias_defasadas{job="central"}'
+        values: '1x70'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: InstanciasSemResumoAtual
+        exp_alerts: []
+      - eval_time: 65m
+        alertname: InstanciasSemResumoAtual
+        exp_alerts:
+          - exp_labels: {severity: info, job: central}
+            exp_annotations: {summary: "Há instância sem consulta de consumo nas últimas 48 horas (atualize o painel de instâncias)"}
+
+  - name: fila com mais de 30% de falhas por 15 minutos dispara; fila saudável não
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_fila_envios_total{job="servirea", resultado="falha_tentativa"}'
+        values: '0+10x40'
+      - series: 'ecossistema_fila_envios_total{job="servirea", resultado="enviado"}'
+        values: '0+5x40'
+      - series: 'ecossistema_fila_envios_total{job="central", resultado="falha_tentativa"}'
+        values: '0+0x40'
+      - series: 'ecossistema_fila_envios_total{job="central", resultado="enviado"}'
+        values: '0+20x40'
+    alert_rule_test:
+      - eval_time: 35m
+        alertname: FilaDeEnvioComFalhas
+        exp_alerts:
+          - exp_labels: {severity: warning, job: servirea}
+            exp_annotations: {summary: "Mais de 30% das tentativas de envio de comunicados falhando"}
+
+  - name: envios aguardando cota em volume persistente dispara
+    interval: 1m
+    input_series:
+      - series: 'ecossistema_fila_envios_total{job="servirea", resultado="aguardando_cota"}'
+        values: '0+1x200'
+    alert_rule_test:
+      - eval_time: 60m
+        alertname: FilaPausadaPorCota
+        exp_alerts: []
+      - eval_time: 130m
+        alertname: FilaPausadaPorCota
+        exp_alerts:
+          - exp_labels: {severity: info, job: servirea, resultado: aguardando_cota}
+            exp_annotations: {summary: "Envios aguardando cota mensal em volume persistente"}

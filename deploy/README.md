@@ -202,7 +202,11 @@ O Caddy limita corpos recebidos pelas quatro entradas de API a 6 MiB, preservand
 
 ## Monitoramento preparado
 
-Ver [métricas privadas](../docs/monitoramento.md) e arquivos em monitoramento/. Caddy nega coleta pela internet; Prometheus exige segredos próprios e rede interna. Nenhum coletor foi iniciado nesta entrega.
+Ver [métricas privadas](../docs/monitoramento.md) e arquivos em monitoramento/. Caddy nega coleta pela internet; Prometheus exige segredos próprios e rede interna. O coletor e o Alertmanager sobem à parte com `docker-compose.monitoramento.yml` (instruções e segredos no topo do arquivo); nenhum foi iniciado na VPS ainda. `bash deploy/testes/alertas.test.sh` valida configuração, regras e entrega.
+
+## Backup e restauração do banco
+
+`backup-banco.sh` e `restaurar-banco.sh`, documentados em [backup-restauracao](../docs/backup-restauracao.md). `bash deploy/testes/backup.test.sh` ensaia o ciclo completo num Postgres descartável. Nada é agendado ainda.
 
 ## 9. Release por commit e rollback (T01)
 
