@@ -1,6 +1,7 @@
 package br.com.central.api.financeiro;
 
 import br.com.central.api.AbstractIntegrationTest;
+import br.com.central.api.web.BadRequestException;
 import br.com.central.api.web.ConflictException;
 import br.com.central.api.web.ResourceNotFoundException;
 import org.junit.jupiter.api.*;
@@ -29,15 +30,19 @@ class FinanceiroIntegrationTest extends AbstractIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired org.springframework.transaction.PlatformTransactionManager tx;
     private ContaResponse conta;
-    private CategoriaResponse categoria;
+    /** Conta contábil de entrada (RECEITA) e de saída (DESPESA), cada uma dentro do seu grupo. */
+    private CategoriaResponse categoria, categoriaSaida, grupoEntrada, grupoSaida;
     private final LocalDate hoje = LocalDate.of(1905,1,15);
     @BeforeEach void preparar() {
         jdbc.update("delete from financeiro_movimento"); jdbc.update("delete from financeiro_conta"); jdbc.update("delete from financeiro_categoria");
         conta = financeiro.salvarConta(null,new ContaRequest("Caixa", new BigDecimal("100.00"), hoje.minusDays(10),true));
-        categoria = financeiro.salvarCategoria(null,new CategoriaRequest("Doações",true));
+        grupoEntrada = financeiro.salvarCategoria(null,new CategoriaRequest("Receitas",true,Tipo.RECEITA,null));
+        grupoSaida = financeiro.salvarCategoria(null,new CategoriaRequest("Despesas",true,Tipo.DESPESA,null));
+        categoria = financeiro.salvarCategoria(null,new CategoriaRequest("Doações",true,Tipo.RECEITA,grupoEntrada.id()));
+        categoriaSaida = financeiro.salvarCategoria(null,new CategoriaRequest("Infraestrutura",true,Tipo.DESPESA,grupoSaida.id()));
     }
     private MovimentoResponse movimento(Tipo tipo, String valor) {
-        return financeiro.salvarMovimento(null,new MovimentoRequest("Teste",tipo,new BigDecimal(valor),hoje,conta.id(),categoria.id(),null,0L));
+        return financeiro.salvarMovimento(null,new MovimentoRequest("Teste",tipo,new BigDecimal(valor),hoje,conta.id(),(tipo==Tipo.RECEITA ? categoria : categoriaSaida).id(),null,0L));
     }
     @Test void saldoUsaSomenteBaixasEEstornoReverteUmaUnicaVez() {
         var entrada=movimento(Tipo.RECEITA,"50.00"); var saida=movimento(Tipo.DESPESA,"20.00");
@@ -125,5 +130,52 @@ class FinanceiroIntegrationTest extends AbstractIntegrationTest {
         })).isInstanceOf(IllegalStateException.class);
         assertThat(jdbc.queryForObject("select count(*) from operador_log where detalhe like 'FINANCEIRO_MOVIMENTO:%'",Long.class)).isEqualTo(antes);
         assertThat(financeiro.listar(hoje,hoje,null,null,null,null,null,0,30).total()).isZero();
+    }
+    private CategoriaRequest grupo(String nome, Tipo tipo) { return new CategoriaRequest(nome,true,tipo,null); }
+    private CategoriaRequest contaContabil(String nome, Tipo tipo, UUID grupoId) { return new CategoriaRequest(nome,true,tipo,grupoId); }
+    private MovimentoRequest lancamento(Tipo tipo, UUID categoriaId) {
+        return new MovimentoRequest("Teste",tipo,BigDecimal.TEN,hoje,conta.id(),categoriaId,null,0L);
+    }
+    @Test void contaContabilPrecisaDeGrupoDoMesmoTipoEGrupoNaoTemGrupo() {
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,contaContabil("Conta errada",Tipo.RECEITA,grupoSaida.id()))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,contaContabil("Dentro de conta",Tipo.RECEITA,categoria.id()))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,contaContabil("Fantasma",Tipo.RECEITA,UUID.randomUUID()))).isInstanceOf(ResourceNotFoundException.class);
+        var lista=financeiro.categorias();
+        assertThat(lista).filteredOn(CategoriaResponse::ehGrupo).extracting(CategoriaResponse::nome).containsExactlyInAnyOrder("Receitas","Despesas");
+        assertThat(lista).filteredOn(c -> !c.ehGrupo()).extracting(CategoriaResponse::nome).containsExactlyInAnyOrder("Doações","Infraestrutura");
+    }
+    @Test void nomesUnicosPorGrupoENoMesmoTipoDeGrupo() {
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,grupo("receitas",Tipo.RECEITA))).isInstanceOf(ConflictException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,contaContabil("DOAÇÕES",Tipo.RECEITA,grupoEntrada.id()))).isInstanceOf(ConflictException.class);
+        assertThatCode(() -> financeiro.salvarCategoria(null,grupo("Receitas",Tipo.DESPESA))).doesNotThrowAnyException();
+        var outroGrupo=financeiro.salvarCategoria(null,grupo("Eventos",Tipo.RECEITA));
+        assertThatCode(() -> financeiro.salvarCategoria(null,contaContabil("Doações",Tipo.RECEITA,outroGrupo.id()))).doesNotThrowAnyException();
+        assertThatCode(() -> financeiro.salvarCategoria(categoria.id(),contaContabil("Doações",Tipo.RECEITA,grupoEntrada.id()))).doesNotThrowAnyException();
+    }
+    @Test void conflitoMostraAMensagemParaOOperadorEnaoSoOCodigo() {
+        var erro=catchThrowableOfType(ConflictException.class,() -> financeiro.salvarCategoria(null,grupo("Receitas",Tipo.RECEITA)));
+        assertThat(erro.getMessage()).contains("grupo com este nome");
+    }
+    @Test void lancamentoSoEmContaContabilDoMesmoTipoEAtiva() {
+        assertThatThrownBy(() -> financeiro.salvarMovimento(null,lancamento(Tipo.RECEITA,grupoEntrada.id()))).isInstanceOf(BadRequestException.class).hasMessageContaining("conta contábil");
+        assertThatThrownBy(() -> financeiro.salvarMovimento(null,lancamento(Tipo.DESPESA,categoria.id()))).isInstanceOf(BadRequestException.class).hasMessageContaining("entradas");
+        assertThatCode(() -> financeiro.salvarMovimento(null,lancamento(Tipo.DESPESA,categoriaSaida.id()))).doesNotThrowAnyException();
+        financeiro.salvarCategoria(grupoSaida.id(),new CategoriaRequest("Despesas",false,Tipo.DESPESA,null));
+        assertThatThrownBy(() -> financeiro.salvarMovimento(null,lancamento(Tipo.DESPESA,categoriaSaida.id()))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(null,contaContabil("Nova",Tipo.DESPESA,grupoSaida.id()))).isInstanceOf(BadRequestException.class);
+    }
+    @Test void estruturaComUsoNaoMudaDeTipoNemDeNivel() {
+        movimento(Tipo.RECEITA,"5");
+        assertThatThrownBy(() -> financeiro.salvarCategoria(categoria.id(),contaContabil("Doações",Tipo.DESPESA,grupoSaida.id()))).isInstanceOf(ConflictException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(categoria.id(),grupo("Doações",Tipo.RECEITA))).isInstanceOf(ConflictException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(grupoEntrada.id(),contaContabil("Receitas",Tipo.RECEITA,grupoEntrada.id()))).isInstanceOf(ConflictException.class);
+        var outro=financeiro.salvarCategoria(null,grupo("Outro grupo",Tipo.RECEITA));
+        assertThatThrownBy(() -> financeiro.salvarCategoria(grupoEntrada.id(),contaContabil("Receitas",Tipo.RECEITA,outro.id()))).isInstanceOf(ConflictException.class);
+        assertThatThrownBy(() -> financeiro.salvarCategoria(grupoEntrada.id(),new CategoriaRequest("Receitas",true,Tipo.DESPESA,null))).isInstanceOf(ConflictException.class);
+        assertThatCode(() -> financeiro.salvarCategoria(categoria.id(),contaContabil("Doações",Tipo.RECEITA,outro.id()))).doesNotThrowAnyException();
+    }
+    @Test void bancoRejeitaAutoReferenciaEGrupoInexistente() {
+        assertThatThrownBy(() -> jdbc.update("update financeiro_categoria set grupo_id=id where id=?",categoria.id())).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update("update financeiro_categoria set grupo_id=? where id=?",UUID.randomUUID(),categoria.id())).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
     }
 }

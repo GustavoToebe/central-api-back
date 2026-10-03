@@ -21,10 +21,10 @@ class FlywayMigrationIntegrationTest extends AbstractIntegrationTest {
         List<String> descricoes = jdbcTemplate.queryForList(
                 "SELECT description FROM flyway_schema_history WHERE type = 'SQL' ORDER BY installed_rank",
                 String.class);
-        assertThat(total).isEqualTo(16);
+        assertThat(total).isEqualTo(17);
         assertThat(descricoes).containsExactly("operador e nonce", "dominio comercial", "ultimo status provisionamento",
                 "cep formatado", "periodicidades e itens da cobranca", "erro aplicativo", "sequencial",
-                "fecha data api do supabase", "competencia cancelada libera nova cobranca", "isencao", "reserva do outbox", "checkout mercadopago", "mfa operador", "financeiro operacional", "historico consumo", "login tentativa");
+                "fecha data api do supabase", "competencia cancelada libera nova cobranca", "isencao", "reserva do outbox", "checkout mercadopago", "mfa operador", "financeiro operacional", "historico consumo", "login tentativa", "plano de contas");
     }
 
     @Test

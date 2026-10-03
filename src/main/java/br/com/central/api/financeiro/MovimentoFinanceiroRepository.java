@@ -14,6 +14,7 @@ public interface MovimentoFinanceiroRepository extends JpaRepository<MovimentoFi
     @Query("select m from MovimentoFinanceiro m where m.id=:id")
     Optional<MovimentoFinanceiro> buscarParaAlterar(@Param("id") UUID id);
     boolean existsByConta_Id(UUID contaId);
+    boolean existsByCategoria_Id(UUID categoriaId);
     interface TotalPorConta { UUID getContaId(); BigDecimal getReceitas(); BigDecimal getDespesas(); }
     @Query("""
         select m.conta.id as contaId,

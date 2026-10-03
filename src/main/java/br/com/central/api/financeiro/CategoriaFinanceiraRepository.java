@@ -4,5 +4,7 @@ import java.util.List;
 import java.util.UUID;
 public interface CategoriaFinanceiraRepository extends JpaRepository<CategoriaFinanceira, UUID> {
     List<CategoriaFinanceira> findAllByOrderByNomeAsc();
-    boolean existsByNomeIgnoreCase(String nome);
+    boolean existsByGrupoId(UUID grupoId);
+    boolean existsByGrupoIdIsNullAndTipoAndNomeIgnoreCaseAndIdNot(MovimentoFinanceiro.Tipo tipo, String nome, UUID id);
+    boolean existsByGrupoIdAndNomeIgnoreCaseAndIdNot(UUID grupoId, String nome, UUID id);
 }

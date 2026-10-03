@@ -352,6 +352,34 @@
     "controlador" : "FinanceiroController#estornar"
   }, {
     "metodo" : "GET",
+    "caminho" : "/financeiro/relatorios/banco-caixa",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.RelatorioFinanceiroDtos.BancoCaixa",
+    "controlador" : "RelatorioFinanceiroController#bancoCaixa"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/relatorios/demonstrativo",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.RelatorioFinanceiroDtos.Demonstrativo",
+    "controlador" : "RelatorioFinanceiroController#demonstrativo"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/relatorios/despesas",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.RelatorioFinanceiroDtos.PorTipo",
+    "controlador" : "RelatorioFinanceiroController#despesas"
+  }, {
+    "metodo" : "GET",
+    "caminho" : "/financeiro/relatorios/receitas",
+    "autorizacao" : "hasRole('OPERADOR')",
+    "corpo" : null,
+    "resposta" : "financeiro.RelatorioFinanceiroDtos.PorTipo",
+    "controlador" : "RelatorioFinanceiroController#receitas"
+  }, {
+    "metodo" : "GET",
     "caminho" : "/financeiro/resumo",
     "autorizacao" : "hasRole('OPERADOR')",
     "corpo" : null,
@@ -909,12 +937,17 @@
     },
     "financeiro.FinanceiroDtos.CategoriaRequest" : {
       "ativo" : "boolean",
-      "nome" : "string?"
+      "grupoId" : "string?",
+      "nome" : "string?",
+      "tipo" : "financeiro.MovimentoFinanceiro.Tipo?"
     },
     "financeiro.FinanceiroDtos.CategoriaResponse" : {
       "ativo" : "boolean",
+      "ehGrupo" : "boolean",
+      "grupoId" : "string?",
       "id" : "string?",
-      "nome" : "string?"
+      "nome" : "string?",
+      "tipo" : "financeiro.MovimentoFinanceiro.Tipo?"
     },
     "financeiro.FinanceiroDtos.ContaRequest" : {
       "ativo" : "boolean",
@@ -987,6 +1020,79 @@
     },
     "financeiro.MovimentoFinanceiro.Tipo" : {
       "enum" : [ "RECEITA", "DESPESA" ]
+    },
+    "financeiro.RelatorioFinanceiroDtos.BancoCaixa" : {
+      "ate" : "string?",
+      "contas" : "financeiro.RelatorioFinanceiroDtos.ContaBanco[]?",
+      "de" : "string?",
+      "entradas" : "number?",
+      "observacao" : "string?",
+      "saidas" : "number?",
+      "saldoAnterior" : "number?",
+      "saldoFinal" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.ContaBanco" : {
+      "ativo" : "boolean",
+      "entradas" : "number?",
+      "id" : "string?",
+      "movimentos" : "financeiro.RelatorioFinanceiroDtos.MovimentoBanco[]?",
+      "nome" : "string?",
+      "saidas" : "number?",
+      "saldoAnterior" : "number?",
+      "saldoFinal" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.ContaContabilLinha" : {
+      "id" : "string?",
+      "lancamentos" : "financeiro.RelatorioFinanceiroDtos.Lancamento[]?",
+      "nome" : "string?",
+      "total" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.Demonstrativo" : {
+      "aPagar" : "number?",
+      "aReceber" : "number?",
+      "ate" : "string?",
+      "de" : "string?",
+      "despesas" : "financeiro.RelatorioFinanceiroDtos.PorTipo?",
+      "receitas" : "financeiro.RelatorioFinanceiroDtos.PorTipo?",
+      "resultado" : "number?",
+      "resultadoPrevisto" : "number?",
+      "saldos" : "financeiro.FinanceiroDtos.SaldoConta[]?",
+      "totalDespesas" : "number?",
+      "totalReceitas" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.GrupoLinha" : {
+      "comercial" : "boolean",
+      "contas" : "financeiro.RelatorioFinanceiroDtos.ContaContabilLinha[]?",
+      "id" : "string?",
+      "nome" : "string?",
+      "total" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.Lancamento" : {
+      "contaBanco" : "string?",
+      "data" : "string?",
+      "descricao" : "string?",
+      "id" : "string?",
+      "valor" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.MovimentoBanco" : {
+      "contaContabil" : "string?",
+      "data" : "string?",
+      "descricao" : "string?",
+      "entrada" : "number?",
+      "id" : "string?",
+      "saida" : "number?",
+      "saldo" : "number?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.PorTipo" : {
+      "ate" : "string?",
+      "de" : "string?",
+      "grupos" : "financeiro.RelatorioFinanceiroDtos.GrupoLinha[]?",
+      "tipo" : "financeiro.MovimentoFinanceiro.Tipo?",
+      "total" : "number?",
+      "visao" : "financeiro.RelatorioFinanceiroDtos.Visao?"
+    },
+    "financeiro.RelatorioFinanceiroDtos.Visao" : {
+      "enum" : [ "REALIZADO", "PREVISTO" ]
     },
     "integracao.ConsumoCentralService.Consumo" : {
       "consultadoEm" : "string?",

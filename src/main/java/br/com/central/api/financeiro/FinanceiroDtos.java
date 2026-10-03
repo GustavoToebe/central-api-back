@@ -9,7 +9,8 @@ public final class FinanceiroDtos {
     private FinanceiroDtos() { }
     public record ContaRequest(@NotBlank @Size(max=120) String nome, @NotNull @Digits(integer=12,fraction=2) BigDecimal saldoInicial,
                                @NotNull LocalDate dataSaldoInicial, boolean ativo) { }
-    public record CategoriaRequest(@NotBlank @Size(max=120) String nome, boolean ativo) { }
+    /** Grupo (sem grupoId) ou conta contábil (com grupoId). O tipo da conta contábil precisa ser o do grupo. */
+    public record CategoriaRequest(@NotBlank @Size(max=120) String nome, boolean ativo, @NotNull Tipo tipo, UUID grupoId) { }
     public record MovimentoRequest(@NotBlank @Size(max=200) String descricao, @NotNull Tipo tipo,
           @NotNull @DecimalMin("0.01") @Digits(integer=12,fraction=2) BigDecimal valor,
           @NotNull LocalDate vencimento, @NotNull UUID contaId, @NotNull UUID categoriaId,
@@ -19,8 +20,8 @@ public final class FinanceiroDtos {
     public record ContaResponse(UUID id, String nome, BigDecimal saldoInicial, LocalDate dataSaldoInicial, boolean ativo) {
         public static ContaResponse de(ContaFinanceira c) { return new ContaResponse(c.getId(),c.getNome(),c.getSaldoInicial(),c.getDataSaldoInicial(),c.isAtivo()); }
     }
-    public record CategoriaResponse(UUID id, String nome, boolean ativo) {
-        public static CategoriaResponse de(CategoriaFinanceira c) { return new CategoriaResponse(c.getId(),c.getNome(),c.isAtivo()); }
+    public record CategoriaResponse(UUID id, String nome, boolean ativo, Tipo tipo, UUID grupoId, boolean ehGrupo) {
+        public static CategoriaResponse de(CategoriaFinanceira c) { return new CategoriaResponse(c.getId(),c.getNome(),c.isAtivo(),c.getTipo(),c.getGrupoId(),c.isGrupo()); }
     }
     public record MovimentoResponse(UUID id, long versao, String descricao, Tipo tipo, Situacao situacao,
           BigDecimal valor, LocalDate vencimento, LocalDate dataPagamento, UUID contaId, String conta,

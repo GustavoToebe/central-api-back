@@ -29,18 +29,35 @@ public class FinanceiroService {
         ContaFinanceira c = id==null ? new ContaFinanceira(req.nome().trim()) : contaParaAlterar(id);
         if (req.dataSaldoInicial().isBefore(LocalDate.of(1900,1,1)) || req.dataSaldoInicial().isAfter(hoje())) throw new BadRequestException("A data do saldo inicial deve ser entre 1900 e hoje.");
         if (id!=null && movimentos.existsByConta_Id(id) && (c.getSaldoInicial().compareTo(req.saldoInicial())!=0 || !c.getDataSaldoInicial().equals(req.dataSaldoInicial())))
-            throw new ConflictException("CONFLITO_FINANCEIRO", "O saldo inicial não pode mudar depois de existir lançamento nesta conta.");
+            throw new ConflictException("O saldo inicial não pode mudar depois de existir lançamento nesta conta.", "CONFLITO_FINANCEIRO");
         if ((id==null || !c.getNome().equalsIgnoreCase(req.nome().trim())) && contas.existsByNomeIgnoreCase(req.nome().trim()))
-            throw new ConflictException("CONFLITO_FINANCEIRO", "Já existe uma conta com este nome.");
+            throw new ConflictException("Já existe uma conta com este nome.", "CONFLITO_FINANCEIRO");
         c.setNome(req.nome().trim()); c.setSaldoInicial(req.saldoInicial()); c.setDataSaldoInicial(req.dataSaldoInicial()); c.setAtivo(req.ativo());
         contas.saveAndFlush(c); audit.registrar(id==null ? "CRIACAO" : "ALTERACAO", "FINANCEIRO_CONTA", c.getId(), List.of("configuracao"));
         return ContaResponse.de(c);
     }
+    /** Plano de contas: grupo (sem grupoId) organiza; conta contábil (com grupoId) recebe lançamentos e tem o tipo do grupo. */
     @Transactional public CategoriaResponse salvarCategoria(UUID id, CategoriaRequest req) {
-        CategoriaFinanceira c = id==null ? new CategoriaFinanceira(req.nome().trim()) : categoria(id);
-        if ((id==null || !c.getNome().equalsIgnoreCase(req.nome().trim())) && categorias.existsByNomeIgnoreCase(req.nome().trim()))
-            throw new ConflictException("CONFLITO_FINANCEIRO", "Já existe uma categoria com este nome.");
-        c.setNome(req.nome().trim()); c.setAtivo(req.ativo()); categorias.saveAndFlush(c);
+        String nome = req.nome().trim();
+        CategoriaFinanceira grupo = null;
+        if (req.grupoId()!=null) {
+            grupo = categoria(req.grupoId());
+            if (!grupo.isGrupo()) throw new BadRequestException("Escolha um grupo, não outra conta contábil.");
+            if (grupo.getTipo()!=req.tipo()) throw new BadRequestException("A conta contábil precisa ter o mesmo tipo (entrada ou saída) do grupo.");
+            if (req.ativo() && !grupo.isAtivo()) throw new BadRequestException("O grupo está inativo: reative o grupo ou deixe a conta contábil inativa.");
+        }
+        CategoriaFinanceira c = id==null ? new CategoriaFinanceira(nome, req.tipo(), req.grupoId()) : categoria(id);
+        if (id!=null) {
+            boolean temContas = categorias.existsByGrupoId(id), temLancamentos = movimentos.existsByCategoria_Id(id);
+            if (grupo!=null && c.isGrupo() && temContas) throw new ConflictException("Este grupo tem contas contábeis e não pode virar conta contábil.", "CONFLITO_FINANCEIRO");
+            if (grupo==null && !c.isGrupo() && temLancamentos) throw new ConflictException("Esta conta contábil tem lançamentos e não pode virar grupo.", "CONFLITO_FINANCEIRO");
+            if (c.getTipo()!=req.tipo() && (temContas || temLancamentos)) throw new ConflictException("O tipo não pode mudar enquanto houver contas contábeis ou lançamentos.", "CONFLITO_FINANCEIRO");
+        }
+        UUID semId = id==null ? new UUID(0,0) : id;
+        if (grupo==null ? categorias.existsByGrupoIdIsNullAndTipoAndNomeIgnoreCaseAndIdNot(req.tipo(),nome,semId)
+                        : categorias.existsByGrupoIdAndNomeIgnoreCaseAndIdNot(grupo.getId(),nome,semId))
+            throw new ConflictException(grupo==null ? "Já existe um grupo com este nome neste tipo." : "Já existe uma conta contábil com este nome neste grupo.", "CONFLITO_FINANCEIRO");
+        c.setNome(nome); c.setAtivo(req.ativo()); c.setTipo(req.tipo()); c.setGrupoId(req.grupoId()); categorias.saveAndFlush(c);
         audit.registrar(id==null ? "CRIACAO" : "ALTERACAO", "FINANCEIRO_CATEGORIA", c.getId(), List.of("configuracao"));
         return CategoriaResponse.de(c);
     }
@@ -62,10 +79,12 @@ public class FinanceiroService {
     }
     @Transactional public MovimentoResponse salvarMovimento(UUID id, MovimentoRequest req) {
         MovimentoFinanceiro m = id==null ? new MovimentoFinanceiro(req.descricao().trim()) : alterar(id,req.versao());
-        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("CONFLITO_FINANCEIRO", "Somente lançamentos pendentes podem ser editados.");
+        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("Somente lançamentos pendentes podem ser editados.", "CONFLITO_FINANCEIRO");
         if (req.vencimento().isBefore(LocalDate.of(1900,1,1))) throw new BadRequestException("Informe vencimento a partir de 1900.");
         ContaFinanceira c = contaParaAlterar(req.contaId()); CategoriaFinanceira cat = categoria(req.categoriaId());
-        if (!c.isAtivo() || !cat.isAtivo()) throw new BadRequestException("Escolha conta e categoria ativas.");
+        if (cat.isGrupo()) throw new BadRequestException("Escolha uma conta contábil; o grupo serve só para organizar.");
+        if (cat.getTipo()!=req.tipo()) throw new BadRequestException("Esta conta contábil é de "+(cat.getTipo()==Tipo.RECEITA ? "entradas" : "saídas")+": ajuste o tipo do lançamento.");
+        if (!c.isAtivo() || !cat.isAtivo() || !categoria(cat.getGrupoId()).isAtivo()) throw new BadRequestException("Escolha conta/banco e conta contábil ativos.");
         m.setDescricao(req.descricao().trim()); m.setTipo(req.tipo()); m.setValor(req.valor()); m.setVencimento(req.vencimento());
         m.setConta(c); m.setCategoria(cat); m.setObservacoes(req.observacoes()==null ? null : req.observacoes().trim());
         movimentos.saveAndFlush(m); audit.registrar(id==null ? "CRIACAO" : "ALTERACAO", "FINANCEIRO_MOVIMENTO",m.getId(),List.of("lancamento"));
@@ -73,7 +92,7 @@ public class FinanceiroService {
     }
     @Transactional public MovimentoResponse baixar(UUID id, BaixaRequest req) {
         MovimentoFinanceiro m=alterar(id,req.versao());
-        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("CONFLITO_FINANCEIRO", "Este lançamento não está pendente.");
+        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("Este lançamento não está pendente.", "CONFLITO_FINANCEIRO");
         if (req.dataPagamento().isAfter(hoje()) || req.dataPagamento().isBefore(m.getConta().getDataSaldoInicial()))
             throw new BadRequestException("A baixa deve ser entre a data do saldo inicial e hoje.");
         m.setSituacao(Situacao.PAGO); m.setDataPagamento(req.dataPagamento());
@@ -82,13 +101,13 @@ public class FinanceiroService {
     }
     @Transactional public MovimentoResponse estornar(UUID id, VersaoRequest req) {
         MovimentoFinanceiro m=alterar(id,req.versao());
-        if (m.getSituacao()!=Situacao.PAGO) throw new ConflictException("CONFLITO_FINANCEIRO", "Somente lançamentos pagos podem ser estornados.");
+        if (m.getSituacao()!=Situacao.PAGO) throw new ConflictException("Somente lançamentos pagos podem ser estornados.", "CONFLITO_FINANCEIRO");
         m.setSituacao(Situacao.PENDENTE); m.setDataPagamento(null); movimentos.flush();
         audit.registrar("ESTORNO", "FINANCEIRO_MOVIMENTO",id,List.of("situacao","dataPagamento")); return MovimentoResponse.de(m);
     }
     @Transactional public MovimentoResponse cancelar(UUID id, VersaoRequest req) {
         MovimentoFinanceiro m=alterar(id,req.versao());
-        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("CONFLITO_FINANCEIRO", "Estorne a baixa antes de cancelar o lançamento.");
+        if (m.getSituacao()!=Situacao.PENDENTE) throw new ConflictException("Estorne a baixa antes de cancelar o lançamento.", "CONFLITO_FINANCEIRO");
         m.setSituacao(Situacao.CANCELADO); movimentos.flush();
         audit.registrar("CANCELAMENTO", "FINANCEIRO_MOVIMENTO",id,List.of("situacao")); return MovimentoResponse.de(m);
     }
@@ -115,12 +134,12 @@ public class FinanceiroService {
     }
     private MovimentoFinanceiro alterar(UUID id,long versao) {
         var m=movimentos.buscarParaAlterar(id).orElseThrow(() -> new ResourceNotFoundException("Lançamento não encontrado."));
-        if (m.getVersao()!=versao) throw new ConflictException("CONFLITO_FINANCEIRO", "Lançamento alterado por outra pessoa. Atualize a página.");
+        if (m.getVersao()!=versao) throw new ConflictException("Lançamento alterado por outra pessoa. Atualize a página.", "CONFLITO_FINANCEIRO");
         return m;
     }
     private ContaFinanceira contaParaAlterar(UUID id) { return contas.buscarParaAlterar(id).orElseThrow(() -> new ResourceNotFoundException("Conta não encontrada.")); }
     private ContaFinanceira conta(UUID id) { return contas.findById(id).orElseThrow(() -> new ResourceNotFoundException("Conta não encontrada.")); }
-    private CategoriaFinanceira categoria(UUID id) { return categorias.findById(id).orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada.")); }
+    private CategoriaFinanceira categoria(UUID id) { return categorias.findById(id).orElseThrow(() -> new ResourceNotFoundException("Grupo ou conta contábil não encontrado.")); }
     private static LocalDate hoje() { return LocalDate.now(ZoneId.of("America/Sao_Paulo")); }
     private static void intervalo(LocalDate de, LocalDate ate) { if (de==null || ate==null || de.isAfter(ate) || de.isBefore(LocalDate.of(1900,1,1))) throw new BadRequestException("Informe um período válido, a partir de 1900."); }
 }
