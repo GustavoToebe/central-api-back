@@ -39,7 +39,8 @@ jobs:
           settings-path: ${{ runner.temp }}/maven
       - name: Testes (o Testcontainers sobe o Postgres)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Maven privado herda permissões do repo produtor; leitura entre repos pode exigir PAT classic.
+          GITHUB_TOKEN: ${{ secrets.GH_PACKAGES_READ_TOKEN || secrets.GITHUB_TOKEN }}
         run: mvn -s "$RUNNER_TEMP/maven/settings.xml" -B -q verify
       - name: Scripts de release e rollback (sandbox, sem Docker nem VPS)
         run: bash deploy/testes/release.test.sh

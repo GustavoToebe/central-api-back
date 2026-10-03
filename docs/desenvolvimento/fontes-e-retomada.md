@@ -29,3 +29,5 @@ Validação: `mvn -o -q clean verify` com argumento local jdk.net.unixdomain.tmp
 CI tem packages: read e settings temporário com referências ao token do Actions. Dockerfiles usam segredo BuildKit e apagam settings no mesmo RUN; Compose validado sem resolução de env. YAML e referências conferidos, scripts de cópias/documentação aprovados. Não foi feito build Docker com token real, nem execução da CI dos consumidores. [Manual](../biblioteca-comum.md) descreve credencial classic e permissões Maven herdadas; fine-grained/Manage Actions access não correspondem ao registry Maven.
 
 Commits desta etapa permanecem somente locais em melhoria/ecossistema-sem-ia por pedido do usuário; sem push, merge ou deploy. Amanhã configurar leitura do pacote na máquina/CI/VPS e só então enviar a branch. Nenhum segredo criado ou configuração Maven do usuário alterada.
+
+CI preparada também para GH_PACKAGES_READ_TOKEN classic, opcional e priorizado quando definido, mantendo GITHUB_TOKEN próprio como padrão. Nenhum segredo configurado; o usuário não precisa editar YAML para a alternativa.

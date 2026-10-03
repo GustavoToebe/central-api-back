@@ -22,9 +22,9 @@ Exportar as duas variáveis somente na sessão de build. GitHub Packages Maven e
 
 ## GitHub Actions
 
-O job Maven tem packages: read e setup-java gera settings.xml em RUNNER_TEMP usando referência ao GITHUB_TOKEN do próprio Actions e GITHUB_ACTOR. A etapa de teste recebe o token do Actions em variável. O workflow docs.yml só executa Python, portanto não precisa de credencial Maven.
+O job Maven tem packages: read e setup-java gera settings.xml em RUNNER_TEMP usando referência ao GITHUB_TOKEN do próprio Actions e GITHUB_ACTOR. A etapa de teste usa GITHUB_TOKEN do Actions por padrão; se existir o segredo GH_PACKAGES_READ_TOKEN, usa essa credencial de leitura. Não é necessário alterar o YAML amanhã. O workflow docs.yml só executa Python, portanto não precisa de credencial Maven.
 
-Maven usa permissões herdadas do repositório produtor; **Manage Actions access não é o fluxo de permissões granulares desse registry**. Conferir o download entre repositórios privados com GITHUB_TOKEN. Se o token do consumidor não tiver acesso, configurar manualmente um segredo de leitura classic (por exemplo GH_PACKAGES_READ_TOKEN) nos dois consumidores e trocar a referência da variável GITHUB_TOKEN da etapa de teste para esse segredo. Não adicionar packages: write aos consumidores. A alternativa não foi configurada ou validada nesta sessão. [Permissões oficiais](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages).
+Maven usa permissões herdadas do repositório produtor; **Manage Actions access não é o fluxo de permissões granulares desse registry**. Conferir o download entre repositórios privados com GITHUB_TOKEN. Se o token do consumidor não tiver acesso, configurar manualmente o segredo GH_PACKAGES_READ_TOKEN, com token classic de leitura, nos dois consumidores; o workflow já prioriza esse segredo quando definido. Não adicionar packages: write aos consumidores. A alternativa não foi configurada ou validada nesta sessão. [Permissões oficiais](https://docs.github.com/en/packages/learn-github-packages/about-permissions-for-github-packages).
 
 ## VPS e Docker
 
