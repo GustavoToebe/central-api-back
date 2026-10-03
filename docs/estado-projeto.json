@@ -13,8 +13,8 @@
     "python scripts/verificar-docs.py"
   ],
   "migrations": {
-    "ultima": "V017__plano_de_contas.sql",
-    "quantidade": 17
+    "ultima": "V018__conta_bancaria_detalhes.sql",
+    "quantidade": 18
   },
   "ambiente_local_atual": {
     "manual": "docs/ambiente-local-atual.md",

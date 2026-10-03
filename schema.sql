@@ -1,11 +1,11 @@
--- Esquema do banco, gerado das migrations (V001-V017). NÃO editar à mão.
+-- Esquema do banco, gerado das migrations (V001-V018). NÃO editar à mão.
 -- Para regerar: scripts/gerar-schema.ps1 (precisa do Postgres local com a API em dev já ter subido).
 -- Só o schema public, sem dono e sem permissões. O banco de produção é criado pelo Flyway a partir destas migrations.
 
 --
 --
 
-\restrict dS2z9REBux13lM6EA7SA8SLElbcwCcakJ9ppK7Nhpxp0jSYZAUr1g9K2rXMimRD
+\restrict o1yU0BIBc0CYKS212hl5oG6BgFoIxgO6T6vkMdtIHILoeP1R1AS9KUr1kLI1XzW
 
 
 
@@ -369,7 +369,18 @@ CREATE TABLE public.financeiro_conta (
     nome character varying(120) NOT NULL,
     saldo_inicial numeric(14,2) DEFAULT 0 NOT NULL,
     data_saldo_inicial date NOT NULL,
-    ativo boolean DEFAULT true NOT NULL
+    ativo boolean DEFAULT true NOT NULL,
+    tipo_conta character varying(20) DEFAULT 'OUTRA'::character varying NOT NULL,
+    banco character varying(120),
+    agencia character varying(20),
+    numero_conta character varying(30),
+    titular character varying(120),
+    data_abertura date,
+    data_encerramento date,
+    chaves_pix jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT ck_financeiro_conta_periodo CHECK (((data_encerramento IS NULL) OR (data_abertura IS NULL) OR (data_encerramento >= data_abertura))),
+    CONSTRAINT financeiro_conta_chaves_pix_check CHECK ((jsonb_typeof(chaves_pix) = 'array'::text)),
+    CONSTRAINT financeiro_conta_tipo_conta_check CHECK (((tipo_conta)::text = ANY ((ARRAY['CORRENTE'::character varying, 'POUPANCA'::character varying, 'CAIXA'::character varying, 'OUTRA'::character varying])::text[])))
 );
 
 
@@ -1572,5 +1583,5 @@ ALTER TABLE public.refresh_token ENABLE ROW LEVEL SECURITY;
 --
 --
 
-\unrestrict dS2z9REBux13lM6EA7SA8SLElbcwCcakJ9ppK7Nhpxp0jSYZAUr1g9K2rXMimRD
+\unrestrict o1yU0BIBc0CYKS212hl5oG6BgFoIxgO6T6vkMdtIHILoeP1R1AS9KUr1kLI1XzW
 

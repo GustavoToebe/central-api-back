@@ -65,6 +65,30 @@ class FinanceiroIntegrationTest extends AbstractIntegrationTest {
     }
 
 
+    @Test void contaBancariaGuardaDadosEChavesPixNormalizadas() {
+        var pix=List.of(new ChavePixDto(ChavePixDto.TipoChavePix.CPF,"123.456.789-09",true),new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL," Tesouraria@Paroquia.org ",false));
+        var c=financeiro.salvarConta(null,new ContaRequest("Banco principal",BigDecimal.TEN,hoje.minusDays(5),true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CORRENTE,
+            "Banco do Brasil","1234-5","98765-0","Paróquia Teste",hoje.minusYears(1),null,pix));
+        var lida=financeiro.contas().stream().filter(x -> x.id().equals(c.id())).findFirst().orElseThrow();
+        assertThat(lida.banco()).isEqualTo("Banco do Brasil"); assertThat(lida.titular()).isEqualTo("Paróquia Teste");
+        assertThat(lida.chavesPix()).extracting(ChavePixDto::chave).containsExactly("12345678909","tesouraria@paroquia.org");
+        assertThat(lida.chavesPix().get(0).principal()).isTrue();
+    }
+    @Test void contaCorrenteExigeDadosBancariosECaixaNao() {
+        assertThatThrownBy(() -> financeiro.salvarConta(null,new ContaRequest("Sem banco",BigDecimal.ZERO,hoje,true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CORRENTE,null,null,null,null,null,null,null)))
+            .isInstanceOf(BadRequestException.class);
+        assertThat(financeiro.salvarConta(null,new ContaRequest("Caixa da secretaria",BigDecimal.ZERO,hoje,true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CAIXA,null,null,null,null,null,null,null)).id()).isNotNull();
+    }
+    @Test void chavesPixInvalidasRepetidasOuComDuasPrincipaisSaoRecusadas() {
+        java.util.function.Function<List<ChavePixDto>,ContaRequest> req = chaves -> new ContaRequest("Pix "+UUID.randomUUID(),BigDecimal.ZERO,hoje,true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CAIXA,null,null,null,null,null,null,chaves);
+        assertThatThrownBy(() -> financeiro.salvarConta(null,req.apply(List.of(new ChavePixDto(ChavePixDto.TipoChavePix.CPF,"123",false))))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> financeiro.salvarConta(null,req.apply(List.of(new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL,"a@b.co",true),new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL,"A@B.co",false))))).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> financeiro.salvarConta(null,req.apply(List.of(new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL,"a@b.co",true),new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL,"c@d.co",true))))).isInstanceOf(BadRequestException.class);
+    }
+    @Test void encerramentoNaoPodeSerAnteriorAAbertura() {
+        assertThatThrownBy(() -> financeiro.salvarConta(null,new ContaRequest("Período errado",BigDecimal.ZERO,hoje,true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CAIXA,null,null,null,null,hoje,hoje.minusDays(1),null)))
+            .isInstanceOf(BadRequestException.class);
+    }
     @Test void saldoInicialProtegidoAceitaMesmoValorComEscalaDiferente() {
         movimento(Tipo.RECEITA,"1");
         financeiro.salvarConta(conta.id(),new ContaRequest("Caixa renomeado",new BigDecimal("100"),conta.dataSaldoInicial(),true));

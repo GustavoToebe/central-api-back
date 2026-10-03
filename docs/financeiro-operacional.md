@@ -40,3 +40,7 @@ Lançamento antigo em conta ou grupo de outro tipo (dado de antes do plano de co
 GET/POST `/financeiro/contas`, PUT `/financeiro/contas/{id}`; categorias seguem o mesmo padrão. GET `/financeiro/movimentos` exige de/ate (vencimento), aceita nome, contaId, categoriaId, situacao, tipo, pagina e tamanho (1–100). POST/PUT criam/editam pendentes. POST `/financeiro/movimentos/{id}/baixar` recebe dataPagamento/versao; `/estornar` e `/cancelar` recebem versao. GET `/financeiro/resumo?de=...&ate=...` devolve realizados, previstos e saldos em snapshot REPEATABLE_READ.
 
 V014 cria financeiro_conta, financeiro_categoria e financeiro_movimento com RLS sem políticas e revogação anon/authenticated. Testes com PostgreSQL verificam projeção, baixas, estorno, conflitos e acesso; billing verifica inclusão de pagamento comercial sem replicação em contas.
+
+## Conta bancária (V018)
+
+A conta (ou caixa) guarda também: tipo (`CORRENTE`, `POUPANCA`, `CAIXA`, `OUTRA`), banco, agência, número da conta, titular, abertura, encerramento e até 10 chaves PIX (`CPF`, `CNPJ`, `EMAIL`, `TELEFONE`, `ALEATORIA`), no máximo uma principal. Em conta corrente ou poupança, banco, agência, conta e titular são obrigatórios; caixa e `OUTRA` (tipo das contas anteriores à V018) não exigem. O encerramento não pode ser anterior à abertura. As chaves são normalizadas, não podem repetir e ficam numa coluna JSON da conta. Só consulta: sem integração bancária e sem Pix automático.

@@ -33,8 +33,35 @@ public class FinanceiroService {
         if ((id==null || !c.getNome().equalsIgnoreCase(req.nome().trim())) && contas.existsByNomeIgnoreCase(req.nome().trim()))
             throw new ConflictException("Já existe uma conta com este nome.", "CONFLITO_FINANCEIRO");
         c.setNome(req.nome().trim()); c.setSaldoInicial(req.saldoInicial()); c.setDataSaldoInicial(req.dataSaldoInicial()); c.setAtivo(req.ativo());
+        aplicarDadosBancarios(c, req);
         contas.saveAndFlush(c); audit.registrar(id==null ? "CRIACAO" : "ALTERACAO", "FINANCEIRO_CONTA", c.getId(), List.of("configuracao"));
         return ContaResponse.de(c);
+    }
+    /** Dados bancários: obrigatórios em conta corrente/poupança; encerramento não vem antes da abertura; no máximo uma chave PIX principal, sem repetição. */
+    private void aplicarDadosBancarios(ContaFinanceira c, ContaRequest req) {
+        var tipo = req.tipoConta()==null ? ContaFinanceira.TipoConta.OUTRA : req.tipoConta();
+        String banco=limpar(req.banco()), agencia=limpar(req.agencia()), numero=limpar(req.numeroConta()), titular=limpar(req.titular());
+        if ((tipo==ContaFinanceira.TipoConta.CORRENTE || tipo==ContaFinanceira.TipoConta.POUPANCA) && (banco==null || agencia==null || numero==null || titular==null))
+            throw new BadRequestException("Informe banco, agência, conta e titular.");
+        if (req.dataAbertura()!=null && req.dataEncerramento()!=null && req.dataEncerramento().isBefore(req.dataAbertura()))
+            throw new BadRequestException("O encerramento não pode ser anterior à abertura.");
+        var chaves = req.chavesPix()==null ? List.<ChavePixDto>of() : req.chavesPix().stream().map(k -> new ChavePixDto(k.tipo(), normalizarChave(k), k.principal())).toList();
+        if (chaves.stream().filter(ChavePixDto::principal).count() > 1) throw new BadRequestException("Só uma chave PIX pode ser a principal.");
+        if (chaves.stream().map(k -> k.chave().toLowerCase()).distinct().count() != chaves.size()) throw new BadRequestException("Há chaves PIX repetidas.");
+        c.setDadosBancarios(tipo, banco, agencia, numero, titular, req.dataAbertura(), req.dataEncerramento(), chaves);
+    }
+    private static String limpar(String texto) { return texto==null || texto.isBlank() ? null : texto.trim(); }
+    /** CPF, CNPJ e telefone guardam só dígitos (telefone pode ter +); e-mail em minúsculas; aleatória é um código de 32 a 36 caracteres. */
+    private static String normalizarChave(ChavePixDto k) {
+        String v = k.chave().trim();
+        switch (k.tipo()) {
+            case CPF -> { v = v.replaceAll("\\D", ""); if (v.length()!=11) throw new BadRequestException("CPF da chave PIX deve ter 11 dígitos."); }
+            case CNPJ -> { v = v.replaceAll("\\D", ""); if (v.length()!=14) throw new BadRequestException("CNPJ da chave PIX deve ter 14 dígitos."); }
+            case EMAIL -> { v = v.toLowerCase(); if (!v.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) throw new BadRequestException("E-mail da chave PIX inválido."); }
+            case TELEFONE -> { v = v.replaceAll("[^\\d+]", ""); if (!v.matches("^\\+?\\d{10,13}$")) throw new BadRequestException("Telefone da chave PIX inválido."); }
+            case ALEATORIA -> { if (!v.matches("^[0-9a-fA-F-]{32,36}$")) throw new BadRequestException("Chave aleatória deve ser um código de 32 a 36 caracteres."); v = v.toLowerCase(); }
+        }
+        return v;
     }
     /** Plano de contas: grupo (sem grupoId) organiza; conta contábil (com grupoId) recebe lançamentos e tem o tipo do grupo. */
     @Transactional public CategoriaResponse salvarCategoria(UUID id, CategoriaRequest req) {

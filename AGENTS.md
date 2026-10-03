@@ -106,7 +106,7 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 | Módulo | Documento | Regra que não pode ser quebrada |
 |---|---|---|
 | MFA do operador (V013) | [mfa-operadores](docs/mfa-operadores.md) | Segredos cifrados em keyring próprio; login, alteração e refresh serializam o operador com `FOR NO KEY UPDATE` e releem o refresh após a trava; nunca logar chave, código ou senha |
-| Financeiro do operador (V014, V017) | [financeiro-operacional](docs/financeiro-operacional.md) | Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário; só a conta contábil (com grupo e do mesmo tipo) recebe lançamento; relatórios só leem e recusam mais de 5.000 lançamentos |
+| Financeiro do operador (V014, V017, V018) | [financeiro-operacional](docs/financeiro-operacional.md) | Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário; só a conta contábil (com grupo e do mesmo tipo) recebe lançamento; relatórios só leem e recusam mais de 5.000 lançamentos |
 | Consumo e instâncias | [consumo-instancias](docs/consumo-instancias.md), [historico-consumo](docs/historico-consumo.md), [painel-instancias](docs/painel-instancias.md) | HTTP fora da transação; sem dado pessoal nem zero fictício; `/instancias` lê só resumos guardados e atualiza em série, no máximo 5 por chamada |
 | Concorrência comercial | [concorrencia-comercial](docs/concorrencia-comercial.md) | Job por contratação, raiz antes das cobranças |
 | Login | [login-limites](docs/login-limites.md) | Contador no banco (`login_tentativa`, V016) por IP e por conta |
