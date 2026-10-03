@@ -113,4 +113,5 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 | Métricas | [monitoramento](docs/monitoramento.md) | Credencial exclusiva, sem dado de negócio; endpoint bloqueado no proxy; não ativar operação externa |
 | Papéis do banco | [papeis-banco](docs/papeis-banco.md) | `MIGRATION_DB_*` separa o Flyway; ensaiar em staging |
 | Contrato da API | [contrato-api](docs/contrato-api.md) | Mudou rota, permissão ou DTO: regenerar `docs/contrato-api.json`; rota nova exige `@PreAuthorize` |
+| Cópias com o Servirea | [scripts/verificar-copias.py](scripts/verificar-copias.py) | HMAC da integração, TOTP, limite de login e filtro de monitoramento existem nos dois back e têm de ser idênticos; mudou um, mude o outro e rode `python scripts/verificar-copias.py` (vê o Servirea ao lado) |
 | Release e rollback | [release-rollback](docs/release-rollback.md) | `atualizar.sh` etiqueta imagens pelo commit e grava `releases/*.json`; `rollback.sh` recusa voltar se a migration avançou; testar com `deploy/testes/release.test.sh` |
