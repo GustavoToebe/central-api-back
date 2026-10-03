@@ -39,6 +39,8 @@ public class FinanceiroService {
     }
     /** Dados bancários: obrigatórios em conta corrente/poupança; encerramento não vem antes da abertura; no máximo uma chave PIX principal, sem repetição. */
     private void aplicarDadosBancarios(ContaFinanceira c, ContaRequest req) {
+        // Atualização sem `tipoConta` é de cliente antigo (só nome, saldo e situação): os dados bancários e as chaves PIX ficam como estão.
+        if (req.tipoConta()==null && c.getId()!=null) return;
         var tipo = req.tipoConta()==null ? ContaFinanceira.TipoConta.OUTRA : req.tipoConta();
         String banco=limpar(req.banco()), agencia=limpar(req.agencia()), numero=limpar(req.numeroConta()), titular=limpar(req.titular());
         if ((tipo==ContaFinanceira.TipoConta.CORRENTE || tipo==ContaFinanceira.TipoConta.POUPANCA) && (banco==null || agencia==null || numero==null || titular==null))

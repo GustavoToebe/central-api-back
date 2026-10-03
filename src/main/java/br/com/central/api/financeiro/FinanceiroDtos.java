@@ -12,7 +12,7 @@ public final class FinanceiroDtos {
     public record ContaRequest(@NotBlank @Size(max=120) String nome, @NotNull @Digits(integer=12,fraction=2) BigDecimal saldoInicial,
                                @NotNull LocalDate dataSaldoInicial, boolean ativo, ContaFinanceira.TipoConta tipoConta,
                                @Size(max=120) String banco, @Size(max=20) String agencia, @Size(max=30) String numeroConta, @Size(max=120) String titular,
-                               LocalDate dataAbertura, LocalDate dataEncerramento, @Size(max=10) List<@Valid ChavePixDto> chavesPix) {
+                               LocalDate dataAbertura, LocalDate dataEncerramento, @Size(max=10) List<@Valid @NotNull ChavePixDto> chavesPix) {
         public ContaRequest(String nome, BigDecimal saldoInicial, LocalDate dataSaldoInicial, boolean ativo) {
             this(nome, saldoInicial, dataSaldoInicial, ativo, null, null, null, null, null, null, null, null);
         }

@@ -141,6 +141,19 @@ class FinanceiroIntegrationTest extends AbstractIntegrationTest {
         financeiro.estornar(m.id(),new VersaoRequest(m.versao()));
         assertThat(financeiro.resumo(hoje,hoje).pagarPrevisto()).isEqualByComparingTo("89.90");
     }
+    @Test void atualizacaoSemOsCamposNovosPreservaOsDadosBancarios() throws Exception {
+        var c=financeiro.salvarConta(null,new ContaRequest("Conta com dados",BigDecimal.ZERO,hoje,true,br.com.central.api.financeiro.ContaFinanceira.TipoConta.CORRENTE,"Banco do Brasil","1234","98765-0","Central",null,null,
+            List.of(new ChavePixDto(ChavePixDto.TipoChavePix.EMAIL,"a@b.co",true))));
+        // Pedido de cliente antigo: só nome, saldo, data e situação (os campos novos chegam nulos).
+        financeiro.salvarConta(c.id(),new ContaRequest("Conta renomeada",BigDecimal.ZERO,hoje,true));
+        var depois=financeiro.contas().stream().filter(x -> x.id().equals(c.id())).findFirst().orElseThrow();
+        assertThat(depois.nome()).isEqualTo("Conta renomeada"); assertThat(depois.banco()).isEqualTo("Banco do Brasil");
+        assertThat(depois.numeroConta()).isEqualTo("98765-0"); assertThat(depois.chavesPix()).hasSize(1);
+    }
+    @Test void itemNuloNaListaDeChavesPixEhRecusadoSemErroInterno() throws Exception {
+        mvc.perform(post("/financeiro/contas").with(authentication(usuario("ROLE_OPERADOR"))).with(csrf()).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"nome\":\"Com nulo\",\"saldoInicial\":0,\"dataSaldoInicial\":\""+hoje+"\",\"ativo\":true,\"tipoConta\":\"CAIXA\",\"chavesPix\":[null]}")).andExpect(status().isBadRequest());
+    }
     @Test void integracaoNaoTemAcessoAoFinanceiroDoOperador() throws Exception {
         mvc.perform(get("/financeiro/contas").with(authentication(usuario("PERM_INTEGRACAO")))).andExpect(status().isForbidden());
         mvc.perform(get("/financeiro/contas").with(authentication(usuario("ROLE_OPERADOR")))).andExpect(status().isOk());

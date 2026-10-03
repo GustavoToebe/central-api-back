@@ -4,7 +4,7 @@ Nada do que foi entregue nas rodadas 1 a 21 foi homologado com provedores, apare
 
 ## 0. Preparação
 - [ ] Staging com os quatro componentes na `melhoria/ecossistema-sem-ia`, mesmo `docker-compose` da produção e bancos separados dos reais.
-- [ ] Backup do banco de staging antes das migrations (Servirea V082, Central V016) e conferência de que subiram sem erro.
+- [ ] Backup do banco de staging antes das migrations (Servirea até a V084, Central até a V018, que incluem login, plano de contas e dados da conta bancária) e conferência de que subiram sem erro.
 - [ ] Perfis de teste com os códigos novos: `VAGA_DISTRIBUIR`, `NOTIFICACAO*`, `PRIVACIDADE*`, `CHECKIN*`, e um perfil **sem** eles (deve ver 403 e não ver os botões).
 - [ ] Paróquia de teste com pessoas fictícias, uma delas com o seu próprio número de WhatsApp e e-mail, `autorizaWhatsapp` ligado.
 
@@ -50,3 +50,10 @@ Nada do que foi entregue nas rodadas 1 a 21 foi homologado com provedores, apare
 - [ ] Ativar MFA, entrar com TOTP e com código de recuperação, desativar.
 
 Ao terminar, registre o resultado em `RETOMADA` e só então decida, paróquia por paróquia, quais gatilhos ligar.
+
+## 9. Financeiro: plano de contas, contas bancárias e relatórios (V083/V017, V084/V018)
+- [ ] **Antes** de migrar, em cópia do banco real: `SELECT lower(nome), count(*) FROM financeiro_categoria GROUP BY 1 HAVING count(*) > 1;` deve vir vazio e confira se existe categoria chamada "Saídas (migradas)" ou "Entradas (migradas)" (a migration cria o grupo com sufixo " – plano de contas" nesse caso, sem falhar).
+- [ ] Depois da migration: categorias antigas aparecem como contas contábeis dentro de "Saídas (migradas)"/"Entradas (migradas)"; nenhuma categoria sem uso virou entrada por engano; lançamentos antigos continuam com a mesma conta contábil.
+- [ ] Criar grupo e conta contábil; lançar entrada e saída; tentar lançar em grupo (deve recusar) e trocar o tipo de um grupo com contas (deve recusar).
+- [ ] Contas bancárias: criar conta corrente sem banco (deve recusar), caixa sem banco (deve aceitar), duas chaves PIX principais (deve recusar), chave repetida (deve recusar); editar mantendo os dados; conferir que no Servirea um perfil só de leitura do financeiro **não** vê agência, número, titular nem chaves PIX.
+- [ ] Relatórios da Central (banco/caixa, DRE, despesas, receitas): conferir com um período real contra o extrato; período com mais de 5.000 lançamentos ou cobranças deve pedir para reduzir; CSV abre na planilha e Imprimir sai limpo.

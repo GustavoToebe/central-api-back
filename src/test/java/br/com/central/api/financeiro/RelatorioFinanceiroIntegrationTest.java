@@ -112,13 +112,20 @@ class RelatorioFinanceiroIntegrationTest extends AbstractIntegrationTest {
         when(cobranca.getSequencial()).thenReturn(7L);
         when(cobranca.getPagoEm()).thenReturn(hoje);
         when(cobranca.getValorPago()).thenReturn(new BigDecimal("150.00"));
-        when(cobrancas.pagasNoPeriodo(any(), any(), any())).thenReturn(List.of(cobranca));
+        when(cobrancas.pagasNoPeriodo(any(), any(), any(), any())).thenReturn(List.of(cobranca));
         var r = relatorios.porTipo(Tipo.RECEITA, Visao.REALIZADO, hoje, hoje);
         assertThat(r.total()).isEqualByComparingTo("160");
         var comercial = r.grupos().stream().filter(GrupoLinha::comercial).findFirst().orElseThrow();
         assertThat(comercial.nome()).isEqualTo("Assinaturas dos aplicativos");
         assertThat(comercial.contas().getFirst().lancamentos().getFirst().descricao()).isEqualTo("Cobrança nº 7");
         assertThat(relatorios.porTipo(Tipo.DESPESA, Visao.REALIZADO, hoje, hoje).grupos()).isEmpty();
+    }
+
+    @Test void cobrancasAcimaDoLimiteDoRelatorioSaoRecusadasEmVezDeCarregadasSemFim() {
+        var muitas = java.util.Collections.nCopies(RelatorioFinanceiroService.LIMITE + 1, Mockito.mock(Cobranca.class));
+        when(cobrancas.pagasNoPeriodo(any(), any(), any(), any())).thenReturn(muitas);
+        assertThatThrownBy(() -> relatorios.porTipo(Tipo.RECEITA, Visao.REALIZADO, hoje, hoje))
+            .isInstanceOf(br.com.central.api.web.BadRequestException.class).hasMessageContaining("cobranças");
     }
 
     @Test void bancoCaixaMostraSaldoAnteriorEntradasSaidasESaldoCorrido() {

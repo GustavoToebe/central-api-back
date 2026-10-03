@@ -123,7 +123,9 @@ public class RelatorioFinanceiroService {
     }
 
     private Optional<GrupoLinha> comercial(Visao visao, LocalDate de, LocalDate ate) {
-        List<Cobranca> lista = visao == Visao.REALIZADO ? cobrancas.pagasNoPeriodo(Cobranca.Status.PAGA, de, ate) : cobrancas.abertasNoPeriodo(de, ate);
+        var limite = PageRequest.of(0, LIMITE + 1);
+        List<Cobranca> lista = visao == Visao.REALIZADO ? cobrancas.pagasNoPeriodo(Cobranca.Status.PAGA, de, ate, limite) : cobrancas.abertasNoPeriodo(de, ate, limite);
+        if (lista.size() > LIMITE) throw new BadRequestException("O período tem mais de " + LIMITE + " cobranças; reduza o período do relatório.");
         if (lista.isEmpty()) return Optional.empty();
         List<Lancamento> lanc = lista.stream().map(c -> new Lancamento(c.getId(), visao == Visao.REALIZADO ? c.getPagoEm() : c.getVencimento(),
                 "Cobrança nº " + c.getSequencial(), "Sem vínculo bancário", visao == Visao.REALIZADO ? c.getValorPago() : c.getValor())).toList();
