@@ -47,7 +47,7 @@ app.servirea.com.br {
 	# CSP do HTML. Não entra no snippet compartilhado: a API é JSON e o
 	# painel do WhatsApp (Evolution) quebraria com esta política.
 	# connect-src ainda lista o host antigo da API para quem não atualizou o front.
-	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.servirea.com.br https://viacep.com.br https://challenges.cloudflare.com https://qcybebkhwhrudbwoweip.supabase.co; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:"
+	header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.servirea.com.br https://viacep.com.br https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:"
 	handle /api/* {
         # Preserva os uploads de até 6 MiB; a integração também limita a leitura na API.
         request_body {

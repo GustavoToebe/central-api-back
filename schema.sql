@@ -1,4 +1,4 @@
--- Esquema do banco, gerado das migrations (V001-V015). NÃO editar à mão.
+-- Esquema do banco, gerado das migrations (V001-V016). NÃO editar à mão.
 -- Para regerar: scripts/gerar-schema.ps1 (precisa do Postgres local com a API em dev já ter subido).
 -- Só o schema public, sem dono e sem permissões. O banco de produção é criado pelo Flyway a partir destas migrations.
 
@@ -438,6 +438,18 @@ CREATE TABLE public.integracao_nonce (
 
 
 --
+-- Name: login_tentativa; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.login_tentativa (
+    chave character varying(100) NOT NULL,
+    janela_ate timestamp with time zone NOT NULL,
+    tentativas integer NOT NULL,
+    CONSTRAINT login_tentativa_tentativas_check CHECK ((tentativas >= 1))
+);
+
+
+--
 -- Name: operador; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -845,6 +857,14 @@ ALTER TABLE ONLY public.integracao_nonce
 
 
 --
+-- Name: login_tentativa login_tentativa_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.login_tentativa
+    ADD CONSTRAINT login_tentativa_pkey PRIMARY KEY (chave);
+
+
+--
 -- Name: operador_log operador_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1078,6 +1098,13 @@ CREATE INDEX ix_financeiro_movimento_baixa ON public.financeiro_movimento USING 
 --
 
 CREATE INDEX ix_financeiro_movimento_vencimento ON public.financeiro_movimento USING btree (vencimento, id);
+
+
+--
+-- Name: login_tentativa_janela_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX login_tentativa_janela_idx ON public.login_tentativa USING btree (janela_ate);
 
 
 --
@@ -1449,6 +1476,12 @@ ALTER TABLE public.historico_contratacao ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.integracao_nonce ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: login_tentativa; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.login_tentativa ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: operador; Type: ROW SECURITY; Schema: public; Owner: -

@@ -11,3 +11,8 @@ bin/
 .classpath
 .settings/
 .factorypath
+
+# Ferramentas de agente: pessoais de cada pessoa, não fazem parte do produto
+.claude/
+openspec/
+.agents/

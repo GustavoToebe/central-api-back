@@ -97,25 +97,20 @@ A Central **não** é multi-tenant: sem `@TenantId` e sem `TenantContext`.
 
 ## Fontes e estado verificável
 
-- MFA opt-in de operador (V013): `docs/mfa-operadores.md`. Segredos cifrados por keyring próprio, recuperação em hash. Login/alteração/refresh serializam operador com FOR NO KEY UPDATE; respeitar esta ordem e reler refresh após trava. Ativar/desativar incrementa versão JWT e apaga sessões. Nunca logar chave TOTP/códigos/senhas.
+- [Estado local](docs/estado-projeto.json) e [índice](docs/README.md). Histórico e plano não definem a versão implantada; precedência em [fontes e retomada](docs/desenvolvimento/fontes-e-retomada.md).
+- Rode `python scripts/verificar-docs.py` ao mudar docs, schema ou migrations e atualize o estado junto.
+- Trabalhar na branch autorizada pelo usuário (`melhoria/ecossistema-sem-ia` nesta etapa). Publicação depende do fluxo e da autorização vigentes; commit e push não são implantação.
 
-- [Estado local](docs/estado-projeto.json) e [índice](docs/README.md). Histórico/plano não define a versão implantada.
-- Executar `python scripts/verificar-docs.py` ao mudar docs, schema ou migrations; atualizar o estado junto.
-- Nesta tarefa, usar `melhoria/ecossistema-sem-ia`, conforme pedido do usuário. Publicação depende do fluxo e autorização vigentes.
+## Regras por funcionalidade
 
-- Financeiro do operador (V014): docs/financeiro-operacional.md. Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário.
-
-- Nova rodada de produto: docs/consumo-instancias.md: consulta de contratação sob demanda, HTTP fora da transação, sem dados pessoais/zero fictício.
-
-- [Fontes e retomada](docs/desenvolvimento/fontes-e-retomada.md): precedência, histórico e registro de evidências.
-
-- Rodada 6–10: Histórico de consumo sob demanda: docs/historico-consumo.md; não gerar zeros para consultas ausentes nem gravar dados pessoais.
-
-- Rodada 11–17: docs/concorrencia-comercial.md: job por contratação, raiz antes de cobranças.
-- Métricas: docs/monitoramento.md; credencial exclusiva e opcional, sem dados pessoais ou acesso de negócio. Endpoint bloqueado no proxy público; não ativar operação externa como efeito da implementação.
-
-- F06/F26/T14: docs/painel-instancias.md. /instancias lê só resumos guardados (SEM_DADOS nunca é zero); atualização manual em série, máx. 5 por chamada, HTTP fora de transação; métricas agregadas por nível para alertas externos.
-
-- T16: docs/papeis-banco.md. MIGRATION_DB_* separa as credenciais do Flyway; app só dados com BYPASSRLS; scripts/roles-banco.sql e adotar-papeis-banco.sql, ensaiar em staging.
-- T17: docs/contrato-api.md. Mudou rota, permissão ou DTO: atualizar docs/contrato-api.json com `mvn test -Dtest=ContratoApiTest -Dcontrato.atualizar=true`; rota nova exige @PreAuthorize.
-- T01: docs/release-rollback.md. atualizar.sh etiqueta imagens pelo commit e grava releases/*.json; rollback.sh recusa voltar se a migration avançou; testar com deploy/testes/release.test.sh.
+| Módulo | Documento | Regra que não pode ser quebrada |
+|---|---|---|
+| MFA do operador (V013) | [mfa-operadores](docs/mfa-operadores.md) | Segredos cifrados em keyring próprio; login, alteração e refresh serializam o operador com `FOR NO KEY UPDATE` e releem o refresh após a trava; nunca logar chave, código ou senha |
+| Financeiro do operador (V014) | [financeiro-operacional](docs/financeiro-operacional.md) | Não copiar cobranças como receitas manuais; saldo por conta exclui cobrança sem vínculo bancário |
+| Consumo e instâncias | [consumo-instancias](docs/consumo-instancias.md), [historico-consumo](docs/historico-consumo.md), [painel-instancias](docs/painel-instancias.md) | HTTP fora da transação; sem dado pessoal nem zero fictício; `/instancias` lê só resumos guardados e atualiza em série, no máximo 5 por chamada |
+| Concorrência comercial | [concorrencia-comercial](docs/concorrencia-comercial.md) | Job por contratação, raiz antes das cobranças |
+| Login | [login-limites](docs/login-limites.md) | Contador no banco (`login_tentativa`, V016) por IP e por conta |
+| Métricas | [monitoramento](docs/monitoramento.md) | Credencial exclusiva, sem dado de negócio; endpoint bloqueado no proxy; não ativar operação externa |
+| Papéis do banco | [papeis-banco](docs/papeis-banco.md) | `MIGRATION_DB_*` separa o Flyway; ensaiar em staging |
+| Contrato da API | [contrato-api](docs/contrato-api.md) | Mudou rota, permissão ou DTO: regenerar `docs/contrato-api.json`; rota nova exige `@PreAuthorize` |
+| Release e rollback | [release-rollback](docs/release-rollback.md) | `atualizar.sh` etiqueta imagens pelo commit e grava `releases/*.json`; `rollback.sh` recusa voltar se a migration avançou; testar com `deploy/testes/release.test.sh` |

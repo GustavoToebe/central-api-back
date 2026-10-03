@@ -13,8 +13,8 @@
     "python scripts/verificar-docs.py"
   ],
   "migrations": {
-    "ultima": "V015__historico_consumo.sql",
-    "quantidade": 15
+    "ultima": "V016__login_tentativa.sql",
+    "quantidade": 16
   },
   "ambiente_local_atual": {
     "manual": "docs/ambiente-local-atual.md",
