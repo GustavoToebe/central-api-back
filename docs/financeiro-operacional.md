@@ -33,7 +33,7 @@ Tela **Relatórios** do painel, só para o operador, sempre de leitura. Todos ac
 - **Relatório de banco/caixa** (`/financeiro/relatorios/banco-caixa`, `contaId` opcional): por conta/banco, saldo anterior, entradas, saídas, saldo corrido e saldo final, só com baixas. Saldo inicial que cai dentro do período aparece como a primeira linha. O saldo final bate com o `saldoTotal` do resumo na mesma data. Cobranças de assinatura não têm vínculo bancário e ficam de fora.
 - **Demonstrativo do resultado do exercício** (`/financeiro/relatorios/demonstrativo`): receitas e despesas realizadas por grupo e conta, resultado, a receber, a pagar, resultado previsto e saldos das contas ao fim do período.
 
-A tela imprime (diálogo do navegador) e baixa CSV. Valores em reais, calendário de São Paulo.
+Lançamento antigo em conta ou grupo de outro tipo (dado de antes do plano de contas) aparece com o aviso "(conta cadastrada como saída/entrada)" em vez de ser misturado em silêncio. A tela imprime (diálogo do navegador) e baixa CSV. Valores em reais, calendário de São Paulo.
 
 ## API
 

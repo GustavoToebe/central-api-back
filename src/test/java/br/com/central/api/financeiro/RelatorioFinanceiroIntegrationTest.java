@@ -81,6 +81,16 @@ class RelatorioFinanceiroIntegrationTest extends AbstractIntegrationTest {
         assertThat(grupo.contas().getFirst().lancamentos().getFirst().contaBanco()).isEqualTo("Caixa");
     }
 
+    @Test void lancamentoAntigoEmContaDeOutroTipoApareceSinalizado() {
+        var m = lancar("Entrada antiga", Tipo.RECEITA, "10", doacoes, hoje, hoje);
+        jdbc.update("update financeiro_movimento set tipo = 'DESPESA' where id = ?", m.id());
+        var r = relatorios.porTipo(Tipo.DESPESA, Visao.REALIZADO, hoje, hoje);
+        var conta = r.grupos().stream().flatMap(g -> g.contas().stream()).findFirst().orElseThrow();
+        assertThat(conta.nome()).isEqualTo("Doações (conta cadastrada como entrada)");
+        assertThat(r.grupos().getFirst().nome()).isEqualTo("Receitas (grupo de entrada)");
+        assertThat(r.total()).isEqualByComparingTo("10");
+    }
+
     @Test void visaoPrevistaMostraPendentesPeloVencimentoEARealizadaSoBaixados() {
         lancar("Pendente", Tipo.DESPESA, "40", infra, hoje, null);
         assertThat(relatorios.porTipo(Tipo.DESPESA, Visao.REALIZADO, hoje, hoje).total()).isEqualByComparingTo("0");

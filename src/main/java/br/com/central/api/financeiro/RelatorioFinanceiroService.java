@@ -59,10 +59,10 @@ public class RelatorioFinanceiroService {
             List<ContaContabilLinha> linhas = new ArrayList<>();
             for (var c : e.getValue().entrySet()) {
                 var lanc = c.getValue();
-                linhas.add(new ContaContabilLinha(c.getKey(), todas.get(c.getKey()).getNome(), soma(lanc), lanc));
+                linhas.add(new ContaContabilLinha(c.getKey(), nomeExibido(todas.get(c.getKey()), tipo, "conta cadastrada como "), soma(lanc), lanc));
             }
             linhas.sort(Comparator.comparing(ContaContabilLinha::nome, String.CASE_INSENSITIVE_ORDER));
-            grupos.add(new GrupoLinha(grupo.getId(), grupo.getNome(), false, linhas.stream().map(ContaContabilLinha::total).reduce(BigDecimal.ZERO, BigDecimal::add), linhas));
+            grupos.add(new GrupoLinha(grupo.getId(), nomeExibido(grupo, tipo, "grupo de "), false, linhas.stream().map(ContaContabilLinha::total).reduce(BigDecimal.ZERO, BigDecimal::add), linhas));
         }
         if (tipo == Tipo.RECEITA) comercial(visao, de, ate).ifPresent(grupos::add);
         grupos.sort(Comparator.comparing(GrupoLinha::nome, String.CASE_INSENSITIVE_ORDER));
@@ -147,6 +147,11 @@ public class RelatorioFinanceiroService {
         return pagina.getContent();
     }
 
+    /** Lançamento antigo em conta ou grupo de outro tipo (dado de antes do plano de contas) aparece sinalizado em vez de misturado em silêncio. */
+    private static String nomeExibido(CategoriaFinanceira c, Tipo tipoDoRelatorio, String prefixo) {
+        if (c.getTipo() == tipoDoRelatorio) return c.getNome();
+        return c.getNome() + " (" + prefixo + (c.getTipo() == Tipo.DESPESA ? "saída" : "entrada") + ")";
+    }
     private static LocalDate data(MovimentoFinanceiro m, Visao visao) { return visao == Visao.REALIZADO ? m.getDataPagamento() : m.getVencimento(); }
     private static BigDecimal soma(List<Lancamento> l) { return l.stream().map(Lancamento::valor).reduce(BigDecimal.ZERO, BigDecimal::add); }
     private static void intervalo(LocalDate de, LocalDate ate) {
